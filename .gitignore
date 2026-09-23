@@ -53,3 +53,18 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# uCore / Make 构建产物
+bin/
+obj/
+*.o
+*.d
+*.elf
+*.img
+*.map
+
+# 编辑器及本机环境
+.vscode/
+.idea/
+*.swp
+*~
