@@ -243,6 +243,10 @@ bootstacktop:
 | 执行 `j kern_init` 后      | `0x8020000a` | `0x80203000` |
 | `kern_init` 建立栈帧后     | `0x8020003a` | `0x80202ff0` |
 
+![GDB 验证栈初始化前后的 sp](images/lab1_9.png)
+
+图 1：断点命中时 `sp = 0x80026eb0`（固件遗留栈）；执行 `auipc sp,0x3` 后 `sp = 0x80203000 <SBI_CONSOLE_PUTCHAR>`，执行 `mv sp,sp` 后数值不变；末尾的 `p/x &bootstacktop`、`p/x &bootstack` 直接给出栈范围 0x80201000–0x80203000。
+
 同时 GDB 直接查询符号：`&bootstack = 0x80201000`、`&bootstacktop = 0x80203000`，与 `sp` 的初始化结果一致，也与国峻赫的 `lab1_3.png`、`lab1_4.png` 截图互相印证。
 
 入口执行前的 `sp = 0x80026eb0` 是固件遗留的栈指针。国峻赫基线上该值为 `0x8001bd80`，差异来自 OpenSBI 版本不同（v1.3 与 v0.4 的内部栈布局不同），属于固件相关数值，不影响内核侧结论。内核侧的全部关键地址（`kern_entry`、`kern_init`、`bootstacktop`、`cprintf = 0x80200056`、消息串 `0x802004c8`、格式串 `0x802004e8`、最终循环 `0x8020003a`）与国峻赫的记录完全一致。
@@ -309,6 +313,6 @@ memset(edata, 0, end - edata);
 
 1. 源码：`kern/init/entry.S`、`kern/init/init.c`、`tools/kernel.ld`、`kern/mm/mmu.h`、`kern/mm/memlayout.h`、`libs/sbi.c`；
 2. 本次实验的原始命令输出：[docs/logs/entry-layout.txt](logs/entry-layout.txt)（`readelf -h/-S/-r/-s`、`nm -n`、`objdump -d` 的完整文本）；
-3. 本次实验的 GDB 会话记录：[docs/logs/entry-gdb.log](logs/entry-gdb.log)（断点、单步、寄存器与符号查询、QEMU 启动输出）；
+3. 本次实验的 GDB 会话记录：[docs/logs/entry-gdb.log](logs/entry-gdb.log)（断点、单步、寄存器与符号查询、QEMU 启动输出），以及对应的验证截图 [docs/images/lab1_9.png](images/lab1_9.png)；
 4. 国峻赫的启动调试草稿 [docs/startup-debug.md](startup-debug.md) 与截图 `docs/images/lab1_3.png`、`docs/images/lab1_4.png`（栈初始化证据，本部分直接引用，不重复截取）；
 5. 陈铭宇的构建与输出分析草稿 [docs/build-sbi.md](build-sbi.md)（构建流程与装载方式）。
