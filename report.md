@@ -293,7 +293,7 @@ bootstacktop = 0x80203000
 
 ### 6.2 GDB 验证
 
-成员 B 的调试日志记录：
+尚文轩的调试日志记录：
 
 | 位置 | PC | SP |
 | --- | --- | --- |
@@ -317,9 +317,9 @@ sp = 0x80203000
 
 图 2：执行入口栈初始化后，`sp` 与 `bootstacktop` 一致。
 
-![成员 B 独立复核：栈初始化验证](docs/images/lab1_9.png)
+![尚文轩独立复核：栈初始化验证](docs/images/lab1_9.png)
 
-图 3：成员 B 在 OpenSBI v1.3 环境下的独立复核——断点命中时 sp = 0x80026eb0（固件遗留栈），执行 auipc sp,0x3 后 sp = 0x80203000 <SBI_CONSOLE_PUTCHAR>，执行 mv sp,sp 后数值不变；p/x &bootstacktop = 0x80203000、p/x &bootstack = 0x80201000，显示启动栈共 8 KiB。
+图 3：尚文轩在 OpenSBI v1.3 环境下的独立复核——断点命中时 sp = 0x80026eb0（固件遗留栈），执行 auipc sp,0x3 后 sp = 0x80203000 <SBI_CONSOLE_PUTCHAR>，执行 mv sp,sp 后数值不变；p/x &bootstacktop = 0x80203000、p/x &bootstack = 0x80201000，显示启动栈共 8 KiB。
 
 ---
 
@@ -345,7 +345,7 @@ end   = 0x80203008
 end - edata = 0
 ```
 
-成员 B 的 GDB 记录也实际观察到：
+尚文轩的 GDB 记录也实际观察到：
 
 ```text
 memset(s=0x80203008, c=0, n=0)
@@ -1217,4 +1217,4 @@ SBI ecall
 - `docs/images/lab1_console_cons_putc.png`：console 调用；
 - `docs/images/lab1_sbi_source.png`：SBI 源码；
 - `docs/images/lab1_sbi_ecall_registers.png`：`ecall` 前寄存器实测。
-- `docs/images/lab1_9.png`：成员 B 独立复核的栈初始化验证。
+- `docs/images/lab1_9.png`：尚文轩独立复核的栈初始化验证。
