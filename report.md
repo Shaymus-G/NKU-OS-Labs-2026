@@ -32,7 +32,7 @@
 
 ### 2.2 尚文轩的独立复核环境
 
-尚文轩使用 Ubuntu 22.04.5 LTS、GCC 10.2.0、QEMU 6.2.0、OpenSBI v1.3 进行了独立复核。固件版本不同导致入口前的 `sp`、`a1` 等固件侧数值不同，但以下内核侧关键地址与基线环境一致：
+尚文轩使用 Ubuntu 22.04.5 LTS、GCC 10.2.0（Ubuntu 包）、binutils 2.35.1、GDB 12.1（gdb-multiarch）、QEMU 6.2.0、OpenSBI v1.3 进行了独立复核。固件版本不同导致入口前的 `sp`、`a1` 等固件侧数值不同，但以下内核侧关键地址与基线环境一致：
 
 ```text
 kern_entry      = 0x80200000
@@ -44,6 +44,8 @@ cprintf         = 0x80200056
 ```
 
 因此最终报告将固件侧数值按各自实测记录保留，而内核侧结论按共同构建结果统一说明。
+
+QEMU 6.2 下 `-device loader` 不再自动向 `fw_dynamic` 固件传递内核入口地址，尚文轩通过本地包装脚本补传 `-kernel` 参数解决，未改动仓库代码与链接结果。
 
 ---
 
@@ -315,6 +317,10 @@ sp = 0x80203000
 
 图 2：执行入口栈初始化后，`sp` 与 `bootstacktop` 一致。
 
+![成员 B 独立复核：栈初始化验证](docs/images/lab1_9.png)
+
+图 3：成员 B 在 OpenSBI v1.3 环境下的独立复核——断点命中时 sp = 0x80026eb0（固件遗留栈），执行 auipc sp,0x3 后 sp = 0x80203000 <SBI_CONSOLE_PUTCHAR>，执行 mv sp,sp 后数值不变；p/x &bootstacktop = 0x80203000、p/x &bootstack = 0x80201000，显示启动栈共 8 KiB。
+
 ---
 
 ## 7. `kern_init` 与 BSS 清零
@@ -427,7 +433,7 @@ GDB 连接后，初始 PC 为：
 
 ![复位引导代码](docs/images/lab1_1.png)
 
-图 3：复位地址处最初五条指令与固件入口地址。
+图 4：复位地址处最初五条指令与固件入口地址。
 
 逐条执行后的状态：
 
@@ -453,7 +459,7 @@ pc = 0x80000000
 
 ![进入 OpenSBI](docs/images/lab1_2.png)
 
-图 4：进入 OpenSBI 后的寄存器与入口指令。
+图 5：进入 OpenSBI 后的寄存器与入口指令。
 
 本实验只观察了 OpenSBI 入口附近的若干指令，没有逐条跟踪整个固件。后续通过内核入口断点验证控制权最终被移交给 uCore。
 
@@ -517,7 +523,7 @@ a1 = 0x802004c8 → "(THU.CST) os is loading ...\n"
 
 ![cprintf 参数](docs/images/lab1_8.png)
 
-图 5：`cprintf` 的格式串和消息字符串。
+图 6：`cprintf` 的格式串和消息字符串。
 
 执行完成后，QEMU 输出：
 
@@ -527,7 +533,7 @@ a1 = 0x802004c8 → "(THU.CST) os is loading ...\n"
 
 ![启动输出](docs/images/lab1_5.png)
 
-图 6：内核启动信息输出与 `cprintf` 返回。
+图 7：内核启动信息输出与 `cprintf` 返回。
 
 最终：
 
@@ -642,7 +648,7 @@ riscv64-unknown-elf-objcopy bin/kernel --strip-all -O binary bin/ucore.img
 
 ![构建成功](docs/images/lab1_build_success.png)
 
-图 7：源码编译、链接和 `ucore.img` 生成成功。
+图 8：源码编译、链接和 `ucore.img` 生成成功。
 
 ### 15.4 构建链
 
@@ -689,7 +695,7 @@ qemu-system-riscv64 \
 
 ![make qemu](docs/images/lab1_make_qemu_command.png)
 
-图 8：`make qemu` 的实际命令。
+图 9：`make qemu` 的实际命令。
 
 关键参数：
 
@@ -711,7 +717,7 @@ qemu-system-riscv64 \
 
 ![make debug](docs/images/lab1_make_debug_command.png)
 
-图 9：`make debug` 的实际命令。
+图 10：`make debug` 的实际命令。
 
 其中：
 
@@ -729,7 +735,7 @@ riscv64-unknown-elf-gdb \
 
 ![make gdb](docs/images/lab1_make_gdb_command.png)
 
-图 10：`make gdb` 的实际命令。
+图 11：`make gdb` 的实际命令。
 
 ---
 
@@ -758,7 +764,7 @@ kern_entry（0x80200000）
 
 ![QEMU 正常启动](docs/images/lab1_qemu_boot.png)
 
-图 11：OpenSBI 启动后内核正常打印启动信息。
+图 12：OpenSBI 启动后内核正常打印启动信息。
 
 因此：
 
@@ -779,7 +785,7 @@ cprintf("%s\n\n", message);
 
 ![kern_init 输出语句](docs/images/lab1_kern_init_output.png)
 
-图 12：`kern_init` 中的输出入口。
+图 13：`kern_init` 中的输出入口。
 
 ### 18.2 `cprintf → vcprintf → vprintfmt`
 
@@ -799,7 +805,7 @@ vprintfmt((void *)cputch, &cnt, fmt, ap);
 
 ![stdio 调用链](docs/images/lab1_stdio_printf_chain.png)
 
-图 13：`cputch`、`vcprintf` 与 `cprintf`。
+图 14：`cputch`、`vcprintf` 与 `cprintf`。
 
 ### 18.3 `cputch → cons_putc`
 
@@ -820,7 +826,7 @@ void cons_putc(int c) {
 
 ![cons_putc](docs/images/lab1_console_cons_putc.png)
 
-图 14：console 层将字符继续交给 SBI。
+图 15：console 层将字符继续交给 SBI。
 
 ### 18.4 `sbi_console_putchar → sbi_call → ecall`
 
@@ -866,7 +872,7 @@ a2 = 0
 
 ![SBI 源码](docs/images/lab1_sbi_source.png)
 
-图 15：SBI 服务号、参数寄存器与 `ecall`。
+图 16：SBI 服务号、参数寄存器与 `ecall`。
 
 完整调用链：
 
@@ -931,7 +937,7 @@ a7 = 1
 
 ![ecall 前寄存器](docs/images/lab1_sbi_ecall_registers.png)
 
-图 16：`ecall` 执行前的 SBI 参数寄存器。
+图 17：`ecall` 执行前的 SBI 参数寄存器。
 
 此时 `0x28` 对应字符 `'('`，正好是启动字符串的第一个字符；`a7 = 1` 与 `SBI_CONSOLE_PUTCHAR = 1` 一致。
 
@@ -1096,6 +1102,26 @@ CPU → 开始执行内核
 不同模块之间通过清晰接口连接，使高层输出代码无需了解底层控制台实现细节。
 
 
+## 29. 本实验尚未覆盖的重要 OS 知识
+
+本次 Lab 1 建立的是一个最小可运行内核的启动、构建、调试和基础输出闭环，尚未真正实现完整操作系统中的许多核心机制。典型的尚未覆盖内容包括：
+
+- 完整的异常与中断管理；
+- 时钟中断驱动的调度；
+- 物理内存分配；
+- 页表与虚拟内存；
+- 用户态进程；
+- 用户态到内核态的系统调用接口；
+- 进程/线程调度；
+- 文件系统；
+- 同步与互斥；
+- 多核调度。
+
+需要明确本实验的能力边界：不能因为源码目录中存在后续实验可能使用的头文件、目录或接口，就声称本次已经实现了对应的操作系统功能；同样，运行过程中调用了 OpenSBI 等固件服务，也不代表内核自身已经完成了相关底层机制。
+
+`kern_init` 最后进入无限循环，只是让这个最小内核在完成启动输出后保持运行，并不是已经具备进程调度、时钟驱动调度或节能机制的完整空闲任务。后续实验将在本实验建立的基本执行环境上，逐步加入异常与中断、内存管理、用户态、系统调用、调度、文件系统等功能。
+
+
 ---
 
 # 实验总结
@@ -1191,3 +1217,4 @@ SBI ecall
 - `docs/images/lab1_console_cons_putc.png`：console 调用；
 - `docs/images/lab1_sbi_source.png`：SBI 源码；
 - `docs/images/lab1_sbi_ecall_registers.png`：`ecall` 前寄存器实测。
+- `docs/images/lab1_9.png`：成员 B 独立复核的栈初始化验证。
