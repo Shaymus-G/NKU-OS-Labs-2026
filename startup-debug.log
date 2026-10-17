@@ -1,0 +1,155 @@
+pc             0x1000	0x1000
+t0             0x0	0
+a0             0x0	0
+a1             0x0	0
+=> 0x1000:	auipc	t0,0x0
+   0x1004:	addi	a1,t0,32
+   0x1008:	csrr	a0,mhartid
+   0x100c:	ld	t0,24(t0)
+   0x1010:	jr	t0
+0x1018:	0x0000000080000000	0x260d0000edfe0dd0
+0x0000000000001004 in ?? ()
+pc             0x1004	0x1004
+t0             0x1000	4096
+a0             0x0	0
+a1             0x0	0
+0x0000000000001008 in ?? ()
+pc             0x1008	0x1008
+t0             0x1000	4096
+a0             0x0	0
+a1             0x1020	4128
+0x000000000000100c in ?? ()
+pc             0x100c	0x100c
+t0             0x1000	4096
+a0             0x0	0
+a1             0x1020	4128
+0x0000000000001010 in ?? ()
+pc             0x1010	0x1010
+t0             0x80000000	2147483648
+a0             0x0	0
+a1             0x1020	4128
+0x0000000080000000 in ?? ()
+pc             0x80000000	0x80000000
+t0             0x80000000	2147483648
+a0             0x0	0
+a1             0x1020	4128
+=> 0x80000000:	csrr	a6,mhartid
+   0x80000004:	bgtz	a6,0x80000108
+   0x80000008:	auipc	t0,0x0
+   0x8000000c:	addi	t0,t0,1032
+   0x80000010:	auipc	t1,0x0
+   0x80000014:	addi	t1,t1,-16
+   0x80000018:	sd	t1,0(t0)
+   0x8000001c:	auipc	t0,0x0
+   0x80000020:	addi	t0,t0,1020
+   0x80000024:	ld	t0,0(t0)
+   0x1000:	auipc	t0,0x0
+   0x1004:	addi	a1,t0,32
+   0x1008:	csrr	a0,mhartid
+   0x100c:	ld	t0,24(t0)
+   0x1010:	jr	t0
+0x1018:	0x0000000080000000
+pc             0x80000000	0x80000000
+t0             0x80000000	2147483648
+a0             0x0	0
+a1             0x1020	4128
+=> 0x80000000:	csrr	a6,mhartid
+   0x80000004:	bgtz	a6,0x80000108
+   0x80000008:	auipc	t0,0x0
+   0x8000000c:	addi	t0,t0,1032
+   0x80000010:	auipc	t1,0x0
+   0x80000014:	addi	t1,t1,-16
+   0x80000018:	sd	t1,0(t0)
+   0x8000001c:	auipc	t0,0x0
+   0x80000020:	addi	t0,t0,1020
+   0x80000024:	ld	t0,0(t0)
+Breakpoint 1 at 0x80200000: file kern/init/entry.S, line 7.
+Num     Type           Disp Enb Address            What
+1       breakpoint     keep y   0x0000000080200000 kern/init/entry.S:7
+Continuing.
+
+Breakpoint 1, kern_entry () at kern/init/entry.S:7
+7	    la sp, bootstacktop
+pc             0x80200000	0x80200000 <kern_entry>
+sp             0x8001bd80	0x8001bd80
+a0             0x0	0
+a1             0x82200000	2183135232
+=> 0x80200000 <kern_entry>:	auipc	sp,0x3
+   0x80200004 <kern_entry+4>:	mv	sp,sp
+   0x80200008 <kern_entry+8>:	j	0x8020000a <kern_init>
+   0x8020000a <kern_init>:	auipc	a0,0x3
+   0x8020000e <kern_init+4>:	addi	a0,a0,-2
+   0x80200012 <kern_init+8>:	auipc	a2,0x3
+   0x80200016 <kern_init+12>:	addi	a2,a2,-10
+   0x8020001a <kern_init+16>:	addi	sp,sp,-16
+Symbol "kern_entry" is at 0x80200000 in a file compiled without debugging.
+Dump of assembler code for function kern_entry:
+=> 0x0000000080200000 <+0>:	auipc	sp,0x3
+   0x0000000080200004 <+4>:	mv	sp,sp
+   0x0000000080200008 <+8>:	j	0x8020000a <kern_init>
+End of assembler dump.
+$1 = 0x80203000
+pc             0x80200000	0x80200000 <kern_entry>
+sp             0x8001bd80	0x8001bd80
+0x0000000080200004 in kern_entry () at kern/init/entry.S:7
+7	    la sp, bootstacktop
+pc             0x80200004	0x80200004 <kern_entry+4>
+sp             0x80203000	0x80203000 <SBI_CONSOLE_PUTCHAR>
+9	    tail kern_init
+pc             0x80200008	0x80200008 <kern_entry+8>
+sp             0x80203000	0x80203000 <SBI_CONSOLE_PUTCHAR>
+$2 = 0x80203000
+sp             0x80203000	0x80203000 <SBI_CONSOLE_PUTCHAR>
+=> 0x80200008 <kern_entry+8>:	j	0x8020000a <kern_init>
+kern_init () at kern/init/init.c:8
+8	    memset(edata, 0, end - edata);
+pc             0x8020000a	0x8020000a <kern_init>
+sp             0x80203000	0x80203000 <SBI_CONSOLE_PUTCHAR>
+=> 0x8020000a <kern_init>:	auipc	a0,0x3
+   0x8020000e <kern_init+4>:	addi	a0,a0,-2
+   0x80200012 <kern_init+8>:	auipc	a2,0x3
+   0x80200016 <kern_init+12>:	addi	a2,a2,-10
+   0x8020001a <kern_init+16>:	addi	sp,sp,-16
+   0x8020001c <kern_init+18>:	li	a1,0
+   0x8020001e <kern_init+20>:	sub	a2,a2,a0
+   0x80200020 <kern_init+22>:	sd	ra,8(sp)
+Breakpoint 2 at 0x80200056: file kern/libs/stdio.c, line 40.
+Continuing.
+
+Breakpoint 2, cprintf (fmt=fmt@entry=0x802004e8 "%s\n\n") at kern/libs/stdio.c:40
+40	    va_start(ap, fmt);
+pc             0x80200056	0x80200056 <cprintf>
+a0             0x802004e8	2149582056
+0x802004e8:	"%s\n\n"
+#0  cprintf (fmt=fmt@entry=0x802004e8 "%s\n\n") at kern/libs/stdio.c:40
+#1  0x000000008020003a in kern_init () at kern/init/init.c:11
+#2  0x0000000080000a02 in ?? ()
+Backtrace stopped: previous frame inner to this frame (corrupt stack?)
+Run till exit from #0  cprintf (fmt=fmt@entry=0x802004e8 "%s\n\n") at kern/libs/stdio.c:40
+kern_init () at kern/init/init.c:12
+12	   while (1)
+Value returned is $3 = 30
+=> 0x8020003a <kern_init+48>:	j	0x8020003a <kern_init+48>
+   0x8020003c <cputch>:	addi	sp,sp,-16
+   0x8020003e <cputch+2>:	sd	s0,0(sp)
+   0x80200040 <cputch+4>:	sd	ra,8(sp)
+   0x80200042 <cputch+6>:	mv	s0,a1
+   0x80200044 <cputch+8>:	jal	ra,0x8020008c <cons_putc>
+   0x80200048 <cputch+12>:	lw	a5,0(s0)
+   0x8020004a <cputch+14>:	ld	ra,8(sp)
+3	#include <sbi.h>
+4	int kern_init(void) __attribute__((noreturn));
+5	
+6	int kern_init(void) {
+7	    extern char edata[], end[];
+8	    memset(edata, 0, end - edata);
+9	
+10	    const char *message = "(THU.CST) os is loading ...\n";
+11	    cprintf("%s\n\n", message);
+12	   while (1)
+12	   while (1)
+=> 0x8020003a <kern_init+48>:	j	0x8020003a <kern_init+48>
+12	   while (1)
+=> 0x8020003a <kern_init+48>:	j	0x8020003a <kern_init+48>
+12	   while (1)
+=> 0x8020003a <kern_init+48>:	j	0x8020003a <kern_init+48>

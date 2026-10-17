@@ -68,3 +68,5 @@ obj/
 .idea/
 *.swp
 *~
+
+*:Zone.Identifier
