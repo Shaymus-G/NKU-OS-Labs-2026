@@ -5,5 +5,7 @@
 
 extern const struct pmm_manager best_fit_pmm_manager;
 
+void best_fit_behavior_check(void);
+
 #endif /* ! __KERN_MM_BEST_FIT_PMM_H__ */
 
