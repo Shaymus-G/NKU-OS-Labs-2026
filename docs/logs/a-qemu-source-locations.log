@@ -1,0 +1,44 @@
+]633;E;grep --color=auto -nE 'get_physical_address|riscv_cpu_tlb_fill' target/riscv/cpu_helper.c;7c5f91cc-43fc-417b-a3a1-1d43f2fe4336]633;C147:/* get_physical_address - get the physical address for this virtual address
+155:static int get_physical_address(CPURISCVState *env, hwaddr *physical,
+389:    if (get_physical_address(&cpu->env, &phys_addr, &prot, addr, 0, mmu_idx)) {
+435:bool riscv_cpu_tlb_fill(CPUState *cs, vaddr address, int size,
+451:    ret = get_physical_address(env, &pa, &prot, address, access_type, mmu_idx);
+383:static inline bool tlb_hit_page_anyprot(CPUTLBEntry *tlb_entry,
+386:    return tlb_hit_page(tlb_entry->addr_read, page) ||
+387:           tlb_hit_page(tlb_addr_write(tlb_entry), page) ||
+388:           tlb_hit_page(tlb_entry->addr_code, page);
+404:    if (tlb_hit_page_anyprot(tlb_entry, page)) {
+697:void tlb_set_page_with_attrs(CPUState *cpu, target_ulong vaddr,
+777:    if (!tlb_hit_page_anyprot(te, vaddr_page) && !tlb_entry_is_empty(te)) {
+843:void tlb_set_page(CPUState *cpu, target_ulong vaddr,
+847:    tlb_set_page_with_attrs(cpu, vaddr, paddr, MEMTXATTRS_UNSPECIFIED,
+864: * Note: tlb_fill() can trigger a resize of the TLB. This means that all of the
+868:static void tlb_fill(CPUState *cpu, target_ulong addr, int size,
+878:    ok = cc->tlb_fill(cpu, addr, size, access_type, mmu_idx, false, retaddr);
+977:static bool victim_tlb_hit(CPUArchState *env, size_t mmu_idx, size_t index,
+1015:  victim_tlb_hit(env, mmu_idx, index, offsetof(CPUTLBEntry, TY), \
+1030:    if (unlikely(!tlb_hit(entry->addr_code, addr))) {
+1032:            tlb_fill(env_cpu(env), addr, 0, MMU_INST_FETCH, mmu_idx, 0);
+1036:        assert(tlb_hit(entry->addr_code, addr));
+1067:    if (!tlb_hit(tlb_addr_write(entry), addr)) {
+1070:            tlb_fill(env_cpu(env), addr, size, MMU_DATA_STORE,
+1100:    if (!tlb_hit_page(tlb_addr, page)) {
+1103:        if (!victim_tlb_hit(env, mmu_idx, index, elt_ofs, page)) {
+1107:            if (!cc->tlb_fill(cs, addr, 0, access_type, mmu_idx, true, 0)) {
+1112:            /* TLB resize via tlb_fill may have moved the entry.  */
+1161:    if (!tlb_hit(tlb_addr, addr)) {
+1163:            tlb_fill(env_cpu(env), addr, 1 << s_bits, MMU_DATA_STORE,
+1180:        tlb_fill(env_cpu(env), addr, 1 << s_bits, MMU_DATA_LOAD,
+1271:    if (!tlb_hit(tlb_addr, addr)) {
+1272:        if (!victim_tlb_hit(env, mmu_idx, index, tlb_off,
+1274:            tlb_fill(env_cpu(env), addr, size,
+1292:             * repeat the MMU check here. This tlb_fill() call might
+1295:            tlb_fill(env_cpu(env), addr, size,
+1519:    if (!tlb_hit(tlb_addr, addr)) {
+1520:        if (!victim_tlb_hit(env, mmu_idx, index, tlb_off,
+1522:            tlb_fill(env_cpu(env), addr, size, MMU_DATA_STORE,
+1540:             * repeat the MMU check here. This tlb_fill() call might
+1543:            tlb_fill(env_cpu(env), addr, size, MMU_DATA_STORE,
+1580:        if (!tlb_hit_page(tlb_addr2, page2)
+1581:            && !victim_tlb_hit(env, mmu_idx, index2, tlb_off,
+1583:            tlb_fill(env_cpu(env), page2, size, MMU_DATA_STORE,
