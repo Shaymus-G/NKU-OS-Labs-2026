@@ -92,3 +92,14 @@ make grade
 ```
 
 每次重新构建的地址和页数以实际输出为准。make grade 会清理本地构建产物，之后再次手动运行时 make qemu 会重新构建。
+
+## 2026-10-19 接入 Buddy 后回归
+
+在 HEAD 6baf620ebb414d821c1e5647bdec9cb486636a5e 上，B 已先运行 Buddy 自检，再清理构建并切回默认 Best-Fit。本轮 WSL Ubuntu 24.04.5 LTS、GCC 10.2.0、QEMU 4.1.1、OpenSBI v0.4 下，既有 B 测试全部 PASS，空闲页恢复为 31928；普通教师评分仍为 20/20。测试函数和算法均未修改。
+
+使用了独立 B 日志，保留上文 10 月 18 日历史日志和截图，不覆盖 C 的记录。运行后已恢复默认 Best-Fit 构建。本轮没有新增截图。联合回归日志与 B 报告更新提交为 [c3c4dd962cafea8050a1a1048973172e7408b244](https://github.com/Shaymus-G/NKU-OS-Labs-2026/commit/c3c4dd962cafea8050a1a1048973172e7408b244)，本测试说明在后续文档提交中补齐。
+
+- [本轮 Best-Fit 构建与最终默认恢复](../logs/b-integration-best-fit-build.log)
+- [本轮 Best-Fit 行为测试](../logs/b-integration-best-fit-run.log)
+- [本轮普通教师评分](../logs/b-integration-grade.log)
+- [完整复核与两种模式操作记录](../notes/b-progress.md)

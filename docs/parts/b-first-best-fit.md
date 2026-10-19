@@ -1,6 +1,6 @@
 # 成员 B：First-Fit 与 Best-Fit 工作记录
 
-首次记录：2026-10-17；更新：2026-10-18。负责人：成员 B（陈铭宇）。本文用于交接 First-Fit 分析、Best-Fit 实现及已验证结果，可由 C 汇入最终报告。
+首次记录：2026-10-17；更新：2026-10-19。负责人：成员 B（陈铭宇，2412559）。本文用于交接 First-Fit 分析、Best-Fit 实现及已验证结果，可由 C 汇入最终报告。
 
 当前工程为 lab2 分支，以 A 的初始化提交 79b5791 为基线。B 的代码、测试、学号及验证证据交接提交为 [f8ed38a8d6fb02e1093995eeb99d0744101eabe1](https://github.com/Shaymus-G/NKU-OS-Labs-2026/commit/f8ed38a8d6fb02e1093995eeb99d0744101eabe1)，本文及其他交接文档由后续文档提交补齐。79b5791 本身不包含 B 的成果。
 
@@ -85,10 +85,25 @@ make grade
 
 ## 尚待完成的联合事项
 
-- 当前仓库尚无 C 的 Buddy 模块。需取得模块名、manager 符号、测试入口及非 2 的幂请求/释放契约，再确定切换方式和做联合回归；目前没有已实现的 Buddy 选择命令。
+- 已接收 C 的 b5c05e9 Buddy 模块并完成复核，在 HEAD 6baf620 上完成 B 本地联合验证；实际切换宏为 PMM_BUDDY，默认保持 Best-Fit。
 - 新增行为测试只适用于当前单段空闲区、至少 32 页、无并发的 Best-Fit 启动自检，不作为 Buddy 测试。
-- 仍需在共同验收环境和最终小组提交上复现；本次 20/20 不能代替 Buddy、双重 GDB 或最终报告验收。
+- A 已提交 Ubuntu 20.04 / QEMU 4.1.1 共同环境回归及分页、TLB 补证；B 本地 QEMU 4.1.1 回归也已通过。小组报告共同通读和最终提交仍需确认，20/20 不能代替 Buddy、双重 GDB 或报告验收。
 - B 的学号已由本人确认，Best-Fit 标记已填写为 2412559；A 的标记由 A 确认。
 - B 的代码及证据已提交为 f8ed38a；C 获取 lab2 分支时同时保留后续文档提交，并整合其他成员章节。
 
 本节已具备 B 阶段交接所需的实现、验证和材料索引，不代表小组全部实验已完成。
+
+## 2026-10-19 联合版本回归补充
+
+本轮验证源码为 6baf620ebb414d821c1e5647bdec9cb486636a5e，不修改算法、教师测试或构建配置。环境为 WSL Ubuntu 24.04.5 LTS、SiFive GCC 10.2.0、QEMU 4.1.1、OpenSBI v0.4。
+
+1. make clean 后以 DEFS=-DPMM_BUDDY 构建，运行 buddy_pmm_manager 自检，包含 1024 次混合操作，空闲页恢复 31928 → 31928。
+2. 退出后清理并普通构建，运行默认 best_fit_pmm_manager，全部 B 行为测试 PASS，恢复 31928 空闲页。
+3. 使用原教师脚本执行普通 make grade，两项 OK、20/20；没有启用 C 的控制台转接脚本。
+4. 评分后普通 make 恢复默认构建，并核对符号表已包含 Best-Fit manager、不含 Buddy manager。
+
+Buddy 已复核的释放契约与 Best-Fit 不同：请求 n 页按 2 的幂取整占用，但释放必须传原始 n 和块头；例如 n=3 占用 4 页仍按 3 释放，不支持部分释放。现有框架通过各 manager 的 check 回调执行各自测试，没有套用 Best-Fit 的部分回收检查。
+
+本轮证据：[环境及源码摘要](../logs/b-integration-environment.log)、[Buddy 构建](../logs/b-integration-buddy-build.log)、[Buddy 自检](../logs/b-integration-buddy-run.log)、[Best-Fit 构建与恢复](../logs/b-integration-best-fit-build.log)、[Best-Fit 自检](../logs/b-integration-best-fit-run.log)、[评分](../logs/b-integration-grade.log)。这些是本次 B 实际运行记录，未覆盖 A/C 的历史证据。日志和 B 报告更新已提交为 [c3c4dd962cafea8050a1a1048973172e7408b244](https://github.com/Shaymus-G/NKU-OS-Labs-2026/commit/c3c4dd962cafea8050a1a1048973172e7408b244)，本章及交接文档由后续提交补齐。
+
+本轮发现总报告未汇入 A 的最新章节，汇总脚本简介也有过时状态。初次检查按要求另列工作区根目录 Lab2报告检查问题.md；随后按用户新指令只更新 github/report.md 中 B 的过时部分，原理和历史验证值保持原样，A/C 章、简介及汇总脚本未改。根目录原始报告已恢复保留，不参与本次提交。旧阶段地址、31929 页和未提交时的历史记录不应被批量替换成新值。
