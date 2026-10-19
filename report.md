@@ -651,7 +651,7 @@ f68e0ee51a42a64ce923eea4777b6365558d8b1e  交接文档
 
 ## 成员 B：First-Fit 与 Best-Fit 工作记录
 
-首次记录：2026-10-17；更新：2026-10-18。负责人：成员 B（陈铭宇）。本文用于交接 First-Fit 分析、Best-Fit 实现及已验证结果，可由 C 汇入最终报告。
+首次记录：2026-10-17；更新：2026-10-19。负责人：成员 B（陈铭宇，2412559）。本文包含 B 的算法分析、历史独立验证及最新联合版本验证，历史结果按各自日期和版本理解。
 
 当前工程为 lab2 分支，以 A 的初始化提交 79b5791 为基线。B 的代码、测试、学号及验证证据交接提交为 [f8ed38a8d6fb02e1093995eeb99d0744101eabe1](https://github.com/Shaymus-G/NKU-OS-Labs-2026/commit/f8ed38a8d6fb02e1093995eeb99d0744101eabe1)，本文及其他交接文档由后续文档提交补齐。79b5791 本身不包含 B 的成果。
 
@@ -683,7 +683,7 @@ f68e0ee51a42a64ce923eea4777b6365558d8b1e  交接文档
 
 Best-Fit 的改进空间：当前搜索最坏 O(k)，释放插入最坏 O(k)，k 是空闲块数量；精确匹配时可提前结束，但一般仍需遍历。可加入按大小排序的索引或平衡树，并保留地址索引用于合并，代价是更多元数据和更新逻辑。Best-Fit 可能留下难以复用的小块，不能仅凭名称认为碎片必然更少，应根据实际请求序列衡量。当前未实现上述索引优化。
 
-### 验证状态
+### 2026-10-18 独立版本验证状态
 
 | 检查 | 当前结果 | 证据 |
 |---|---|---|
@@ -734,15 +734,31 @@ make grade
 
 实现过程和后续实际交互见 [实现 prompt 记录](docs/prompts/b-best-fit.md)，测试规格见 [测试 prompt 记录](docs/prompts/b-best-fit-tests.md)，交接文件清单及剩余事项见 [B 进度与交接](docs/notes/b-progress.md)。
 
-### 尚待完成的联合事项
+### 联合验证与剩余事项
 
-- 当前仓库尚无 C 的 Buddy 模块。需取得模块名、manager 符号、测试入口及非 2 的幂请求/释放契约，再确定切换方式和做联合回归；目前没有已实现的 Buddy 选择命令。
+- 已接收 C 的 b5c05e9 Buddy 模块，完成接口和测试复核，并在 HEAD 6baf620 上完成 B 本地联合回归。默认仍为 Best-Fit，使用 DEFS=-DPMM_BUDDY 启用 Buddy，每次切换均须清理重建、重新启动。
 - 新增行为测试只适用于当前单段空闲区、至少 32 页、无并发的 Best-Fit 启动自检，不作为 Buddy 测试。
-- 仍需在共同验收环境和最终小组提交上复现；本次 20/20 不能代替 Buddy、双重 GDB 或最终报告验收。
+- A 已提交 Ubuntu 20.04 / QEMU 4.1.1 共同环境回归及分页、TLB 补证；B 本地 QEMU 4.1.1 联合回归也已通过。小组报告共同通读和最终提交仍需确认，教师 20/20 不能代替 Buddy、双重 GDB 或报告验收。
 - B 的学号已由本人确认，Best-Fit 标记已填写为 2412559；A 的标记由 A 确认。
-- B 的代码及证据已提交为 f8ed38a；C 获取 lab2 分支时同时保留后续文档提交，并整合其他成员章节。
+- B 的首批代码及证据已提交为 f8ed38a，交接文档为 f68e0ee；本次 10 月 19 日新增联合回归日志和文档修改仅在本地保存，尚未提交、推送。
 
 本节已具备 B 阶段交接所需的实现、验证和材料索引，不代表小组全部实验已完成。
+
+### 2026-10-19 联合版本验证结果
+
+本次被测源码为 6baf620ebb414d821c1e5647bdec9cb486636a5e，环境为 WSL Ubuntu 24.04.5 LTS、SiFive GCC 10.2.0、QEMU 4.1.1、OpenSBI v0.4，默认 128 MiB RAM。未修改算法、教师测试或构建配置。
+
+| 检查 | 实际结果 | 证据 |
+|---|---|---|
+| 环境和源码版本 | 记录 HEAD、工具版本及源码 SHA256 | [环境记录](docs/logs/b-integration-environment.log) |
+| Buddy 清理构建与运行 | 自检通过，含 1024 次混合操作，空闲页恢复 31928 → 31928 | [构建](docs/logs/b-integration-buddy-build.log)、[运行](docs/logs/b-integration-buddy-run.log) |
+| 清理并切回默认 Best-Fit | 所有 B 行为测试 PASS，恢复 31928 空闲页 | [构建](docs/logs/b-integration-best-fit-build.log)、[运行](docs/logs/b-integration-best-fit-run.log) |
+| 普通教师评分 | Page Init、Best-Fit 均 OK，20/20；无需 C 的控制台转接 | [评分日志](docs/logs/b-integration-grade.log) |
+| 评分后默认构建恢复 | 普通 make 成功，符号表为 Best-Fit manager，不含 Buddy manager | Best-Fit 构建日志末尾 |
+
+已复核 Buddy 的完整块释放契约：请求 n 页按 2 的幂取整占用，释放必须使用原始 n 和原始块头；例如请求 3 页占用 4 页，仍以 free_pages(base, 3) 释放，不支持部分释放。Best-Fit 和 Buddy 分别通过各自 check 回调执行测试。
+
+上文 10 月 18 日日志、截图及历史布局保持原样。本次使用独立 b-integration-* 日志，没有覆盖 A/C 证据；本次没有新增截图。当前源码默认 Best-Fit 构建已恢复。
 
 ## B：Best-Fit 补充行为测试
 
@@ -838,6 +854,8 @@ make grade
 ```
 
 每次重新构建的地址和页数以实际输出为准。make grade 会清理本地构建产物，之后再次手动运行时 make qemu 会重新构建。
+
+以上为 10 月 18 日独立验证记录。10 月 19 日在 6baf620 联合版本上切换 Buddy 后再次清理构建、运行本套 Best-Fit 测试，仍为全部 PASS，普通评分仍为 20/20；见 [联合版本行为日志](docs/logs/b-integration-best-fit-run.log) 和 [联合版本评分](docs/logs/b-integration-grade.log)。
 
 ## 成员 C：Buddy System 设计、实现和验证
 
