@@ -1,0 +1,38 @@
+Final audit 2026-10-19T10:26:18.928351+08:00
+HEAD: a3574e2b288674f3d0045d6a71753bd94c5327ef
+PASS: pmm.c only conditional include and manager selection changed; A page_init unchanged.
+PASS: Best-Fit, teacher tests, Makefile, public headers, grade scripts and A/B report sections unchanged.
+PASS: git diff --check, Python syntax, 80 local Markdown links, successful log/source SHA256 consistency.
+PASS: final default Best-Fit kernel exists. No commit/push performed.
+Historical missing attachment: docs/logs/a-build.log; explicitly marked in assembled report.
+$ uname -a
+Linux LAPTOP-C2LGBAKT 6.18.33.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+$ riscv64-unknown-elf-gcc --version
+riscv64-unknown-elf-gcc () 10.2.0
+$ qemu-system-riscv64 --version
+QEMU emulator version 6.2.0 (Debian 1:6.2+dfsg-2ubuntu6.31)
+diff --git a/kern/mm/pmm.c b/kern/mm/pmm.c
+index ee96664..d0a7950 100644
+--- a/kern/mm/pmm.c
++++ b/kern/mm/pmm.c
+@@ -1,5 +1,8 @@
+ #include <default_pmm.h>
+ #include <best_fit_pmm.h>
++#ifdef PMM_BUDDY
++#include <buddy_pmm.h>
++#endif
+ #include <defs.h>
+ #include <error.h>
+ #include <memlayout.h>
+@@ -34,7 +37,11 @@ static void check_alloc_page(void);
+ 
+ // init_pmm_manager - initialize a pmm_manager instance
+ static void init_pmm_manager(void) {
++#ifdef PMM_BUDDY
++    pmm_manager = &buddy_pmm_manager;
++#else
+     pmm_manager = &best_fit_pmm_manager;
++#endif
+     cprintf("memory management: %s\n", pmm_manager->name);
+     pmm_manager->init();
+ }
