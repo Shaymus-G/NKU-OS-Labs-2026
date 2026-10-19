@@ -1,0 +1,41 @@
+Already logging to /home/gjhjz/NKU-OS-Labs-2026/docs/logs/a-qemu-tlb-hit-after-c.log.
+1025	    uintptr_t mmu_idx = cpu_mmu_index(env, true);
+1026	    uintptr_t index = tlb_index(env, mmu_idx, addr);
+1027	    CPUTLBEntry *entry = tlb_entry(env, mmu_idx, addr);
+1028	    void *p;
+1029	
+1030	    if (unlikely(!tlb_hit(entry->addr_code, addr))) {
+1031	        if (!VICTIM_TLB_HIT(addr_code, addr)) {
+1032	            tlb_fill(env_cpu(env), addr, 0, MMU_INST_FETCH, mmu_idx, 0);
+1033	            index = tlb_index(env, mmu_idx, addr);
+1034	            entry = tlb_entry(env, mmu_idx, addr);
+Breakpoint 1 at 0x633c964113f2: file /home/gjhjz/OSopt/qemu-4.1.1/accel/tcg/cputlb.c, line 1030.
+Num     Type           Disp Enb Address            What
+1       breakpoint     keep y   0x0000633c964113f2 in get_page_addr_code at /home/gjhjz/OSopt/qemu-4.1.1/accel/tcg/cputlb.c:1030
+	stop only if ((addr & 0xfffffffffffff000ULL) == 0xffffffffc0200000ULL) && (entry->addr_code == (addr & 0xfffffffffffff000ULL))
+Continuing.
+[Switching to Thread 0x7125c1d55700 (LWP 9804)]
+
+Thread 3 "qemu-system-ris" hit Breakpoint 1, get_page_addr_code (env=0x633c9ba22620, addr=18446744072637907160) at /home/gjhjz/OSopt/qemu-4.1.1/accel/tcg/cputlb.c:1030
+1030	    if (unlikely(!tlb_hit(entry->addr_code, addr))) {
+#0  get_page_addr_code (env=0x633c9ba22620, addr=18446744072637907160) at /home/gjhjz/OSopt/qemu-4.1.1/accel/tcg/cputlb.c:1030
+#1  0x0000633c96435ea6 in tb_htable_lookup (cpu=0x633c9ba19c10, pc=18446744072637907160, cs_base=0, flags=24577, cf_mask=4278714368) at /home/gjhjz/OSopt/qemu-4.1.1/accel/tcg/cpu-exec.c:339
+#2  0x0000633c9643541d in tb_lookup__cpu_state (cpu=0x633c9ba19c10, pc=0x7125c1d54958, cs_base=0x7125c1d54950, flags=0x7125c1d5494c, cf_mask=4278714368) at /home/gjhjz/OSopt/qemu-4.1.1/include/exec/tb-lookup.h:43
+#3  0x0000633c9643616a in tb_find (cpu=0x633c9ba19c10, last_tb=0x0, tb_exit=0, cf_mask=524288) at /home/gjhjz/OSopt/qemu-4.1.1/accel/tcg/cpu-exec.c:406
+#4  0x0000633c96436a67 in cpu_exec (cpu=0x633c9ba19c10) at /home/gjhjz/OSopt/qemu-4.1.1/accel/tcg/cpu-exec.c:731
+(More stack frames follow...)
+$1 = 0xffffffffc02000d8
+$2 = 0xffffffffc0200000
+$3 = 1
+$4 = 1
+$5 = 0xffffffffc0200000
+$6 = 1
+1039	    if (unlikely(entry->addr_code & (TLB_RECHECK | TLB_MMIO))) {
+$7 = 0xffffffffc02000d8
+$8 = 0xffffffffc0200000
+#0  get_page_addr_code (env=0x633c9ba22620, addr=18446744072637907160) at /home/gjhjz/OSopt/qemu-4.1.1/accel/tcg/cputlb.c:1039
+#1  0x0000633c96435ea6 in tb_htable_lookup (cpu=0x633c9ba19c10, pc=18446744072637907160, cs_base=0, flags=24577, cf_mask=4278714368) at /home/gjhjz/OSopt/qemu-4.1.1/accel/tcg/cpu-exec.c:339
+#2  0x0000633c9643541d in tb_lookup__cpu_state (cpu=0x633c9ba19c10, pc=0x7125c1d54958, cs_base=0x7125c1d54950, flags=0x7125c1d5494c, cf_mask=4278714368) at /home/gjhjz/OSopt/qemu-4.1.1/include/exec/tb-lookup.h:43
+#3  0x0000633c9643616a in tb_find (cpu=0x633c9ba19c10, last_tb=0x0, tb_exit=0, cf_mask=524288) at /home/gjhjz/OSopt/qemu-4.1.1/accel/tcg/cpu-exec.c:406
+#4  0x0000633c96436a67 in cpu_exec (cpu=0x633c9ba19c10) at /home/gjhjz/OSopt/qemu-4.1.1/accel/tcg/cpu-exec.c:731
+(More stack frames follow...)

@@ -1,7 +1,8 @@
 # A：物理内存初始化与调试记录
 
 > 负责人：国峻赫  
-> 当前阶段：已完成物理内存初始化、First Fit 验证，以及双重 GDB 下的 Sv39 页表遍历、TLB 填充和填充后复核；最终联合版本待回归。  
+> 更新日期：2026-10-19。  
+> 当前阶段：已完成初始化、旧版页表遍历与 TLB 填充、联合版本 Buddy/Best-Fit 回归、分页切换前后对照，以及软件 TLB 直接命中观察；待完成报告与附件的最终核对。  
 > 仓库分支：lab2。当前源码和 Makefile 位于仓库根目录。  
 > 本文保存位置：docs/parts/a-memory-debug.md。
 
@@ -9,9 +10,21 @@
 
 本部分负责实现 `kern/mm/pmm.c` 中的 `page_init()`，从设备树解析结果建立物理页描述符，并将可用物理页交给当前分配器。同时分析启动页表，并通过宿主 GDB 和 RISC-V GDB 调试 QEMU 中的地址翻译与 TLB 行为。
 
-当前已经完成初始化实现、First Fit 配置下的编译运行，并按调试步骤完成初始化状态检查和截图。已取得的启动输出显示 `check_alloc_page() succeeded!`。本阶段通过命令行排除了尚未完成的 Best Fit 源文件，因此这些结果不代表 Best Fit、Buddy 或完整 Lab 2 已通过验证。
+实验分两个阶段，证据分别保留：
 
-本文中的运行地址来自本次构建。增加代码或改变链接布局后，应以新构建的符号与输出为准。本次调试时已跟踪源码的基线提交为 `79b5791a358d2e5f684b09e09dbd201325577c59`；截图与日志在之后单独提交。当前 Git 检查显示已跟踪文件无未提交修改，但不对构建产物作逐字节一致性保证。陈铭宇已报告推送 Best Fit 实现，本文尚不将其结果作为 A 本机复测结果。
+1. **First-Fit 历史阶段（第 3～12 节）**：完成 `page_init()`、初始化检查和宿主/客体双重 GDB 的页表遍历、软件 TLB 填充及填充后复核。该阶段临时排除尚未完成的 Best-Fit 源文件。
+2. **联合版本阶段（第 16～18 节）**：获取陈铭宇（B）的 Best-Fit 和尚文轩（C）的 Buddy 后，在 A 本机完成两种管理器回归及教师评分，并补录分页配置前后状态与取指地址查询直接命中软件 TLB 的现场。
+
+| 版本记录 | 用途 |
+|---|---|
+| `79b5791a358d2e5f684b09e09dbd201325577c59` | A 初始化源码基线；历史 First-Fit 及页表遍历证据对应这一阶段 |
+| `8612090` | A 第一批页表调试文档与证据提交 |
+| `a3574e2` | 合并 A、B 成果的提交 |
+| `b5c05e9` | C 的 Buddy 实现提交，本轮联合回归以获取该提交后的源码为基础 |
+
+后续日志、截图的提交与源码提交分开记录；本人已提交回归及启动反汇编材料，具体提交号以仓库历史为准，不在本文编造未知提交号。联合回归时记录的完整 HEAD 见 `docs/logs/a-after-c-revision.log`。
+
+第 3～12 节中的“本次”指历史阶段；第 16～18 节中的“本次”指 2026-10-19 的联合版本实验。不同构建地址不能混用；本次记录不表示所有证据来自同一次 QEMU 会话。
 
 ## 2. 实验环境与证据
 
@@ -24,12 +37,14 @@
 | 模拟器 | QEMU 4.1.1 |
 | 固件 | OpenSBI v0.4 |
 | QEMU 默认内存 | 128 MiB |
-| 本次证据对应的物理页管理器 | `default_pmm_manager`，即 First Fit |
+| 历史阶段管理器 | `default_pmm_manager`，即 First Fit |
+| 联合版本默认管理器 | `best_fit_pmm_manager` |
+| 联合版本 Buddy 模式 | `buddy_pmm_manager`，使用 `DEFS=-DPMM_BUDDY` 构建 |
 
 早期初始化阶段的材料如下；文件存在性和具体内容应在最终提交前核对：
 
 - [环境记录](../logs/a-environment.log)
-- [初次构建记录](../logs/a-build.log)
+- 初次构建失败记录：`docs/logs/a-build.log`。此前保存在本地但未跟踪，最终交付前应核对是否补交，不将其视作成功构建日志。
 - [临时 First Fit 构建记录](../logs/a-build-first-fit.log)
 - [初始化 GDB 日志](../logs/a-page-init-debug.log)
 - [规格与 AI 交互记录](../prompts/a-page-init.md)
@@ -144,7 +159,7 @@ make qemu \
     'listf_cc=$(filter-out kern/mm/best_fit_pmm.c,$(call listf,$(1),$(CTYPE)))'
 ```
 
-该覆盖只影响相应的 Make 调用，不修改公共 Makefile。后续 Best Fit 完成后，需要清理并恢复普通构建，再联合验证。
+该覆盖只影响相应的 Make 调用，不修改公共 Makefile。**这是历史复现命令，不适用于当前联合版本。**Best-Fit 完成后的普通构建及联合验证已完成，见第 16 节。
 
 这一问题属于未完成模块造成的集成阻塞，不是已经定位到的 `page_init()` 运行错误，也不应写成 AI 生成初始化代码的 Bug。
 
@@ -205,7 +220,7 @@ satp physical address: 0x0000000080205000
 
 DTB 输出中的 `0x87ffffff` 是最后一个字节地址，而半开区间末端 `0x88000000` 不包含在区间中，两种表示一致。
 
-## 8. GDB 检查过程与证据整理
+## 8. 历史初始化 GDB 检查过程与证据整理
 
 已经按以下流程执行初始化状态检查并保存截图。精确的 GDB 返回值以随附日志和图片为准；本节列出检查方法及对应判据，不将预期值冒充日志原文。最终合并报告前，应逐项对照实际记录补充检查结论。
 
@@ -527,7 +542,7 @@ if (unlikely(entry->addr_code & (TLB_RECHECK | TLB_MMIO))) {
 
 ![填充后的 TLB 命中检查](../images/a-qemu-tlb-recheck.png)
 
-**证据边界：这证明同一次访问在填充后通过命中断言，不是一次独立的后续访问直接命中 TLB 的实验。** 当前没有把另一次访问在第 1030 行跳过填充分支的现场记录作为已完成结果，也没有仅凭到达第 1039 行就声称其条件分支结果。
+**本节证据仅证明同一次访问填充后的断言通过。**联合版本中另一次调用在第 1030 行直接命中并跳过填充分支的证据已补充于第 18 节，两者不能互相替代。到达第 1039 行本身也不表示已经观察了该行条件的执行结果。
 
 ### 12.4 结束会话与日志保存
 
@@ -546,7 +561,7 @@ quit
 
 本次捕获的早期访问是 `0x1000`、`MMU_INST_FETCH`、`mmu_idx=3`；后续内核访问是 `0xffffffffc02000d8`、`MMU_INST_FETCH`、`mmu_idx=1`，并实际读取到 Sv39 模式的 `satp`。
 
-前一条记录证明捕获了早期 M 模式取指上下文，但没有单独记录该次 `satp` 和转换返回值，不能仅据此声称完成了分页开关前后的全部对照。源码分析表明，QEMU 对 M 模式取指采用不经 Sv39 页表遍历的路径；本次 S 模式目标取指则实际经过了上述根页表叶子转换。
+前一条历史记录证明捕获了早期 M 模式取指上下文，但没有单独记录该次 `satp` 和转换返回值，不能仅据此声称完成了分页开关前后的全部对照。联合版本的 Bare/Sv39 寄存器状态及高地址入口对照已补充于第 17 节；这不追溯补齐旧会话中没有采集的数据。源码分析表明，QEMU 对 M 模式取指采用不经 Sv39 页表遍历的路径；本次 S 模式目标取指则实际经过了上述根页表叶子转换。
 
 QEMU 通过软件结构模拟地址转换和权限检查，并借助软件 TLB 缓存翻译结果。真实 CPU 同样需要遵守 RISC-V 的地址翻译、权限和异常语义，但一般由硬件 MMU、页表遍历机制和 TLB 实现，内部结构与替换策略不由本次 QEMU 软件结构直接决定。
 
@@ -564,7 +579,9 @@ AI 辅助工作包括初始化规格整理、页号和地址语义解释、实�
 | 函数入口断点 | 入口形参显示异常，基于异常参数的条件断点不可靠 | 改在第 451 行停止后参数与调用者一致 |
 | 停止线程上下文 | `__ppoll` 栈帧中无法查看翻译函数形参 | 在正确函数体断点处读取参数 |
 | 地址解释 | 区分转换返回的物理页基址和完整取指地址 | `0x80200000 + 0xd8 = 0x802000d8` |
-| TLB 证据解释 | 区分填充后断言与独立后续命中 | 第 1036 行执行后到第 1039 行 |
+| TLB 证据解释 | 区分填充后断言与独立调用直接命中 | 历史会话为 1036→1039；联合版本会话为 1030→1039 |
+| 分页切换断点 | 低地址断点跨越 satp 更新后无法重新插入；修正为在切换前禁用该断点 | 首次失败日志和高地址入口补录均保留 |
+| 环境兼容性 | C 环境与 A 不同，未直接照搬 C 的控制台转接脚本 | A 的 QEMU 4.1.1 普通评分获得 20/20 |
 
 ## 15. 原理联系与未覆盖内容
 
@@ -575,37 +592,336 @@ AI 辅助工作包括初始化规格整理、页号和地址语义解释、实�
 | 物理分配与虚拟映射 | 前者管理资源，后者决定地址访问关系，职责不同 |
 | Sv39 多级页表 | 每级索引 9 位，叶子可以出现在不同层级，大页可提前结束遍历 |
 | 访问权限 | 有效位、读写执行权限、特权级及对齐共同决定转换能否成功 |
-| TLB | 缓存转换结果，减少重复页表查询；本次观察填充与填充后复核 |
+| TLB | 缓存转换结果，减少重复页表查询；已分别观察填充、填充后复核和后续查询直接命中 |
 | 管理器接口 | 初始化可用区逻辑与 First Fit、Best Fit、Buddy 的策略分离 |
 
 本部分没有实现进程独立地址空间、按需分页、页面置换或交换，也没有验证所有非法 PTE、权限故障、A/D 位更新、多核并发和 TLB 失效场景。
 
-## 16. 与陈铭宇、尚文轩的集成及阶段结论
+## 16. 联合版本在 A 环境的回归验证
 
-本报告记录的实验基于我的 First Fit 阶段源码，已经完成：
+### 16.1 获取与检查 C 的提交
 
-1. 建立 32768 个物理页描述符，登记 31929 个初始空闲页，并通过当前管理器自检。
-2. 在宿主 GDB 中捕获内核高地址取指，读取 `satp` 和根页表项。
-3. 确认根级 1 GiB 叶子映射，计算完整物理地址 `0x802000d8`。
-4. 观察软件 TLB 填充参数及同次访问填充后的命中断言通过。
+2026-10-19，`git fetch origin` 将远程跟踪分支从 `a3574e2` 更新至 `b5c05e9`，提交说明为 `Buddy_System design and implementation`。该提交位于本地基线之后，可快进获取。
 
-陈铭宇交接称其已在 `lab2` 推送以下提交：
+对 `pmm.c`、Makefile 和评分脚本的差异检查表明，本批公共入口仅增加 `PMM_BUDDY` 条件包含与管理器选择：定义宏时选择 `buddy_pmm_manager`，否则仍选择 `best_fit_pmm_manager`；A 的 `page_init()`、Makefile 和 `tools/grade.sh` 在该提交中未改变。
 
-```text
-f8ed38a8d6fb02e1093995eeb99d0744101eabe1  代码、测试及证据
-f68e0ee51a42a64ce923eea4777b6365558d8b1e  交接文档
+C 的实现与其自检属于尚文轩的贡献，Best-Fit 实现及行为测试属于陈铭宇的贡献；本节记录 A 在自己的环境进行的集成复测，不把队友实现归为本人完成。
+
+### 16.2 Buddy 构建与运行
+
+在仓库根目录执行以下命令，保留构建和运行输出：
+
+```bash
+set -o pipefail
+make clean
+make DEFS=-DPMM_BUDDY \
+    2>&1 | tee docs/logs/a-after-c-buddy-build.log
+make qemu DEFS=-DPMM_BUDDY \
+    QEMU="$HOME/OSopt/qemu-4.1.1/riscv64-softmmu/qemu-system-riscv64" \
+    2>&1 | tee docs/logs/a-after-c-buddy-run.log
 ```
 
-他报告已启用 `best_fit_pmm_manager`、初始空闲页数为 31928、教师评分 20/20。这些是他的交接结果，尚未作为我本机联合回归结果确认。增加代码可能改变内核末端、页表符号及空闲区边界，因此不能把他的地址或页数直接替换到本次旧日志中。
+实际输出摘录：
 
-合并后应移除临时排除 Best Fit 的命令参数，执行普通清理、构建、运行和评分。随后重新构建并记录新符号，将联合版本证据保存为新文件，保留本轮日志。尚文轩的 Buddy 接入、管理器切换及联合测试还需单独验证。
+```text
+memory management: buddy_pmm_manager
+[Buddy] initial free pages: 31928
+[Buddy] split six levels and merge back: PASS
+[Buddy] powers of two and rounded requests (3 -> 4): PASS
+[Buddy] non-buddy neighbours, fragmentation, exhaustion: PASS
+[Buddy] unaligned 37-page init, multiple ranges, no lost pages: PASS
+[Buddy] 1024 mixed operations with occupancy oracle: PASS
+[Buddy] state restored: 31928 -> 31928 free pages: PASS
+check_alloc_page() succeeded!
+```
 
-尚需完成或补充：
+该结果支持本轮 Buddy 所列自检场景通过，测试后空闲页总量恢复。它不代表所有非法调用、任意负载或并发场景均已验证。Buddy 请求向上取整和完整块释放约定详见 [C 个人章节](c-buddy.md)，不能用 Best-Fit 的部分区间释放契约替代。
 
-- 核对初始化阶段截图、日志及 prompt 文件，并填入本人学号，保留教师要求的代码标记。
-- 如需证明独立后续 TLB 命中，补录在实际后续访问中跳过填充分支的过程。
-- 如需完整分页前后实测对照，补录分页启用前后的寄存器及转换结果。
-- 在整合后的 Best Fit/Buddy 版本上完成共同环境回归，并关联准确源码版本。
-- 由全组整合各自报告、真实 prompt 和证据，检查实验手册全部要求。
+![A 环境下 Buddy 联合回归](../images/a-after-c-buddy.png)
 
-当前结论限于上述已观察到的初始化与地址转换路径，不代表整个 Lab 2 或所有组员任务已经完成。
+### 16.3 恢复默认 Best-Fit 与教师评分
+
+退出 QEMU 后先清理，避免沿用 Buddy 编译宏产生的对象文件：
+
+```bash
+make clean
+make 2>&1 | tee docs/logs/a-after-c-best-fit-build.log
+make qemu \
+    QEMU="$HOME/OSopt/qemu-4.1.1/riscv64-softmmu/qemu-system-riscv64" \
+    2>&1 | tee docs/logs/a-after-c-best-fit-run.log
+```
+
+实际启用 `best_fit_pmm_manager`，最佳匹配、精确匹配及同大小选择、拆分、前后及双侧合并、碎片与耗尽失败、多轮恢复均 PASS，末尾为：
+
+```text
+[Best-Fit behavior] original state restored: PASS (31928 free pages)
+[Best-Fit behavior] ALL PASS
+check_alloc_page() succeeded!
+```
+
+退出 QEMU 后执行：
+
+```bash
+make grade \
+    QEMU="$HOME/OSopt/qemu-4.1.1/riscv64-softmmu/qemu-system-riscv64" \
+    2>&1 | tee docs/logs/a-after-c-grade.log
+```
+
+评分实际结果：
+
+```text
+lab2 injection complete
+  -check page init:                          OK
+  -check best fit:                           OK
+Total Score: 20/20
+```
+
+A 环境使用普通评分命令即可获得结果，没有使用 C 的 `qemu-grade-console.py`。本轮回归环境为 WSL Ubuntu 20.04、SiFive GCC 10.2.0、QEMU 4.1.1、OpenSBI v0.4，区别于 C 的 QEMU 6.2.0 / OpenSBI 1.3 环境。
+
+教师 20/20 仅覆盖 Page Init 和 Best-Fit 评分项，不评分 Buddy、双重 GDB 或报告。Buddy 由独立自检提供证据。评分在 `/tmp/lab2_grade` 的注入版本中执行；后续地址调试前重新 `make`，使用仓库自身的默认内核。
+
+![A 环境下 Best-Fit 联合回归](../images/a-after-c-best-fit.png)
+
+![A 环境下教师评分 20/20](../images/a-after-c-grade.png)
+
+### 16.4 联合版本布局与历史版本对比
+
+| 项目 | 历史 First-Fit | 联合版本 Buddy | 联合版本 Best-Fit |
+|---|---|---|---|
+| `kern_init` VA | `0xffffffffc02000d8` | `0xffffffffc02000d8` | `0xffffffffc02000d8` |
+| 内核 `end` VA | `0xffffffffc0206078` | `0xffffffffc0207298` | `0xffffffffc0207078` |
+| 描述符数组 PA | `0x80207000` | `0x80208000` | `0x80208000` |
+| 描述符数量 | 32768 | 32768 | 32768 |
+| 描述符字节数 | 1310720 | 1310720 | 1310720 |
+| 空闲起点 PA | `0x80347000` | `0x80348000` | `0x80348000` |
+| 初始空闲页数 | 31929 | 31928 | 31928 |
+| 根页表 PA | `0x80205000` | `0x80206000` | `0x80206000` |
+
+三种构建的管理末端均为 `0x88000000`。联合版本的算术核对为：
+
+```text
+描述符末端 = 0x80208000 + 0x140000 = 0x80348000
+空闲页数 = (0x88000000 - 0x80348000) / 4096 = 31928
+总页数 = 512（固件等预留）+ 8（内核及对齐）+ 320（描述符）+ 31928 = 32768
+```
+
+新增代码改变链接布局，初始可用页数减少一页，不是测试泄漏。旧截图中的 `0x80205000`、31929 等数值继续对应其历史构建，不能覆盖成新值。
+
+## 17. 联合版本分页切换前后实测
+
+### 17.1 定位启动指令
+
+本节使用联合版本的默认 Best-Fit 内核。源码、符号与反汇编分别记录在：
+
+- [启动源码](../logs/a-entry-source-after-c.log)
+- [启动反汇编](../logs/a-entry-disassembly-after-c.log)
+- [新版本符号](../logs/a-paging-symbols-after-c.log)
+
+本次关键位置为：
+
+| 指令/符号 | ELF 高地址 | 分页前对应物理地址 |
+|---|---|---|
+| `kern_entry` | `0xffffffffc0200000` | `0x80200000` |
+| `csrw satp,t0` | `0xffffffffc0200034` | `0x80200034` |
+| `sfence.vma` | `0xffffffffc0200038` | `0x80200038` |
+| 设置 SP 的 `lui` | `0xffffffffc020003c` | `0x8020003c` |
+| `jr t0` | `0xffffffffc0200048` | `0x80200048` |
+| `kern_init` | `0xffffffffc02000d8` | `0x802000d8` |
+
+源码以 `lui` 等指令取得根页表链接地址，减去虚实偏移得到物理地址，再右移 12 位获得 PPN，与 Sv39 MODE 字段组合后写入 `satp`。写入翻译配置和执行 `sfence.vma` 是两个不同操作，不能把 `csrw satp` 本身解释为完成全部翻译缓存同步。
+
+### 17.2 分页启用前的观察
+
+终端 1 启动 `make debug`，显式指定上述 QEMU 4.1.1；终端 2 运行 `make gdb`。本轮只使用客体 GDB，不同时附加宿主 GDB。
+
+在新会话中执行：
+
+```gdb
+set pagination off
+set logging file docs/logs/a-paging-transition-after-c.log
+set logging overwrite off
+set logging on
+hbreak *0x80200034
+continue
+info registers pc t0 t1 sp
+p/x $satp
+x/6i $pc
+x/gx 0x80206000
+x/gx 0x80206ff8
+```
+
+实际结果：
+
+```text
+pc   = 0x80200034
+当前指令：csrw satp,t0
+satp = 0x0
+t0   = 0x8000000000080206
+t1   = 0x8000000000000000
+sp   = 0x8001bd80
+根页表第 0 项：0x0000000000000000
+根页表第 511 项：0x00000000200000cf
+```
+
+此时写 `satp` 的指令尚未执行，MODE 为 Bare。根页表地址计算为 `0x80206000 + 511 × 8 = 0x80206ff8`。
+
+![写入 satp 前的寄存器及页表状态](../images/a-paging-before-satp.png)
+
+### 17.3 首次切换时的断点问题
+
+首次在保留低地址断点 1 的情况下设置高地址断点 2 并继续，出现：
+
+```text
+Cannot insert hardware breakpoint 1:
+Cannot access memory at address 0x80200034.
+pc = 0x80200038
+satp = 0x8000000000080206
+```
+
+此时执行 `x/6i $pc` 无法读取低地址 `0x80200038`，但通过高地址 `0xffffffffc0206ff8` 能读到 PTE `0x200000cf`。这说明 `satp` 已写入，并且分页切换影响了调试器的低地址访问与断点重插入。根页表第 0 项为空，而高地址映射存在，与上述现象一致。
+
+这是调试器报告的断点/内存访问问题，不能单凭该提示认定发生了客体取指异常。第一次禁用全部断点后继续运行，最终 Ctrl+C 停在 `kern_init` 的循环：
+
+```text
+pc = 0xffffffffc0200110
+j 0xffffffffc0200110
+```
+
+首次记录证明最终进入高地址循环，但没有捕获函数入口。它也没有直接解释 QEMU 跨越切换区间的全部内部机制，不能据此推广为任意硬件平台都能使用相同的无低地址映射启动序列。
+
+原始问题记录保留在 [首次分页切换日志](../logs/a-paging-transition-after-c.log)，不以成功补录覆盖。
+
+### 17.4 修正断点方案并捕获高地址入口
+
+新会话将日志保存到 `a-paging-transition-confirm.log`。在 `0x80200034` 命中并记录分页前状态后，**先禁用低地址断点**：
+
+```gdb
+disable 1
+hbreak *0xffffffffc02000d8
+info breakpoints
+continue
+```
+
+本次 `info breakpoints` 显示断点 1 为 `Enb n`，断点 2 为 `Enb y`；继续后成功命中 `kern_init` 第一条指令：
+
+```text
+Breakpoint 2, kern_init () at kern/init/init.c:30
+pc   = 0xffffffffc02000d8
+sp   = 0xffffffffc0206000
+satp = 0x8000000000080206
+&boot_page_table_sv39 = 0xffffffffc0206000
+*(根页表第 511 项 VA 0xffffffffc0206ff8) = 0x200000cf
+```
+
+反汇编的当前指令是 `auipc a0,0x7`；`addi sp,sp,-16` 位于后面的 `kern_init+16`，尚未执行。GDB 显示源码行 `memset(...)` 不代表已经执行 `memset`。
+
+| 对照项 | 写入 satp 前 | 高地址 kern_init 入口 |
+|---|---|---|
+| PC | `0x80200034` | `0xffffffffc02000d8` |
+| SP | `0x8001bd80` | `0xffffffffc0206000` |
+| satp | `0x0` | `0x8000000000080206` |
+| 翻译配置 | Bare | Sv39，ASID=0，根页表 PA=`0x80206000` |
+
+SP 与根页表 VA 相同是两段存储区域的边界关系：栈向低地址增长，页表从该地址向高地址存放，不意味着栈和页表重叠。
+
+![禁用低地址断点后捕获高地址内核入口](../images/a-paging-after-satp-confirm.png)
+
+证据：[成功补录日志](../logs/a-paging-transition-confirm.log)。本节记录配置状态与执行位置的前后对照；GDB 内存读取不能代替真实访存的页表遍历或 TLB 命中证据。
+
+## 18. 联合版本取指地址查询直接命中软件 TLB
+
+### 18.1 观察目标与条件断点
+
+本轮重新启动 QEMU，通过宿主 GDB 附加进程，客体 GDB 只执行 `continue`，不设置高地址客体断点。与历史第 12 节不同，本轮在 `get_page_addr_code()` 判断之前等待已有 TLB 项匹配，而不是在填充后断言处停止。
+
+宿主 GDB 的关键设置如下：
+
+```gdb
+set pagination off
+set logging file /home/gjhjz/NKU-OS-Labs-2026/docs/logs/a-qemu-tlb-hit-after-c.log
+set logging overwrite off
+set logging on
+break /home/gjhjz/OSopt/qemu-4.1.1/accel/tcg/cputlb.c:1030 if ((addr & 0xfffffffffffff000ULL) == 0xffffffffc0200000ULL) && (entry->addr_code == (addr & 0xfffffffffffff000ULL))
+continue
+```
+
+该条件只筛选目标页已有取指标签匹配的调用，不修改 TLB 项、不伪造命中，也不能用来统计所有访问的命中率。
+
+### 18.2 实际命中与跳过填充分支
+
+实际在第 1030 行停止：
+
+```c
+if (unlikely(!tlb_hit(entry->addr_code, addr))) {
+```
+
+观察命令和结果：
+
+```gdb
+p/x addr
+p/x entry->addr_code
+p/d mmu_idx
+p/x (addr & 0xfffffffffffff000ULL)
+p (entry->addr_code == (addr & 0xfffffffffffff000ULL))
+```
+
+```text
+addr = 0xffffffffc02000d8
+entry->addr_code = 0xffffffffc0200000
+mmu_idx = 1
+addr 所在虚拟页 = 0xffffffffc0200000
+相等判断 = 1
+```
+
+随后执行一次 `next`，直接到达第 1039 行：
+
+```c
+if (unlikely(entry->addr_code & (TLB_RECHECK | TLB_MMIO))) {
+```
+
+因此，本次调用没有进入第 1031～1036 行的未命中处理，也没有执行其中的 `tlb_fill()` 和填充后断言。前后调用栈均包含 `get_page_addr_code`、`tb_htable_lookup`、`tb_lookup__cpu_state`、`tb_find`、`cpu_exec`，支持这是 QEMU 取指地址查询路径中的观察。
+
+![取指地址查询直接命中已有软件 TLB 项](../images/a-qemu-tlb-hit-after-c.png)
+
+成功日志：[a-qemu-tlb-hit-after-c.log](../logs/a-qemu-tlb-hit-after-c.log)。退出后通过 `ls -lh`、`tail -80` 确认约 3.1 KiB 日志已经保存，包含条件断点、地址比较、单步后的行号和调用栈。
+
+### 18.3 与填充后复核的区别及结论边界
+
+| 证据 | 停止位置与路径 | 能证明的内容 |
+|---|---|---|
+| 历史页表遍历及填充 | `get_physical_address` → `tlb_set_page` → 第 1036 行断言 | 一次未命中路径的转换、填充及填充后复核 |
+| 联合版本直接命中 | 第 1030 行 → 第 1039 行 | 本次查询进入判断时已有匹配项，跳过未命中处理 |
+
+本次可表述为“后续取指地址查询复用了已有软件 TLB 项”。不能写成“CPU 第二次执行 kern_init 时命中”：QEMU 内部可能对同一地址进行多次查询，日志不能确定客体指令的执行次数。
+
+本轮没有记录该条目最初填充的具体时刻。历史填充证据与本轮命中证据来自不同版本和会话，不能拼接成同一会话的严格时间序列；两者分别验证对应路径。也不能据此推断真实硬件 TLB 的性能、替换策略或整个程序的命中率。
+
+## 19. 证据索引、交接与最终核对
+
+### 19.1 本轮新增材料
+
+| 材料 | 文件 |
+|---|---|
+| 联合回归源码版本 | [a-after-c-revision.log](../logs/a-after-c-revision.log) |
+| Buddy 构建及运行 | [构建](../logs/a-after-c-buddy-build.log)、[运行](../logs/a-after-c-buddy-run.log) |
+| Best-Fit 构建及运行 | [构建](../logs/a-after-c-best-fit-build.log)、[运行](../logs/a-after-c-best-fit-run.log) |
+| 教师评分 | [a-after-c-grade.log](../logs/a-after-c-grade.log) |
+| 新版符号与启动指令 | [符号](../logs/a-paging-symbols-after-c.log)、[源码](../logs/a-entry-source-after-c.log)、[反汇编](../logs/a-entry-disassembly-after-c.log) |
+| 分页切换首次记录与成功补录 | [首次记录](../logs/a-paging-transition-after-c.log)、[入口补录](../logs/a-paging-transition-confirm.log) |
+| 软件 TLB 直接命中 | [a-qemu-tlb-hit-after-c.log](../logs/a-qemu-tlb-hit-after-c.log) |
+
+图片路径采用仓库约定名称；交付前核对实际文件名和相对链接。若某张图片未保存，保留对应真实日志引用，不用其他实验图片替代。旧 `a-build.log` 等本地未跟踪材料是否补交应单独确认，不能将本地存在等同于仓库已交付。
+
+### 19.2 当前完成情况
+
+- A 的物理页初始化及历史 First-Fit 验证已完成。
+- 历史版本的 Sv39 根级大页遍历、物理地址计算、软件 TLB 填充与填充后复核已完成。
+- C 接入后的 Buddy、默认 Best-Fit 在 A 环境的本轮回归已完成，教师评分 20/20。
+- 联合版本 Bare/Sv39 配置和低/高地址执行位置对照已完成，保留断点问题及修正记录。
+- 联合版本一次独立调用直接命中已有取指 TLB 项、跳过填充分支的观察已完成。
+
+这些结果覆盖本章所列任务和观察路径，不等于所有体系结构边界条件或整个实验的全部验收项自动通过。若之后改变源码、编译选项或运行环境，应按变化范围确定是否需要重新验证。
+
+### 19.3 剩余交付事项
+
+更新个人章节后重新汇总 `report.md`。
