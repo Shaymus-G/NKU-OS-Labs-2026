@@ -14,6 +14,8 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--log-dir', type=Path)
 parser.add_argument('--negative-tests', action='store_true',
                     help='run isolated expected-panic tests in both PMMs')
+parser.add_argument('--memory-matrix', action='store_true',
+                    help='also boot 64/96/256 MiB machines with both PMMs')
 args = parser.parse_args()
 stamp = datetime.now(timezone(timedelta(hours=8))).strftime('%Y%m%d-%H%M%S-%f')
 logs = (args.log_dir or Path('docs/logs/extensions-runs') / stamp).resolve()
@@ -74,6 +76,14 @@ for label, defs, manager in [
 ]:
     build(label, defs)
     boot(label, defs, manager, markers)
+    if args.memory_matrix:
+        for memory in (64, 96, 256):
+            reported_end = 0x80000000 + (memory << 20)
+            managed_end = min(reported_end, 0x88000000)
+            boot(label + '-memory-' + str(memory), defs, manager, markers + [
+                'Size: 0x%016x' % (memory << 20),
+                'DTB range: [0x0000000080000000, 0x%016x)' % reported_end,
+                'managed end: 0x%016x' % managed_end], memory=memory)
     if args.negative_tests:
         for case in (1, 2, 3):
             negative = label + '-negative-' + str(case)
@@ -84,3 +94,14 @@ for label, defs, manager in [
                   'assertion failed:'], expected_panic=True)
 # Restore the familiar default artifact, with no extension test enabled.
 build('default-restored', '')
+with (logs / 'default-grade.log').open('w') as out:
+    out.write(provenance())
+    out.flush()
+    subprocess.run(['make', 'grade', 'QEMU=python3 tools/qemu-grade-console.py'],
+                   stdout=out, stderr=subprocess.STDOUT, check=True)
+assert 'Total Score: 20/20' in (logs / 'default-grade.log').read_text()
+print('default-grade: 20/20', flush=True)
+with (logs / 'default-restored-build.log').open('a') as out:
+    out.write('\n$ make (restore after grade)\n')
+    out.flush()
+    subprocess.run(['make'], stdout=out, stderr=subprocess.STDOUT, check=True)
