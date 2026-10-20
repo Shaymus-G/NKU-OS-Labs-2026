@@ -1,12 +1,12 @@
 # 成员 C：Buddy System 设计、实现和验证
 
-负责人：尚文轩，学号 2412456。日期：2026-10-19。
+负责人：尚文轩，学号 2412456。首次验证：2026-10-19；交接状态更新：2026-10-20。
 
 ## 1. 基线、职责和进度判断
 
-本轮工作基于 `lab2` 的 `a3574e2b288674f3d0045d6a71753bd94c5327ef`，已 `git fetch origin lab2`，当时 HEAD 与 origin/lab2 无差异。该基线包含 A 的 `79b5791` 初始化、B 的 `f8ed38a`/`f68e0ee` 以及 A 的调试材料合并。本次 C 修改尚未提交，不能将基线 ID 当作 Buddy 的提交号；运行日志以源码 SHA256 关联实际代码。
+初次开发基于 `lab2` 的 `a3574e2b288674f3d0045d6a71753bd94c5327ef`，该基线包含 A 的 `79b5791` 初始化、B 的 `f8ed38a`/`f68e0ee` 以及 A 的调试材料合并。C 的 Buddy 与材料已提交为 `b5c05e9706bedefb18cd7f6c3ad0b2404a8e5869`，并已包含在远程 `lab2`。旧 c-* 日志保留当时未提交工作树的 HEAD 与 SHA256，它们是 10 月 19 日开发阶段的真实记录，不改写为后来的提交状态。
 
-A 已实现 DTB 初始化、页描述符及保留区域处理，提供了 First-Fit 实测和 Sv39 大页、TLB 填充证据。B 已实现并验证 Best-Fit，保存了行为测试和 20/20 记录。C 原缺 Buddy、独立自检、两份提示词及总报告，本轮补齐实现和材料，并在本机回归默认模式。
+A 已实现 DTB 初始化、页描述符及保留区域处理，提供 First-Fit 实测和 Sv39 大页、TLB 填充证据。B 已实现并验证 Best-Fit。C 在 10 月 19 日补齐 Buddy、自检、两份规格记录和总报告，并在本机回归默认模式。10 月 20 日同步至 `cf881a985919d78a773bd77c09998f324f603d27` 后，已核对 A 的 `cc646e0`/`6baf620` 联合回归与调试补证、B 的 `c3c4dd9`/`cf881a9` 联合验收材料。以下 C 构建数值仍指初次验证；后续联合结果见第 7 节。
 
 ## 2. 环境与启用方式
 
@@ -128,10 +128,19 @@ check_alloc_page() succeeded!
 - [教师评分](../logs/c-grade.log)、[环境与源码差异检查](../logs/c-final-audit.log)
 - [Buddy 日志摘录图](../images/c-buddy-log.png)、[评分日志摘录图](../images/c-grade-log.png)：由真实日志排版，属于日志可视化，不冒充原始终端截屏。
 
-未测试多核竞争、热插拔、NUMA、超过本框架 128 MiB 管理上限、预期 panic 的非法释放用例，也未实现 SLUB。A 的独立后续 TLB 命中和完整分页前后实测对照仍需补证据；不要从本轮分配器验证推断已完成这些调试。
+后续联合验证已完成，证据按各自环境分开保存：
+
+| 验证方 | 被测版本与环境 | 结果及证据 |
+|---|---|---|
+| A | `b5c05e9`，WSL Ubuntu 20.04 / QEMU 4.1.1 / OpenSBI 0.4 | Buddy 恢复 31928 页，Best-Fit 行为通过，普通评分 20/20；[版本](../logs/a-after-c-revision.log)、[Buddy](../logs/a-after-c-buddy-run.log)、[Best-Fit](../logs/a-after-c-best-fit-run.log)、[评分](../logs/a-after-c-grade.log) |
+| B | `6baf620`，WSL Ubuntu 24.04.5 / QEMU 4.1.1 / OpenSBI 0.4 | 复核 Buddy 契约，独立完成两种模式切换与普通评分 20/20；[环境与摘要](../logs/b-integration-environment.log)、[Buddy](../logs/b-integration-buddy-run.log)、[Best-Fit](../logs/b-integration-best-fit-run.log)、[评分](../logs/b-integration-grade.log) |
+
+A 也已补足分页切换前后对照和后续取指地址查询直接命中已有 TLB 项的观察，见 [分页成功补录](../logs/a-paging-transition-confirm.log)、[直接命中日志](../logs/a-qemu-tlb-hit-after-c.log) 和 [A 章节](a-memory-debug.md) 第 17～18 节。联合版根页表 PA 为 `0x80206000`，历史 First-Fit 为 `0x80205000`，不能混用。直接命中日志证明查询跳过 `tlb_fill()`，不能据此断言“CPU 第二次执行 kern_init”。
+
+未测试多核竞争、热插拔、NUMA、超过本框架 128 MiB 管理上限、预期 panic 的非法释放用例，也未实现 SLUB。这些限制继续保留，不因教师评分通过而删除。
 
 ## 8. 答辩要点与队友交接
 
 说明 npage 是物理页号上界、nbase 是 DRAM 起始物理页号，描述符数量为两者之差；伙伴计算使用物理页号而不是空闲区偏移。解释为何两块相邻不一定可合并，以及为何总空闲页足够仍可能分配失败。对比 Best-Fit 的外部碎片与 Buddy 向上取整的内部碎片。物理块分配不会自动建立页表映射，本实验不等于实现进程虚拟内存。
 
-公共改动仅是 `pmm.c` 条件 include 与管理器选择；A 的 page_init()、B 的源码、教师检查和 Makefile 保持不变。启用命令及完整清单见 [C 交接记录](../notes/c-progress.md)。当前未提交、未推送，后续由用户授权后再同步远程、检查差异并提交。
+Buddy 提交的公共改动仅是 `pmm.c` 条件 include 与管理器选择；A 的 page_init()、B 的源码、教师检查和 Makefile 在该接入中保持不变。启用命令及完整清单见 [C 交接记录](../notes/c-progress.md)。Buddy 成果已在远程；本次报告收尾由用户授权分子任务进行本地 commit，最终 push 由用户操作。A 的学号标记和初始化实际 AI 交互记录仍需本人确认，全组三人通读不由本次自动核验代替。

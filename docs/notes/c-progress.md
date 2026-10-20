@@ -1,10 +1,10 @@
 # C 部分交接：Buddy、验证与报告汇总
 
-负责人：尚文轩，2412456。日期：2026-10-19。
+负责人：尚文轩，2412456。初次交付：2026-10-19；最新交接核对：2026-10-20。
 
 ## 分支与版本
 
-共用 `lab2`；起点 `a3574e2b288674f3d0045d6a71753bd94c5327ef`，已核对与远程一致。包含 A 初始化、B 实现及交接、A 调试材料。C 本轮尚未 commit/push，不能提供不存在的提交号；代码版本见每份成功日志中的 SHA256。
+共用 `lab2`；C 初次开发起点为 `a3574e2b288674f3d0045d6a71753bd94c5327ef`，成果已提交为 `b5c05e9706bedefb18cd7f6c3ad0b2404a8e5869` 并包含在远程分支。旧 c-* 日志的未提交状态描述仅对应 10 月 19 日开发阶段，以当时的 SHA256 关联代码，不改写历史证据。10 月 20 日已同步并核对远程 `cf881a985919d78a773bd77c09998f324f603d27`，包含 A 的 `cc646e0`、`6baf620` 和 B 的 `c3c4dd9`、`cf881a9`。
 
 ## 本次完成
 
@@ -64,8 +64,12 @@ python3 tools/check-buddy.py
 - 图片：`c-buddy-log.png`、`c-grade-log.png`，为相应真实日志的摘录图，标题明确标注生成方式。
 - 正文：`docs/parts/c-buddy.md` 和根目录 `report.md`。
 
-## 后续共同验收
+## 联合验收更新及剩余核对
 
-请 B 复核选择入口与 Buddy 完整块释放契约，并在共同 QEMU 4.1.1 环境复测；本机评分 20/20 不替代 Buddy 独立测试、双重 GDB 或全实验验收。请 A 核对自己的学号标记并补足其报告已指出的证据缺口：独立后续 TLB 命中、完整分页前后实测对照。旧 First-Fit 31929 页与本次 31928 页分别保留，不改旧证据统一数值。
+A 已在 Ubuntu 20.04 / QEMU 4.1.1 / OpenSBI 0.4 上完成两种管理器回归和普通评分 20/20；B 已复核 Buddy 完整块释放契约，并在 Ubuntu 24.04.5 / QEMU 4.1.1 / OpenSBI 0.4 上完成独立联合回归及普通评分 20/20。见 [A 回归](../logs/a-after-c-grade.log)、[B 环境](../logs/b-integration-environment.log)、[B 回归](../logs/b-integration-grade.log)。这两项不再列为待办，旧 c-* 日志仍作为 C 环境历史证据保留。
 
-C 的 prompt 文档诚实标注为助手整理与最终复核所用规格，没有冒称学生逐字输入或独立模型对话；如课程要求完整原始交互，应另导出本次 Codex 会话。提交前还需全组三人通读和共同环境验收。当前遵照用户要求未 commit/push。
+A 的 [分页前后成功补录](../logs/a-paging-transition-confirm.log) 和 [软件 TLB 直接命中](../logs/a-qemu-tlb-hit-after-c.log) 已交付。直接命中应表述为“后续取指地址查询直接命中已有 TLB 项”，不能称为“CPU 第二次执行 kern_init”。旧 First-Fit 的 31929 页 / 根页表 PA 0x80205000，与联合版的 31928 页 / 0x80206000 分别保留。
+
+A 明确不交付四份历史日志：`a-build.log`、`a-qemu-pagewalk-retry.log`、`a-qemu-pagewalk.log`、`a-ucore-pagewalk.log`，均为“本地历史记录，未随本次提交交付”。不提供有效下载链接；成功页表遍历仍引用 `a-qemu-pagewalk-body.log`。
+
+C 的 prompt 文档诚实标注为助手整理与最终复核所用规格，没有冒称学生逐字输入或独立模型对话；如课程要求完整原始交互，应另导出本次 Codex 会话。仍需 A 本人确认学号及初始化实际 AI 交互记录，并由全组三人通读最终报告。本次按子任务分别在本地 commit，只使用尚文轩现有 Git 身份、不加 AI 共同作者；push 由用户进行。

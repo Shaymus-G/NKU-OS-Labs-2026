@@ -44,7 +44,7 @@
 早期初始化阶段的材料如下；文件存在性和具体内容应在最终提交前核对：
 
 - [环境记录](../logs/a-environment.log)
-- 初次构建失败记录：`docs/logs/a-build.log`。此前保存在本地但未跟踪，最终交付前应核对是否补交，不将其视作成功构建日志。
+- 初次构建失败记录：`docs/logs/a-build.log`，属于本地历史记录，未随本次提交交付，不作为已交付附件或成功构建证据。
 - [临时 First Fit 构建记录](../logs/a-build-first-fit.log)
 - [初始化 GDB 日志](../logs/a-page-init-debug.log)
 - [规格与 AI 交互记录](../prompts/a-page-init.md)
@@ -301,7 +301,7 @@ ffffffffc0205000 D bootstacktop
 - [QEMU 源码位置记录](../logs/a-qemu-source-locations.log)
 - [成功的宿主 GDB 调试日志](../logs/a-qemu-pagewalk-body.log)
 
-`a-qemu-pagewalk.log`、`a-qemu-pagewalk-retry.log` 是早期尝试记录；其中是否存在无效参数输出，应按具体上下文判断，不能替代成功日志。`a-ucore-pagewalk.log` 可作为客体侧补充材料，其内容需单独核对。`a-build.log` 记录的是早期构建过程，若包含 Best Fit 未实现导致的错误，应保留其失败语境。
+`a-qemu-pagewalk.log`、`a-qemu-pagewalk-retry.log`、`a-ucore-pagewalk.log`、`a-build.log` 均为本地历史记录，未随本次提交交付，不列为可下载附件或已交付补充材料。它们不能替代已交付的成功日志 `a-qemu-pagewalk-body.log`，也不作为本报告已验证结论的必需证据。
 
 ## 10. 断点问题与修正
 
@@ -910,7 +910,7 @@ if (unlikely(entry->addr_code & (TLB_RECHECK | TLB_MMIO))) {
 | 分页切换首次记录与成功补录 | [首次记录](../logs/a-paging-transition-after-c.log)、[入口补录](../logs/a-paging-transition-confirm.log) |
 | 软件 TLB 直接命中 | [a-qemu-tlb-hit-after-c.log](../logs/a-qemu-tlb-hit-after-c.log) |
 
-图片路径采用仓库约定名称；交付前核对实际文件名和相对链接。若某张图片未保存，保留对应真实日志引用，不用其他实验图片替代。旧 `a-build.log` 等本地未跟踪材料是否补交应单独确认，不能将本地存在等同于仓库已交付。
+图片路径采用仓库约定名称；汇总时核对实际文件名和相对链接，不用其他实验图片替代。`a-build.log`、`a-qemu-pagewalk-retry.log`、`a-qemu-pagewalk.log`、`a-ucore-pagewalk.log` 为本地历史记录，未随本次提交交付，不再列为待补交附件。
 
 ### 19.2 当前完成情况
 
