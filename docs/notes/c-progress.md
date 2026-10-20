@@ -26,7 +26,7 @@
 | docs/parts/c-buddy.md | C 个人章节 |
 | docs/prompts/c-buddy.md、c-buddy-tests.md | 分开的实现/测试规格及过程来源说明 |
 | docs/logs/c-*、docs/images/c-* | 本轮证据 |
-| report.md | 汇总 A/B 原章节和 C 章节，保留历史版本边界 |
+| report.md | 正式实验报告；2026-10-21起由docs/report编辑稿生成，个人原始材料仍在docs/parts |
 
 未改 Makefile、pmm.h、memlayout.h、A 的 page_init()、B 源码、教师 basic_check()/best_fit_check()、tools/grade.sh、tools/inject.py 或 OSopt 包装器。用户已授权完成 C 接入，公共入口差异记录在此；未向其他成员发送消息。
 
