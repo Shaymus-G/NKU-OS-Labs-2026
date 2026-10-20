@@ -19,7 +19,7 @@ intro = '''# 操作系统 Lab2：物理内存管理与地址翻译
 
 ## 范围、分工与版本说明
 
-实验包含物理页初始化、First-Fit 分析、Best-Fit、Buddy、QEMU 双重 GDB 和报告材料。A 负责初始化与地址翻译；B 负责 First/Best-Fit 及基础测试；C 负责 Buddy、测试和本文汇总。教师框架、教师检查、组员实现与 AI 辅助范围见各章，不将教师代码记为本组从零实现。
+实验包含物理页初始化、First-Fit 分析、Best-Fit、Buddy、QEMU 双重 GDB 和报告材料。A 负责初始化与地址翻译；B 负责 First/Best-Fit 及基础测试；C 负责 Buddy、测试和本文汇总。根据用户后续“全部已知选做与扩展都做”的要求，C 又完成 SLUB、动态内存范围边界验证及实时 GDB 自动演示。教师框架、教师检查、组员实现与 AI 辅助范围见各章，不将教师代码记为本组从零实现。
 
 C 的 Buddy 成果已提交为 b5c05e9，并包含在远程 lab2。A 的 cc646e0 完成联合回归，6baf620 补足分页切换和软件 TLB 直接命中；B 的 c3c4dd9、cf881a9 完成独立联合验证和交接。本次汇总以已同步的 cf881a9 及其后的本地文档提交为基础，源码及运行证据按各日志记录的 HEAD、SHA256 关联。
 
@@ -28,12 +28,15 @@ C 的 Buddy 成果已提交为 b5c05e9，并包含在远程 lab2。A 的 cc646e0
 | C 初次实现 | Ubuntu 22.04 / GCC 10.2.0 / QEMU 6.2.0 / OpenSBI 1.3 | Buddy 六组自检、1024 次混合操作和 Best-Fit 行为通过，恢复 31928 页；本机控制台转接后评分 20/20 |
 | A 联合回归 | Ubuntu 20.04 / GCC 10.2.0 / QEMU 4.1.1 / OpenSBI 0.4 | Buddy、Best-Fit 通过，普通 make grade 为 20/20；分页前后对照和后续取指查询直接命中 TLB 已补录 |
 | B 独立联合验收 | Ubuntu 24.04.5 / GCC 10.2.0 / QEMU 4.1.1 / OpenSBI 0.4 | 已复核 Buddy 契约，切换后两种模式通过，普通 make grade 为 20/20，最后恢复默认构建 |
+| C 新增扩展验证 | Ubuntu 22.04 / GCC 10.2.0 / QEMU 6.2.0 / OpenSBI 1.3 | 两种管理器下 SLUB 正常/混合/真实耗尽测试和6次预期非法释放断言通过；2230项DTB检查；64/96/128/256MiB实际启动通过，默认评分20/20；实时GDB与17项Sv39解码检查通过 |
 
 教师 20/20 只覆盖 Page Init 和 Best-Fit；Buddy 由独立自检支持，地址翻译由 A 调试记录支持。A 的直接命中记录证明后续取指地址查询跳过 tlb_fill()，不能表述为“CPU 第二次执行 kern_init”。C 本轮核对并汇总这些已交付证据，没有声称在本机重新完成 A 的调试。
 
 各章保留历史版本和证据限定：First-Fit 旧版为 31929 页、根页表 PA 0x80205000；联合版为 31928 页、根页表 PA 0x80206000。不同构建地址不能混用。a-build.log、a-qemu-pagewalk-retry.log、a-qemu-pagewalk.log、a-ucore-pagewalk.log 均为本地历史记录，未随本次提交交付，不提供下载链接；成功页表遍历引用已交付的 a-qemu-pagewalk-body.log。
 
-三人学号均已确认，代码标记已填写。剩余人工核对：A 的初始化实际 AI 交互记录仍有占位内容，需要本人按真实过程补齐；全组三人通读及最终提交版本签认尚待进行。Challenge SLUB 未实现，多核等未测边界见各章。这些真实限制不因更新进度文字而删除。
+三人学号均已确认，代码标记已填写。已知扩展已完成：SLUB 提交 be8029b、DTB 范围及验证 c6a6722、实时 GDB 演示 64638d6。新增扩展构建会改变内核尺寸和符号布局，其空闲页数、根页表等只引用各自新日志，不能替换旧版证据。
+
+剩余人工核对：A 的初始化实际 AI 交互记录仍有占位内容，需要本人按真实过程补齐；A/B 尚需在各自 QEMU 4.1.1 环境复核这批新增扩展（此前已通过的是主实验联合版）；全组三人通读、答辩理解和最终提交版本签认尚待进行。多核等未测边界见各章。已知范围来自分工文件和用户交付的课程文字记录；未取得原实验手册PDF，不宣称穷尽其中尚未见到的额外细则。课件贡献尚待全组决定并发送，不能把本地完成工具等同于已获加分。
 
 个人章节是维护源，使用 `python3 tools/assemble-lab2-report.py` 重新汇总，或加 `--check` 只核对一致性。当前源码在仓库根目录，与计划中的 labcodes/lab2 目录不同。C 本次按子任务在本地 commit，push 由用户执行；这不改变 Buddy 成果已在远程的事实。各章中的初次开发、失败日志和带日期的交接过程按当时状态理解。
 
@@ -64,12 +67,28 @@ make grade QEMU='python3 tools/qemu-grade-console.py'
 - [C Buddy 验证](docs/logs/c-buddy-run.log)、[C 默认回归](docs/logs/c-best-fit-run.log)、[C 教师评分](docs/logs/c-grade.log)
 - [A 联合回归](docs/logs/a-after-c-grade.log)、[A 分页切换补录](docs/logs/a-paging-transition-confirm.log)、[A TLB 直接命中](docs/logs/a-qemu-tlb-hit-after-c.log)
 - [B 联合环境与摘要](docs/logs/b-integration-environment.log)、[B Buddy](docs/logs/b-integration-buddy-run.log)、[B Best-Fit](docs/logs/b-integration-best-fit-run.log)、[B 普通评分](docs/logs/b-integration-grade.log)
+- [SLUB扩展](docs/parts/slub.md)、[DTB范围扩展](docs/parts/dtb-challenge.md)、[实时调试演示](docs/parts/address-demo.md)
+- [最新责任与待办](docs/notes/final-actions.md)、[课程四段式规格说明](docs/notes/prompt-method.md)
+
+扩展复现（C本机先 source ~/OSopt/env.sh）：
+
+扩展规格按助教给出的 Prompt（任务与修改边界）、Rely（最小可信依赖）、Guarantee（交付接口）、Specification（前置条件、成功/失败及状态不变要求）组织。编码前规格和后续整理/复核明确区分；人工阅读、验证、迭代及即时答辩不能由AI测试代替。
+
+```bash
+python3 tools/check-extensions.py --negative-tests --memory-matrix
+python3 tools/test-dtb-parser.py
+python3 tools/test-sv39.py
+python3 tools/demo-address-translation.py
+```
+
+自动脚本的两项异常/矩阵开关可分开运行，证据写入新目录。实时演示会重新构建默认内核，不应与其他正在使用该构建产物的调试会话并行运行。
 
 以下为各成员章节。所有“本次”“当前”等叙述依各章说明的日期和基线理解；历史待办不覆盖上文的本轮验证结论。
 
 '''
 parts = ['a-memory-debug.md', 'b-first-best-fit.md',
-         'b-best-fit-tests.md', 'c-buddy.md']
+         'b-best-fit-tests.md', 'c-buddy.md', 'slub.md',
+         'dtb-challenge.md', 'address-demo.md']
 chunks = [intro]
 for name in parts:
     text = (root / 'docs/parts' / name).read_text(encoding='utf-8')
@@ -103,7 +122,7 @@ output = root / 'report.md'
 if args.check:
     if not output.exists() or output.read_text(encoding='utf-8') != result:
         parser.exit(1, 'report.md is stale; run tools/assemble-lab2-report.py\n')
-    print('report.md matches all four authored sections and introduction')
+    print(f'report.md matches all {len(parts)} authored sections and introduction')
 else:
     output.write_text(result, encoding='utf-8')
-    print('report.md assembled from four authored sections')
+    print(f'report.md assembled from {len(parts)} authored sections')

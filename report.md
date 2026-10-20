@@ -4,7 +4,7 @@
 
 ## 范围、分工与版本说明
 
-实验包含物理页初始化、First-Fit 分析、Best-Fit、Buddy、QEMU 双重 GDB 和报告材料。A 负责初始化与地址翻译；B 负责 First/Best-Fit 及基础测试；C 负责 Buddy、测试和本文汇总。教师框架、教师检查、组员实现与 AI 辅助范围见各章，不将教师代码记为本组从零实现。
+实验包含物理页初始化、First-Fit 分析、Best-Fit、Buddy、QEMU 双重 GDB 和报告材料。A 负责初始化与地址翻译；B 负责 First/Best-Fit 及基础测试；C 负责 Buddy、测试和本文汇总。根据用户后续“全部已知选做与扩展都做”的要求，C 又完成 SLUB、动态内存范围边界验证及实时 GDB 自动演示。教师框架、教师检查、组员实现与 AI 辅助范围见各章，不将教师代码记为本组从零实现。
 
 C 的 Buddy 成果已提交为 b5c05e9，并包含在远程 lab2。A 的 cc646e0 完成联合回归，6baf620 补足分页切换和软件 TLB 直接命中；B 的 c3c4dd9、cf881a9 完成独立联合验证和交接。本次汇总以已同步的 cf881a9 及其后的本地文档提交为基础，源码及运行证据按各日志记录的 HEAD、SHA256 关联。
 
@@ -13,12 +13,15 @@ C 的 Buddy 成果已提交为 b5c05e9，并包含在远程 lab2。A 的 cc646e0
 | C 初次实现 | Ubuntu 22.04 / GCC 10.2.0 / QEMU 6.2.0 / OpenSBI 1.3 | Buddy 六组自检、1024 次混合操作和 Best-Fit 行为通过，恢复 31928 页；本机控制台转接后评分 20/20 |
 | A 联合回归 | Ubuntu 20.04 / GCC 10.2.0 / QEMU 4.1.1 / OpenSBI 0.4 | Buddy、Best-Fit 通过，普通 make grade 为 20/20；分页前后对照和后续取指查询直接命中 TLB 已补录 |
 | B 独立联合验收 | Ubuntu 24.04.5 / GCC 10.2.0 / QEMU 4.1.1 / OpenSBI 0.4 | 已复核 Buddy 契约，切换后两种模式通过，普通 make grade 为 20/20，最后恢复默认构建 |
+| C 新增扩展验证 | Ubuntu 22.04 / GCC 10.2.0 / QEMU 6.2.0 / OpenSBI 1.3 | 两种管理器下 SLUB 正常/混合/真实耗尽测试和6次预期非法释放断言通过；2230项DTB检查；64/96/128/256MiB实际启动通过，默认评分20/20；实时GDB与17项Sv39解码检查通过 |
 
 教师 20/20 只覆盖 Page Init 和 Best-Fit；Buddy 由独立自检支持，地址翻译由 A 调试记录支持。A 的直接命中记录证明后续取指地址查询跳过 tlb_fill()，不能表述为“CPU 第二次执行 kern_init”。C 本轮核对并汇总这些已交付证据，没有声称在本机重新完成 A 的调试。
 
 各章保留历史版本和证据限定：First-Fit 旧版为 31929 页、根页表 PA 0x80205000；联合版为 31928 页、根页表 PA 0x80206000。不同构建地址不能混用。a-build.log、a-qemu-pagewalk-retry.log、a-qemu-pagewalk.log、a-ucore-pagewalk.log 均为本地历史记录，未随本次提交交付，不提供下载链接；成功页表遍历引用已交付的 a-qemu-pagewalk-body.log。
 
-三人学号均已确认，代码标记已填写。剩余人工核对：A 的初始化实际 AI 交互记录仍有占位内容，需要本人按真实过程补齐；全组三人通读及最终提交版本签认尚待进行。Challenge SLUB 未实现，多核等未测边界见各章。这些真实限制不因更新进度文字而删除。
+三人学号均已确认，代码标记已填写。已知扩展已完成：SLUB 提交 be8029b、DTB 范围及验证 c6a6722、实时 GDB 演示 64638d6。新增扩展构建会改变内核尺寸和符号布局，其空闲页数、根页表等只引用各自新日志，不能替换旧版证据。
+
+剩余人工核对：A 的初始化实际 AI 交互记录仍有占位内容，需要本人按真实过程补齐；A/B 尚需在各自 QEMU 4.1.1 环境复核这批新增扩展（此前已通过的是主实验联合版）；全组三人通读、答辩理解和最终提交版本签认尚待进行。多核等未测边界见各章。已知范围来自分工文件和用户交付的课程文字记录；未取得原实验手册PDF，不宣称穷尽其中尚未见到的额外细则。课件贡献尚待全组决定并发送，不能把本地完成工具等同于已获加分。
 
 个人章节是维护源，使用 `python3 tools/assemble-lab2-report.py` 重新汇总，或加 `--check` 只核对一致性。当前源码在仓库根目录，与计划中的 labcodes/lab2 目录不同。C 本次按子任务在本地 commit，push 由用户执行；这不改变 Buddy 成果已在远程的事实。各章中的初次开发、失败日志和带日期的交接过程按当时状态理解。
 
@@ -49,6 +52,21 @@ make grade QEMU='python3 tools/qemu-grade-console.py'
 - [C Buddy 验证](docs/logs/c-buddy-run.log)、[C 默认回归](docs/logs/c-best-fit-run.log)、[C 教师评分](docs/logs/c-grade.log)
 - [A 联合回归](docs/logs/a-after-c-grade.log)、[A 分页切换补录](docs/logs/a-paging-transition-confirm.log)、[A TLB 直接命中](docs/logs/a-qemu-tlb-hit-after-c.log)
 - [B 联合环境与摘要](docs/logs/b-integration-environment.log)、[B Buddy](docs/logs/b-integration-buddy-run.log)、[B Best-Fit](docs/logs/b-integration-best-fit-run.log)、[B 普通评分](docs/logs/b-integration-grade.log)
+- [SLUB扩展](docs/parts/slub.md)、[DTB范围扩展](docs/parts/dtb-challenge.md)、[实时调试演示](docs/parts/address-demo.md)
+- [最新责任与待办](docs/notes/final-actions.md)、[课程四段式规格说明](docs/notes/prompt-method.md)
+
+扩展复现（C本机先 source ~/OSopt/env.sh）：
+
+扩展规格按助教给出的 Prompt（任务与修改边界）、Rely（最小可信依赖）、Guarantee（交付接口）、Specification（前置条件、成功/失败及状态不变要求）组织。编码前规格和后续整理/复核明确区分；人工阅读、验证、迭代及即时答辩不能由AI测试代替。
+
+```bash
+python3 tools/check-extensions.py --negative-tests --memory-matrix
+python3 tools/test-dtb-parser.py
+python3 tools/test-sv39.py
+python3 tools/demo-address-translation.py
+```
+
+自动脚本的两项异常/矩阵开关可分开运行，证据写入新目录。实时演示会重新构建默认内核，不应与其他正在使用该构建产物的调试会话并行运行。
 
 以下为各成员章节。所有“本次”“当前”等叙述依各章说明的日期和基线理解；历史待办不覆盖上文的本轮验证结论。
 
@@ -1337,11 +1355,169 @@ check_alloc_page() succeeded!
 
 A 也已补足分页切换前后对照和后续取指地址查询直接命中已有 TLB 项的观察，见 [分页成功补录](docs/logs/a-paging-transition-confirm.log)、[直接命中日志](docs/logs/a-qemu-tlb-hit-after-c.log) 和 [A 章节](docs/parts/a-memory-debug.md) 第 17～18 节。联合版根页表 PA 为 `0x80206000`，历史 First-Fit 为 `0x80205000`，不能混用。直接命中日志证明查询跳过 `tlb_fill()`，不能据此断言“CPU 第二次执行 kern_init”。
 
-未测试多核竞争、热插拔、NUMA、超过本框架 128 MiB 管理上限、预期 panic 的非法释放用例，也未实现 SLUB。这些限制继续保留，不因教师评分通过而删除。
+本章 Buddy 主体测试未覆盖多核竞争、热插拔、NUMA、超过本框架 128 MiB 管理上限、预期 panic 的 Buddy 非法释放用例。这些限制继续保留，不因教师评分通过而删除。初次 Buddy 交付时尚未实现的 SLUB 已在用户随后要求的扩展阶段完成，见 [SLUB扩展](docs/parts/slub.md)；其非法释放自检不等同于 Buddy 接口自身的非法释放测试。
 
 ### 8. 答辩要点与队友交接
 
 说明 npage 是物理页号上界、nbase 是 DRAM 起始物理页号，描述符数量为两者之差；伙伴计算使用物理页号而不是空闲区偏移。解释为何两块相邻不一定可合并，以及为何总空闲页足够仍可能分配失败。对比 Best-Fit 的外部碎片与 Buddy 向上取整的内部碎片。物理块分配不会自动建立页表映射，本实验不等于实现进程虚拟内存。
 
 Buddy 提交的公共改动仅是 `pmm.c` 条件 include 与管理器选择；A 的 page_init()、B 的源码、教师检查和 Makefile 在该接入中保持不变。启用命令及完整清单见 [C 交接记录](docs/notes/c-progress.md)。Buddy 成果已在远程；本次报告收尾由用户授权分子任务进行本地 commit，最终 push 由用户操作。2026-10-20 用户已确认 A 学号 2412082，代码标记已补齐；A 的初始化实际 AI 交互记录仍需本人补齐，全组三人通读不由本次自动核验代替。
+
+## 扩展：教学 SLUB 对象分配器
+
+实现、测试及报告：尚文轩，2412456。新增扩展，不覆盖原有 A/B/C 主体任务。
+
+### 接口和设计
+
+`kern/mm/slub.c/.h` 提供命名缓存 create/alloc/free/shrink/destroy，以及 `kmalloc/kfree/ksize`。以既有页分配器为底层，不改变 Page 和 pmm_manager。单核教学 SLUB 风格：每个缓存优先从当前 partial 页取对象，空对象自身保存 next 指针，页头保存缓存归属、占用计数和 256 位分配位图；没有外部每对象描述符数组。partial/full/empty 三种链表支持状态转移与回收，每缓存最多保留一个空页。
+
+这不是 Linux 多核 SLUB 的完整移植：没有每 CPU 批处理、NUMA、锁或远程释放协议，调用者必须串行化。明确这一边界比把一个简化分配器称作生产级实现更准确。
+
+| 接口 | 契约 |
+|---|---|
+| kmem_cache_create(name,size,align,ctor) | 名称指针需保持有效；size>0，align 为 2 的幂；最小实际对齐 16；每页至少放下一个对象 |
+| kmem_cache_alloc/free | 同一缓存的完整对象指针；构造回调每次分配执行；非法指针、重复或错缓存释放触发断言 |
+| kmem_cache_destroy | 仍有活对象或属于内置通用缓存时返回 false，不能销毁 |
+| kmalloc | 1..2048 字节选择 16/32/64/128/256/512/1024/2048 缓存；更大对象交给连续页分配 |
+| kfree | NULL 无操作；大对象记录原始页数，正确兼容 Buddy 向上取整及按原请求释放的契约 |
+| shrink | 只归还空页，不移动或破坏存活对象 |
+
+固定 24 个缓存描述符中 8 个用于通用大小类、16 个可用于命名缓存；描述符耗尽返回 NULL，不耗物理页。大对象头位于首个物理页，返回地址按 16 字节对齐；零字节、溢出尺寸、页分配失败返回 NULL。
+
+### 启用与运行
+
+默认内核保持原实验行为；扩展编译宏仅在 `pmm_init()` 后运行扩展检查：
+
+```bash
+source ~/OSopt/env.sh
+make clean
+make DEFS=-DLAB2_EXTENSIONS
+make qemu DEFS=-DLAB2_EXTENSIONS
+# Buddy 底层需先 clean，再同时传入两个宏：
+make clean
+make DEFS='-DLAB2_EXTENSIONS -DPMM_BUDDY'
+make qemu DEFS='-DLAB2_EXTENSIONS -DPMM_BUDDY'
+```
+
+自动验证：`python3 tools/check-extensions.py --negative-tests`。每次写入新时间目录，最后恢复默认构建；正常自检和预期 panic 分开启动。
+
+### 实际验证与测试理由
+
+`kern/mm/slub_test.c` 用断言检查：对齐 64 字节的 37 字节记录缓存、构造回调计数、对象复用、full/partial/empty 状态、活对象阻止销毁；跨两页互不重叠；27 个大小边界与大对象的数据隔离；64 个小对象只占一个物理页；1024 次混合申请/释放与独立字节图案及区间不重叠判据；16 个命名缓存描述符耗尽；真正耗尽全部物理页后小/大对象失败，再回收全部页、重新申请并恢复初始页数。
+
+非法释放通过三次独立启动测试：重复释放、错误缓存释放、内部地址释放。每次必须出现所选 case 标记和断言 panic；预期异常不是正常自检失败，也不允许仅凭超时判成功。
+
+初次版本在 Best-Fit、Buddy 下均通过，见 [首轮 Best-Fit](docs/logs/extensions-runs/slub-first/slub-best-fit-run.log)、[首轮 Buddy](docs/logs/extensions-runs/slub-first/slub-buddy-run.log)。这版扩展构建空闲页为 31925，根页表 PA 为 0x80208000；代码增加引起布局变化，不回填到旧版日志。后续增加混合/异常测试的准确布局与结果以各新日志为准。
+
+加入混合与异常测试后的两种正常运行以及六次预期异常均通过：[Best-Fit](docs/logs/extensions-runs/slub-validation/slub-best-fit-run.log)、[Buddy](docs/logs/extensions-runs/slub-validation/slub-buddy-run.log)。独立负例日志以同目录 `*-negative-1/2/3-run.log` 保存；每份均有 case 标志和真实断言 panic。这是防御性校验成功的预期结果，不把它当作正常启动成功日志。
+
+### 理论联系
+
+页分配器解决连续物理页资源问题，SLUB 在页内切分重复尺寸的小对象，降低每次分配整页的浪费。固定大小类仍有内部碎片、页头和空对象链成本；保留一个空 slab 可加快复用，也会暂占一页，通过 shrink 主动归还。大对象仍受底层连续块碎片和 Buddy 取整限制，不保证“总空闲足够”就一定成功。
+
+## 扩展：动态物理内存范围与 FDT 边界验证
+
+负责人：尚文轩，2412456。基于教师已有 DTB 支持和 A 的 page_init() 继续完善，不将原框架描述为本组从零实现。
+
+### 实现与契约
+
+教师原解析器已能读取典型 QEMU 设备树，A 已把动态结果接入 page_init()。本扩展将有界、可独立执行的解析抽到 `kern/driver/fdt_memory.c`，在 dtb.h 增加 `dtb_parse_memory(blob,length,&base,&size)`，保留 dtb_init/get_memory_base/get_memory_size 调用方式。
+
+解析时核对 header、结构块与字符串块的边界及非重叠、token 深度、根节点、属性名终止和范围、属性长度、结束标记。所有多字节读取按字节拼装，不依赖 uint64_t 对齐；没有无界 strlen 或无界 token 遍历。只接受根节点直属 memory/memory@ 节点，子节点 reg 不被误识别。
+
+| 情形 | 结果 |
+|---|---|
+| 单个连续 bank，1/2 个 address/size cell，非零无溢出 | 返回0，写入范围 |
+| 截断、偏移越界、坏 magic、结构错误、零长度或地址溢出 | DTB_INVALID=-1，输出参数不变 |
+| 没有可识别 memory reg | DTB_NO_MEMORY=-2，输出参数不变 |
+| 超过2个 cell 或多个 bank | DTB_UNSUPPORTED=-3，输出参数不变，不能静默丢掉其余 bank |
+
+本接口不是 libfdt 的完整替代，不解释所有设备节点、保留区和热插拔。框架仍只管理一段从 DRAM_BASE 开始的连续内存。runtime 信任 OpenSBI 传入的物理指针指向实际 RAM，先检查它落在启动根页表的 1 GiB DRAM 映射窗口，并限制可解析大小；这不等于能安全读取任意恶意物理地址。失败时全局内存范围为零，已有 page_init() 会拒绝初始化。
+
+### 测试与结果
+
+按 [实施前四段式规格](docs/prompts/dtb-memory.md) 完成。`tools/test-dtb-parser.py` 在宿主编译同一份实际 C 解析器，以 Python 独立构造 FDT。覆盖4种cell组合、4种内存容量、每个截断点、错误偏移/字符串/属性、nested memory误判、零范围、溢出、多个bank、2000次固定种子变异；失败验证调用方输出不变。共 **2230 项检查通过**，见 [解析测试日志](docs/logs/dtb-parser-tests.log)。
+
+真实 QEMU 启动矩阵均启用 SLUB，并分别运行 Best-Fit/Buddy 自检：
+
+| RAM | DTB 半开区间 | page_init 管理末端 | 两种模式 |
+|---|---|---|---|
+| 64 MiB | [0x80000000,0x84000000) | 0x84000000 | 通过 |
+| 96 MiB | [0x80000000,0x86000000) | 0x86000000 | 通过 |
+| 128 MiB | [0x80000000,0x88000000) | 0x88000000 | 通过 |
+| 256 MiB | [0x80000000,0x90000000) | 0x88000000，受框架上限裁剪 | 通过 |
+
+128 MiB 日志为 `slub-best-fit-run.log` / `slub-buddy-run.log`，其余为同目录 `*-memory-64/96/256-run.log`：[Best-Fit 默认128](docs/logs/extensions-runs/dtb-memory-matrix/slub-best-fit-run.log)、[Buddy 默认128](docs/logs/extensions-runs/dtb-memory-matrix/slub-buddy-run.log)、[Best-Fit 256](docs/logs/extensions-runs/dtb-memory-matrix/slub-best-fit-memory-256-run.log)、[Buddy 64](docs/logs/extensions-runs/dtb-memory-matrix/slub-buddy-memory-64-run.log)。每次记录当前源码 SHA256 与实际输出，不套用旧版地址。
+
+默认模式未修改教师测试，[教师评分仍为20/20](docs/logs/extensions-runs/dtb-memory-matrix/default-grade.log)，评分后恢复默认 Best-Fit 构建。大于128 MiB的额外内存只报告不分配，不能据此声称突破管理上限。
+
+复现：
+
+```bash
+source ~/OSopt/env.sh
+python3 tools/test-dtb-parser.py
+python3 tools/check-extensions.py --memory-matrix
+```
+
+实际遇到的环境问题：OSopt 刻意提供裸名 RISC-V as/ld，宿主 gcc 会从 PATH 误选它们并报 `as: unrecognized option --64`。宿主专用测试使用 `/usr/bin/gcc -B/usr/bin/` 明确选择宿主 binutils；未删除或修改工具链软链接。
+
+## 扩展：实时 GDB 地址查询和单步演示
+
+负责人：尚文轩，2412456。对应课程文字记录 00:43:13 提到的可贡献课件的地址查询与单步演示建议；工具完成不等于老师已接受贡献或已给予加分，尚未向任何外部人员发送材料。
+
+### 功能与真实执行边界
+
+工具自动清理构建默认内核，从本次 ELF 反汇编定位 satp 写指令及其前一条指令，从本次符号读取 kern_entry、kern_init、bootstacktop 和根页表，不套用旧地址。启动自己的 QEMU GDB stub 随机空闲端口，并用现成 RISC-V GDB 完成：
+
+1. 在 Bare 模式 satp 写指令的前一条指令处真实停止、单步，观察 PC 前进且 satp 仍为0。
+2. 移除低地址断点，在高地址 kern_init 入口真实停止，读取 Sv39 satp、PC、SP，然后再次真实单步。
+3. 读取本次 satp 指向的 PTE，解释 kern_init 取指和栈边界地址；演示未映射与非规范地址的拒绝。
+4. 保存 JSON、完整 GDB/QEMU 日志、ELF SHA256、反汇编和可离线回放的页面。
+
+自动会话正常结束或报错都会终止自己启动的 QEMU 进程组，不占用固定1234端口或结束别人的调试器。为了避开分页后低地址断点重插入问题，不在开启 satp 后保留低地址断点；真实单步在分页前后分别完成，不声称逐条单步跨过整个切换路径。
+
+这是客体 GDB 的寄存器和页表读取，不是宿主 GDB 在 QEMU 内部的 MMU/TLB 断点。A 已有的宿主遍历、填充和直接命中记录仍是独立证据，不能合并为同一时间序列。结构化 walker 不完整模拟特权覆盖、PMP、MPRV/SUM/MXR、A/D 更新或 TLB。
+
+### 本次实际结果
+
+| 阶段 | PC | satp |
+|---|---|---|
+| Bare 单步前 | 0x80200030，or 指令 | 0 |
+| Bare 单步后 | 0x80200034，即将写 satp | 0 |
+| Sv39 高地址入口 | 0xffffffffc02000d8 | 0x8000000000080206 |
+| 高地址单步后 | 0xffffffffc02000dc | 0x8000000000080206 |
+
+这次默认构建根页表 PA 为 0x80206000，根索引511，PTE地址0x80206ff8，PTE为0x200000cf。根级叶子、权限VRWXAD，对应1GiB映射；kern_init VA 0xffffffffc02000d8 的完整物理地址为0x802000d8。只读取一项PTE，不声称总走完三级。
+
+[真实 GDB 日志](docs/logs/address-demo/live-confirm/gdb.log)、[结构化数据](docs/logs/address-demo/live-confirm/trace.json)、[本次符号/源码摘要](docs/logs/address-demo/live-confirm/provenance.log)、[离线回放](docs/logs/address-demo/live-confirm/replay.html)。页面按钮和错误查询已通过实际浏览器操作验证，64位地址以十六进制字符串保存，避免 JavaScript Number 丢失精度。
+
+![真实浏览器中的页表查询回放](docs/images/extensions-address-query.png)
+
+### 复现与交互命令
+
+```bash
+source ~/OSopt/env.sh
+python3 tools/test-sv39.py
+python3 tools/demo-address-translation.py
+```
+
+每次保存到新的 `docs/logs/address-demo/<时间>/`。输出目录中 replay.html 可直接在浏览器打开，按钮只回放记录，不实时执行CPU。若希望在自己的调试会话实时查询：
+
+```gdb
+source tools/gdb_lab2.py
+lab2-vtop &kern_init fetch
+lab2-vtop &bootstacktop read
+```
+
+命令应在分页已开启、当前页表可通过启动高地址映射读取时使用。当前自动工具面向本实验的启动地址空间，不适用于任意进程页表或未知映射窗口。
+
+### 验证、问题和规格迭代
+
+`tools/test-sv39.py` 的17项手构页表 fixture 覆盖4KiB/2MiB/1GiB叶子、Bare、非规范地址、非法权限组合、未映射、错误大页对齐、保留位与读取失败：[离线测试](docs/logs/address-demo/live-confirm/decoder-tests.log)。这里是合成页表测试，和上述真实GDB运行分开表述。
+
+首轮运行成功到达高地址入口，但GDB把satp按有符号64位返回，直接右移导致模式判断失败。修正为按uint64掩码解释寄存器后重跑通过，保留 [首轮失败日志](docs/logs/address-demo/live-first/gdb.log)。这不是页表或QEMU启动失败，也没有改动实际寄存器值。原始 [实施前四段式规格](docs/prompts/address-demo.md) 已在编码前保存，失败与修正是本次真实迭代。
+
+### 面向课件贡献的交付说明
+
+贡献候选包含源码、离线fixture、实时自动脚本、JSON、日志、回放及截图。任何机器只需已有相容的GCC/GDB/QEMU环境；没有接入外部大模型服务或密钥，工具为AI协作开发的确定性调试流程，不冒充自主推理模型服务。是否接收为课程课件由教师决定，贡献发送和署名核对由全组完成。
 

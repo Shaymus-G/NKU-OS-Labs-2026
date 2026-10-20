@@ -1,0 +1,16 @@
+Extensions final audit: 2026-10-20T23:55:38.076467+08:00
+HEAD before report integration commit: 64638d624a24e43abfae2c5f46311dc328a02622
+$ python3 tools/check-lab2-report.py
+report.md matches all 7 authored sections and introduction
+PASS: 22 documents, 309 local links, no non-delivered attachments linked
+PASS: old/new layouts, joint evidence and genuine owner-confirmation items retained
+$ python3 tools/test-dtb-parser.py
+PASS: 2230 C FDT parser checks; 1/2-cell layouts, every truncation, malformed bounds, unsupported banks, 2000 mutations
+$ python3 tools/test-sv39.py
+PASS: 17 Sv39 fixtures; 4KiB/2MiB/1GiB, Bare, permissions and invalid mappings
+PASS: A page_init, B/First-Fit algorithms, PMM/Page public interfaces, Makefile and teacher grading scripts unchanged from 02e3599.
+PASS: eight live 64/96/128/256MiB manager/SLUB runs; source hashes match final kernel sources; default grade 20/20.
+PASS: six isolated invalid-free runs triggered expected assertion panics.
+PASS: live GDB Bare/Sv39 snapshots, real single steps and root-leaf translation; replay stage/error controls checked in actual browser.
+PASS: all new local commits use only user author/committer, no co-author trailers. No push performed.
+Remaining human tasks: A real original AI notes; A/B extension environment review; original manual cross-check; team understanding/signoff; user push/submission; optional teacher contribution delivery.

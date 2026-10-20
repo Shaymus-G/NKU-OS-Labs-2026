@@ -139,7 +139,7 @@ check_alloc_page() succeeded!
 
 A 也已补足分页切换前后对照和后续取指地址查询直接命中已有 TLB 项的观察，见 [分页成功补录](../logs/a-paging-transition-confirm.log)、[直接命中日志](../logs/a-qemu-tlb-hit-after-c.log) 和 [A 章节](a-memory-debug.md) 第 17～18 节。联合版根页表 PA 为 `0x80206000`，历史 First-Fit 为 `0x80205000`，不能混用。直接命中日志证明查询跳过 `tlb_fill()`，不能据此断言“CPU 第二次执行 kern_init”。
 
-未测试多核竞争、热插拔、NUMA、超过本框架 128 MiB 管理上限、预期 panic 的非法释放用例，也未实现 SLUB。这些限制继续保留，不因教师评分通过而删除。
+本章 Buddy 主体测试未覆盖多核竞争、热插拔、NUMA、超过本框架 128 MiB 管理上限、预期 panic 的 Buddy 非法释放用例。这些限制继续保留，不因教师评分通过而删除。初次 Buddy 交付时尚未实现的 SLUB 已在用户随后要求的扩展阶段完成，见 [SLUB扩展](slub.md)；其非法释放自检不等同于 Buddy 接口自身的非法释放测试。
 
 ## 8. 答辩要点与队友交接
 
