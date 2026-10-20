@@ -19,7 +19,7 @@
 |---|---|
 | kern/mm/buddy_pmm.c/.h | Buddy 和自检，符号 buddy_pmm_manager |
 | kern/mm/pmm.c | 仅新增 PMM_BUDDY 条件 include/选择；默认 Best-Fit |
-| tools/check-buddy.py | 两种模式清理重建、启动验证、默认评分、恢复默认构建 |
+| tools/check-buddy.py | 两种模式清理重建、启动验证、默认评分、恢复默认构建；新证据写入 c-runs 独立目录 |
 | tools/qemu-grade-console.py | 本机半主机控制台与教师串口文件的评分转接 |
 | tools/assemble-lab2-report.py | 从个人章节重建总报告 |
 | tools/render-c-evidence.ps1 | 将真实日志摘录排版为 PNG，非原始终端截图 |
@@ -56,6 +56,8 @@ python3 tools/check-buddy.py
 
 本次环境为 WSL Ubuntu 22.04 / GCC 10.2.0 / QEMU 6.2.0 / OpenSBI 1.3，均使用现成 OSopt；没有 sudo 或安装工具。自动脚本终止故意空转的 QEMU 后核对实际断言输出，不能用超时替代测试通过。
 
+2026-10-20 起自动脚本默认写入 `docs/logs/c-runs/<运行时间>/`，也可用 `--log-dir` 指定仓库内的新目录，已有目录会被拒绝。旧 c-*、a-*、b-* 日志均不覆盖；Git 状态由运行时实际读取。B 交接中对旧脚本覆盖历史日志的提醒属于修复前的事实，保留其原稿。
+
 ## 证据索引
 
 - 成功：`c-buddy-build.log`、`c-buddy-run.log`、`c-best-fit-build.log`、`c-best-fit-run.log`、`c-grade.log`。
@@ -63,6 +65,7 @@ python3 tools/check-buddy.py
 - 已修复失败：`c-buddy-first-failure.log`、`c-buddy-debug.log`、`c-grade-console-failure.log`。
 - 图片：`c-buddy-log.png`、`c-grade-log.png`，为相应真实日志的摘录图，标题明确标注生成方式。
 - 正文：`docs/parts/c-buddy.md` 和根目录 `report.md`。
+- 10 月 20 日收尾与最新回归：[最终核验清单](c-final-review.md)，新证据独立保存在 `docs/logs/c-runs/2026-10-20-final/`。
 
 ## 联合验收更新及剩余核对
 

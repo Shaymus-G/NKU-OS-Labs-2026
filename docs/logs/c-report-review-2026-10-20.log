@@ -1,0 +1,15 @@
+C report review: 2026-10-20T23:22:04.522713+08:00
+Evidence collected before the third task commit.
+HEAD: fa90737f75a2b360cd5e19c2047a5ff25488e734
+$ python3 tools/assemble-lab2-report.py
+report.md assembled from four authored sections
+$ python3 tools/check-lab2-report.py
+report.md matches all four authored sections and introduction
+PASS: 8 documents, 233 local links, no non-delivered attachments linked
+PASS: old/new layouts, joint evidence and genuine owner-confirmation items retained
+PASS: kernel, libraries, Makefile, teacher grader, B source chapters/handoff and C historical logs unchanged from cf881a9.
+PASS: new run source SHA256 entries match the final source/tool files.
+PASS: existing verification directory refused before builds/log writes.
+PASS: personal author/committer and no co-author: fa90737f75a2b360cd5e19c2047a5ff25488e734
+PASS: personal author/committer and no co-author: 884c098ce7b3769da5c8e08f2206c146a847dca0
+The final task commit identity is additionally inspected after committing. No push performed.

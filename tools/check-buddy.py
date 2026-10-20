@@ -4,6 +4,8 @@
 Rebuild each manager from scratch, validate real QEMU output, run the
 teacher grade unchanged, and leave a normal Best-Fit build behind.
 """
+import argparse
+from datetime import datetime, timedelta, timezone
 import hashlib
 import os
 from pathlib import Path
@@ -14,13 +16,24 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parent.parent
 os.chdir(ROOT)
-LOGS = ROOT / 'docs/logs'
-LOGS.mkdir(parents=True, exist_ok=True)
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--log-dir', type=Path,
+                    help='new workspace directory; existing directories are refused')
+args = parser.parse_args()
+stamp = datetime.now(timezone(timedelta(hours=8))).strftime('%Y%m%d-%H%M%S-%f')
+LOGS = (args.log_dir or Path('docs/logs/c-runs') / stamp).resolve()
+if not LOGS.is_relative_to(ROOT):
+    parser.error('--log-dir must stay within the repository workspace')
+LOGS.mkdir(parents=True, exist_ok=False)
+print('New verification logs: ' + str(LOGS.relative_to(ROOT)), flush=True)
 
 
 def provenance():
-    text = 'C verification; source tree contains uncommitted C changes.\n'
+    text = 'C verification: ' + datetime.now(timezone(timedelta(hours=8))).isoformat() + '\n'
     text += 'HEAD: ' + subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True)
+    status = subprocess.check_output(
+        ['git', 'status', '--porcelain', '--untracked-files=no'], text=True)
+    text += 'Tracked worktree status: ' + ('clean\n' if not status else '\n' + status)
     for name in ('kern/mm/buddy_pmm.c', 'kern/mm/buddy_pmm.h', 'kern/mm/pmm.c',
                  'kern/mm/best_fit_pmm.c', 'kern/mm/best_fit_test.c', 'Makefile',
                  'tools/check-buddy.py', 'tools/qemu-grade-console.py'):

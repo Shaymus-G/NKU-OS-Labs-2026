@@ -47,6 +47,8 @@ source ~/OSopt/env.sh
 python3 tools/check-buddy.py
 ```
 
+2026-10-20 更新：一键脚本把每次新证据写入 `docs/logs/c-runs/<运行时间>/`，拒绝复用已有目录，保留原 `c-*` 历史日志。可用 `--log-dir` 指定仓库内的新目录；记录中的工作树状态来自实际 Git 查询，不再固定声称“未提交”。
+
 宏变化不会自动使旧对象失效，手动切换必须先 clean；每次都重新启动，不能在运行中更换管理器。本轮不改 Makefile，保持默认 Best-Fit，仅在 `pmm.c` 增加条件 include 和选择分支。
 
 ## 3. 数据结构与接口契约
