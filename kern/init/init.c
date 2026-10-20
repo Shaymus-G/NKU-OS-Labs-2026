@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <dtb.h>
+#ifdef LAB2_EXTENSIONS
+#include <slub.h>
+#endif
 
 int kern_init(void) __attribute__((noreturn));
 void grade_backtrace(void);
@@ -38,6 +41,9 @@ int kern_init(void) {
 
     // grade_backtrace();
     pmm_init();  // init physical memory management
+#ifdef LAB2_EXTENSIONS
+    slub_check();
+#endif
 
     /* do nothing */
     while (1)

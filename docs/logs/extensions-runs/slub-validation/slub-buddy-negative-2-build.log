@@ -1,0 +1,46 @@
+Extension verification: 2026-10-20T23:37:11.540622+08:00
+HEAD: 26653dd760d60c55f195c8dca96d77a50de7d3ff
+e7d710ecef4024fb9c5851bf587eed83990d8b591c3ba4de0409680153e52062  kern/debug/assert.h
+dca2921c69fbe56b1e6c36d2606af39da39fa4e6e2fa1eaec0059862af0f37c3  kern/debug/panic.c
+ccc8ad8b2a359566895f42ec5f7a25ce547ae594a4281701b3ab66d48b76c503  kern/driver/console.c
+0d1b4c3cec6e990ea5c85e7ad0db73f1bb8c1f3dea723baa1475fd5e145c284b  kern/driver/console.h
+ed03126289ff33282add04a1146d0670d4b0627be10fadf251df30afbdcc50db  kern/driver/dtb.c
+99f7d2dfb3d9df500d0ce4a31a2ee0e3ec478284c3ad30d29ec1816b1298cfaf  kern/driver/dtb.h
+a7b0c48448bd1411c28e30296c61d28449bc4edbec29e6fc0e503acab9e517f5  kern/init/init.c
+e2dadd76d58dafb51b1d37a74fb8ab7d31de1b7e7007c890686848acb0dc0eca  kern/libs/stdio.c
+d0545493b626e4149037921a5f9ed60cd8a725c132ca8805d2490483269dc40f  kern/mm/best_fit_pmm.c
+db84fb74a80f38a06b1fa669f135c04c148ea3ba7bcac37bfba13c95c8d82a7a  kern/mm/best_fit_pmm.h
+e7cd82988dccb7c9358c91235e6e55162edbfb53115e9566b3241ad8e2161ed4  kern/mm/best_fit_test.c
+cf8fb72399bba9eed4fb7116803efc3e35f77e08c3afc13ee633c2e5cc9d5286  kern/mm/buddy_pmm.c
+171d00e48413ddac0979858bcdccf1b5f24c2fd43e11f7d17361d39f68200805  kern/mm/buddy_pmm.h
+c6b62aec683e290616c3e6a9ebbe1272edb50722b6b2f422ef87d035eb0b3b00  kern/mm/default_pmm.c
+73d37059123716f4ea4e62ca38515bc20af702bf7f7bd69d44f5da0785230461  kern/mm/default_pmm.h
+c2ddc293e99649d4eb9772cf79fff4f2c5e7100e2b0c9c3d8700f3c00a49a6bd  kern/mm/memlayout.h
+5a609b5bf5d83148614542dac524c85ad5b3481bd3ec3cf74bf289d442efa0e4  kern/mm/mmu.h
+72a42d6904f7bebc9796f56ce49952c704c7f877d8d68f865a3f795c49d5d27e  kern/mm/pmm.c
+afd175be22d87008e4070dde7fc3c1cebe876b55aafeb6fb9a335f8fd66c93bc  kern/mm/pmm.h
+a96b5b27e9b0021f9ceac4db69dad39c27552a3f388aa8d19d0ebe31472f81dc  kern/mm/slub.c
+177e8bd4f9dd5ae6b955582f01987778b79d0cc8de30c1e922909d9bbb735e51  kern/mm/slub.h
+ef55acdc9fdc91f4b93b4fa3365f1e1fa5f879b739d0c7cedaccaf2404af74a5  kern/mm/slub_test.c
+$ make clean
+rm -f -r obj bin
+$ make DEFS=-DLAB2_EXTENSIONS -DPMM_BUDDY -DSLUB_NEGATIVE_TEST=2
++ cc kern/init/entry.S
++ cc kern/init/init.c
++ cc kern/libs/stdio.c
++ cc kern/debug/panic.c
++ cc kern/driver/console.c
++ cc kern/driver/dtb.c
++ cc kern/mm/best_fit_pmm.c
++ cc kern/mm/best_fit_test.c
++ cc kern/mm/buddy_pmm.c
++ cc kern/mm/default_pmm.c
++ cc kern/mm/pmm.c
++ cc kern/mm/slub.c
++ cc kern/mm/slub_test.c
++ cc libs/printfmt.c
++ cc libs/readline.c
++ cc libs/sbi.c
++ cc libs/string.c
++ ld bin/kernel
+riscv64-unknown-elf-objcopy bin/kernel --strip-all -O binary bin/ucore.img
