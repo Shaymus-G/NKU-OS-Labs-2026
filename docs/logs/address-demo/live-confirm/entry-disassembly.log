@@ -1,0 +1,27 @@
+
+bin/kernel:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+ffffffffc0200000 <kern_entry>:
+ffffffffc0200000:	00007297          	auipc	t0,0x7
+ffffffffc0200004:	00028293          	mv	t0,t0
+ffffffffc0200008:	00a2b023          	sd	a0,0(t0) # ffffffffc0207000 <boot_hartid>
+ffffffffc020000c:	00007297          	auipc	t0,0x7
+ffffffffc0200010:	ffc28293          	addi	t0,t0,-4 # ffffffffc0207008 <boot_dtb>
+ffffffffc0200014:	00b2b023          	sd	a1,0(t0)
+ffffffffc0200018:	c02062b7          	lui	t0,0xc0206
+ffffffffc020001c:	ffd0031b          	addiw	t1,zero,-3
+ffffffffc0200020:	037a                	slli	t1,t1,0x1e
+ffffffffc0200022:	406282b3          	sub	t0,t0,t1
+ffffffffc0200026:	00c2d293          	srli	t0,t0,0xc
+ffffffffc020002a:	fff0031b          	addiw	t1,zero,-1
+ffffffffc020002e:	137e                	slli	t1,t1,0x3f
+ffffffffc0200030:	0062e2b3          	or	t0,t0,t1
+ffffffffc0200034:	18029073          	csrw	satp,t0
+ffffffffc0200038:	12000073          	sfence.vma
+ffffffffc020003c:	c0206137          	lui	sp,0xc0206
+ffffffffc0200040:	c02002b7          	lui	t0,0xc0200
+ffffffffc0200044:	0d828293          	addi	t0,t0,216 # ffffffffc02000d8 <kern_init>
+ffffffffc0200048:	8282                	jr	t0
