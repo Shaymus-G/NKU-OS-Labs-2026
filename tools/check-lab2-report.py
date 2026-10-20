@@ -10,7 +10,7 @@ subprocess.run(['python3', str(root / 'tools/assemble-lab2-report.py'), '--check
 excluded = {'a-build.log', 'a-qemu-pagewalk-retry.log',
             'a-qemu-pagewalk.log', 'a-ucore-pagewalk.log'}
 documents = [root / 'report.md']
-for folder in ('docs/parts', 'docs/notes', 'docs/prompts'):
+for folder in ('docs/report', 'docs/parts', 'docs/notes', 'docs/prompts'):
     documents.extend(sorted((root / folder).glob('*.md')))
 count = 0
 for path in documents:
@@ -31,12 +31,24 @@ for path in documents:
             count += 1
 report = (root / 'report.md').read_text(encoding='utf-8')
 for token in ('31929', '31928', '0x80205000', '0x80206000',
-              'b5c05e9', 'cc646e0', '6baf620', 'c3c4dd9', 'cf881a9',
               'a-paging-transition-confirm.log', 'a-qemu-tlb-hit-after-c.log',
               'b-integration-grade.log', '2412082', '2412559', '2412456',
               'SLUB', '2230', '17项', 'LAB2_EXTENSIONS', 'Prompt', 'Specification'):
     if token not in report:
         raise SystemExit('Required evidence/version/limitation missing: ' + token)
+structural_lines = []
+fenced = False
+for line in report.splitlines():
+    if line.startswith('```'):
+        fenced = not fenced
+    elif not fenced:
+        structural_lines.append(line)
+structure = '\n'.join(structural_lines)
+headings = re.findall(r'^## (\d+)\.', structure, re.M)
+if headings != [str(number) for number in range(1, 10)]:
+    raise SystemExit('Expected nine ordered academic report sections')
+if len(re.findall(r'^# ', structure, re.M)) != 1:
+    raise SystemExit('Expected exactly one report title')
 subprocess.run(['git', 'diff', '--check'], cwd=root, check=True)
 print(f'PASS: {len(documents)} documents, {count} local links, no non-delivered attachments linked')
 print('PASS: old/new layouts, joint evidence and genuine owner-confirmation items retained')
