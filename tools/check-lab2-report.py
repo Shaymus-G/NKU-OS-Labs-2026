@@ -33,7 +33,7 @@ report = (root / 'report.md').read_text(encoding='utf-8')
 for token in ('31929', '31928', '0x80205000', '0x80206000',
               'b5c05e9', 'cc646e0', '6baf620', 'c3c4dd9', 'cf881a9',
               'a-paging-transition-confirm.log', 'a-qemu-tlb-hit-after-c.log',
-              'b-integration-grade.log', 'YOUR CODE'):
+              'b-integration-grade.log', '2412082', '2412559', '2412456'):
     if token not in report:
         raise SystemExit('Required evidence/version/limitation missing: ' + token)
 subprocess.run(['git', 'diff', '--check'], cwd=root, check=True)
