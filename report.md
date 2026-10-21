@@ -121,6 +121,8 @@ free range: [0x0000000080348000, 0x0000000088000000), pages: 31928
 
 B 的 QEMU 4.1.1 联合验证恢复 31928 个空闲页，教师评分为 20/20。见 [行为日志](docs/logs/b-integration-best-fit-run.log)、[评分日志](docs/logs/b-integration-grade.log)。该测试依赖 Best-Fit 的区间释放语义，不用于 Buddy。
 
+2026-10-21，B 在扩展合入版本 `35c479d` 上清理重建默认 Best-Fit，再次通过全部行为检查，恢复 31928 页，普通教师评分仍为 20/20。见 [最新基础回归](docs/logs/b-extension-20261021-102252/baseline-best-fit-run.log)、[普通评分](docs/logs/b-extension-20261021-102252/default-grade.log)。启用完整 SLUB 自检的构建在 128 MiB 下恢复 31925 页；这是不同构建的内核占用差异，不改写早期日志的 31928 页。
+
 最佳匹配用例在偏移 0、12、22 处分别构造 8、5、7 页空闲块。请求 4 页应返回偏移 12，留下偏移 16 的 1 页块，另外两个块不变。它可以区分“找到第一个足够块”和“找到最小足够块”，而仅检查返回非空无法证明 Best-Fit 选择正确。
 
 碎片用例保留三个互不相邻的 4 页块，总量为 12 页。6 页请求仍应失败，因为不存在满足请求的连续区间；随后比较失败前后的布局和计数，可以验证搜索失败没有摘链或扣减计数。三种合并用例分别改变释放顺序，以覆盖仅前邻、仅后邻及双侧相邻的路径。
@@ -249,6 +251,8 @@ capacity = (PGSIZE - offset) / stride
 | 非法释放 | 重复释放、错误缓存、内部指针分别触发断言 | 通过 |
 
 正常自检和非法释放分别启动；后者共在两种页管理器下运行六次，以预期断言作为判据。扩展版本的两种正常运行均恢复 `31925 → 31925` 页。见 [Best-Fit 下的 SLUB](docs/logs/extensions-runs/dtb-memory-matrix/slub-best-fit-run.log)、[Buddy 下的 SLUB](docs/logs/extensions-runs/dtb-memory-matrix/slub-buddy-run.log) 和 [独立重复释放检查](docs/logs/extensions-runs/slub-validation/slub-best-fit-negative-1-run.log)。
+
+B 于 2026-10-21 在 QEMU 4.1.1 / OpenSBI 0.4 下独立复测：两种 PMM 的完整 SLUB 自检在 64、96、128、256 MiB 下均通过，六次非法释放均命中各自预期断言。128 MiB 下两种模式仍恢复 31925 页。见 [B 的 Best-Fit 运行](docs/logs/b-extension-20261021-102252/slub-best-fit-run.log)、[Buddy 运行](docs/logs/b-extension-20261021-102252/slub-buddy-run.log) 及 [矩阵与断言核对结果](docs/logs/b-extension-20261021-102252/results.json)。
 
 命名缓存测试在第 63 个对象分配后检查 slab 数量为 2、活对象数为 63，空闲物理页数减少 2。释放一个槽再分配时返回同一地址，并重新执行构造回调；释放所有对象后只保留一个空页，`shrink` 再回收这一页，页数恢复到初值。这一过程同时覆盖缓存复用和页面生命周期。
 
@@ -396,9 +400,19 @@ entry->addr_code = 0xffffffffc0200000
 | DTB | 2230 项解析检查、四种内存容量 | 通过 |
 | 地址转换 | 双重 GDB、切换对照、直接命中及自动查询 | 获得对应日志 |
 
-主实验联合版在 A、B 的 QEMU 4.1.1 环境通过。新增 SLUB、DTB 和自动演示在 C 的 QEMU 6.2.0 环境验证，尚需在原环境复测这一批扩展。教师评分不包含 Buddy、SLUB 或调试结果。
+主实验联合版在 A、B 的 QEMU 4.1.1 环境通过。新增 SLUB、DTB 和自动演示先在 C 的 QEMU 6.2.0 环境验证；2026-10-21，B 在 QEMU 4.1.1 / OpenSBI 0.4 下完成 SLUB、DTB 及两种 PMM 的独立回归，普通教师评分为 20/20。本轮 B 未运行自动 GDB 演示，该项仍引用 A/C 的既有证据。教师评分不包含 Buddy、SLUB 或调试结果。
 
-最新默认评分见 [扩展后的教师评分](docs/logs/extensions-runs/dtb-memory-matrix/default-grade.log)。新内核的容量矩阵中，两种 PMM 与 SLUB 共完成八次正常启动。相应 [源码摘要与审计](docs/logs/extensions-final-audit.log) 用于关联版本；报告结构调整不改变这些代码和结果。
+C 的扩展后默认评分见 [教师评分记录](docs/logs/extensions-runs/dtb-memory-matrix/default-grade.log)。该容量矩阵中，两种 PMM 与 SLUB 共完成八次正常启动。相应 [源码摘要与审计](docs/logs/extensions-final-audit.log) 用于关联版本；报告结构调整不改变这些代码和结果。
+
+B 本轮被测内核源码为 `35c479da0ca0ba300a777cf1830808857b5c3f76`，未修改算法和教师检查。环境与源码摘要见 [B 环境记录](docs/logs/b-extension-20261021-102252/environment.log)，完整索引及复现说明见 [B 扩展复测记录](docs/notes/b-extension-review-2026-10-21.md)。
+
+| B 本轮验证 | 实际结果 | 独立证据 |
+|---|---|---|
+| 两种 PMM × 四种内存容量的 SLUB | 八次正常自检通过；64/96/128/256 MiB 分别恢复 15701/23813/31925/31925 页 | [矩阵结果](docs/logs/b-extension-20261021-102252/results.json) |
+| 两种 PMM × 三类非法释放 | 重复释放、错误缓存、内部指针分别命中预期断言，六次通过 | 同上，逐项保存断言表达式及原始日志 |
+| 宿主 C FDT 解析器 | 2230 项检查通过 | [解析日志](docs/logs/b-extension-20261021-102252/dtb-parser.log) |
+| 关闭扩展后的 Buddy、Best-Fit | 两种基础自检通过，均恢复 31928 页 | [Buddy](docs/logs/b-extension-20261021-102252/baseline-buddy-run.log)、[Best-Fit](docs/logs/b-extension-20261021-102252/baseline-best-fit-run.log) |
+| 普通教师评分与最终产物 | 20/20；最终镜像为默认 Best-Fit | [评分](docs/logs/b-extension-20261021-102252/default-grade.log)、[产物检查](docs/logs/b-extension-20261021-102252/default-artifact.log) |
 
 评分脚本的关键输出为：
 
@@ -448,6 +462,15 @@ python3 tools/check-extensions.py --negative-tests --memory-matrix
 python3 tools/test-sv39.py
 python3 tools/demo-address-translation.py
 ```
+
+B 的 OpenSBI 0.4 环境使用以下入口完成扩展矩阵、非法释放和普通评分；不带 `--native-grade` 时保留 C 原有的控制台转接评分方式：
+
+```bash
+python3 tools/check-extensions.py --native-grade --negative-tests --memory-matrix \
+    --log-dir "docs/logs/b-extension-$(date +%Y%m%d-%H%M%S)"
+```
+
+日志目录必须尚不存在。完整矩阵、预期异常和解析检查分别保存，不将预期 panic 计作正常启动成功。
 
 各次运行保存到新目录，保留早期证据。测试脚本在内核完成输出后结束其空转进程；正常日志末尾的终止信号不是 panic 判据。
 

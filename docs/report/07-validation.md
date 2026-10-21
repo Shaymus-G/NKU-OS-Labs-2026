@@ -13,9 +13,19 @@
 | DTB | 2230 项解析检查、四种内存容量 | 通过 |
 | 地址转换 | 双重 GDB、切换对照、直接命中及自动查询 | 获得对应日志 |
 
-主实验联合版在 A、B 的 QEMU 4.1.1 环境通过。新增 SLUB、DTB 和自动演示在 C 的 QEMU 6.2.0 环境验证，尚需在原环境复测这一批扩展。教师评分不包含 Buddy、SLUB 或调试结果。
+主实验联合版在 A、B 的 QEMU 4.1.1 环境通过。新增 SLUB、DTB 和自动演示先在 C 的 QEMU 6.2.0 环境验证；2026-10-21，B 在 QEMU 4.1.1 / OpenSBI 0.4 下完成 SLUB、DTB 及两种 PMM 的独立回归，普通教师评分为 20/20。本轮 B 未运行自动 GDB 演示，该项仍引用 A/C 的既有证据。教师评分不包含 Buddy、SLUB 或调试结果。
 
-最新默认评分见 [扩展后的教师评分](../logs/extensions-runs/dtb-memory-matrix/default-grade.log)。新内核的容量矩阵中，两种 PMM 与 SLUB 共完成八次正常启动。相应 [源码摘要与审计](../logs/extensions-final-audit.log) 用于关联版本；报告结构调整不改变这些代码和结果。
+C 的扩展后默认评分见 [教师评分记录](../logs/extensions-runs/dtb-memory-matrix/default-grade.log)。该容量矩阵中，两种 PMM 与 SLUB 共完成八次正常启动。相应 [源码摘要与审计](../logs/extensions-final-audit.log) 用于关联版本；报告结构调整不改变这些代码和结果。
+
+B 本轮被测内核源码为 `35c479da0ca0ba300a777cf1830808857b5c3f76`，未修改算法和教师检查。环境与源码摘要见 [B 环境记录](../logs/b-extension-20261021-102252/environment.log)，完整索引及复现说明见 [B 扩展复测记录](../notes/b-extension-review-2026-10-21.md)。
+
+| B 本轮验证 | 实际结果 | 独立证据 |
+|---|---|---|
+| 两种 PMM × 四种内存容量的 SLUB | 八次正常自检通过；64/96/128/256 MiB 分别恢复 15701/23813/31925/31925 页 | [矩阵结果](../logs/b-extension-20261021-102252/results.json) |
+| 两种 PMM × 三类非法释放 | 重复释放、错误缓存、内部指针分别命中预期断言，六次通过 | 同上，逐项保存断言表达式及原始日志 |
+| 宿主 C FDT 解析器 | 2230 项检查通过 | [解析日志](../logs/b-extension-20261021-102252/dtb-parser.log) |
+| 关闭扩展后的 Buddy、Best-Fit | 两种基础自检通过，均恢复 31928 页 | [Buddy](../logs/b-extension-20261021-102252/baseline-buddy-run.log)、[Best-Fit](../logs/b-extension-20261021-102252/baseline-best-fit-run.log) |
+| 普通教师评分与最终产物 | 20/20；最终镜像为默认 Best-Fit | [评分](../logs/b-extension-20261021-102252/default-grade.log)、[产物检查](../logs/b-extension-20261021-102252/default-artifact.log) |
 
 评分脚本的关键输出为：
 
@@ -65,5 +75,14 @@ python3 tools/check-extensions.py --negative-tests --memory-matrix
 python3 tools/test-sv39.py
 python3 tools/demo-address-translation.py
 ```
+
+B 的 OpenSBI 0.4 环境使用以下入口完成扩展矩阵、非法释放和普通评分；不带 `--native-grade` 时保留 C 原有的控制台转接评分方式：
+
+```bash
+python3 tools/check-extensions.py --native-grade --negative-tests --memory-matrix \
+    --log-dir "docs/logs/b-extension-$(date +%Y%m%d-%H%M%S)"
+```
+
+日志目录必须尚不存在。完整矩阵、预期异常和解析检查分别保存，不将预期 panic 计作正常启动成功。
 
 各次运行保存到新目录，保留早期证据。测试脚本在内核完成输出后结束其空转进程；正常日志末尾的终止信号不是 panic 判据。

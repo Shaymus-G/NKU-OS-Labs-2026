@@ -44,6 +44,8 @@ capacity = (PGSIZE - offset) / stride
 
 正常自检和非法释放分别启动；后者共在两种页管理器下运行六次，以预期断言作为判据。扩展版本的两种正常运行均恢复 `31925 → 31925` 页。见 [Best-Fit 下的 SLUB](../logs/extensions-runs/dtb-memory-matrix/slub-best-fit-run.log)、[Buddy 下的 SLUB](../logs/extensions-runs/dtb-memory-matrix/slub-buddy-run.log) 和 [独立重复释放检查](../logs/extensions-runs/slub-validation/slub-best-fit-negative-1-run.log)。
 
+B 于 2026-10-21 在 QEMU 4.1.1 / OpenSBI 0.4 下独立复测：两种 PMM 的完整 SLUB 自检在 64、96、128、256 MiB 下均通过，六次非法释放均命中各自预期断言。128 MiB 下两种模式仍恢复 31925 页。见 [B 的 Best-Fit 运行](../logs/b-extension-20261021-102252/slub-best-fit-run.log)、[Buddy 运行](../logs/b-extension-20261021-102252/slub-buddy-run.log) 及 [矩阵与断言核对结果](../logs/b-extension-20261021-102252/results.json)。
+
 命名缓存测试在第 63 个对象分配后检查 slab 数量为 2、活对象数为 63，空闲物理页数减少 2。释放一个槽再分配时返回同一地址，并重新执行构造回调；释放所有对象后只保留一个空页，`shrink` 再回收这一页，页数恢复到初值。这一过程同时覆盖缓存复用和页面生命周期。
 
 ```text

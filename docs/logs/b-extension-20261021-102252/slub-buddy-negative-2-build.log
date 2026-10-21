@@ -1,0 +1,50 @@
+Extension verification: 2026-10-21T10:26:33.676244+08:00
+HEAD: 35c479da0ca0ba300a777cf1830808857b5c3f76
+0a93afd3ff9538d1712e7e1df0006668d5a9c91cfd38c0fa945dceaa72613633  kern/debug/assert.h
+7ad06be18808f6318c5beeeb415f7c9dd399dde52dc0b79b346e2f54a43c9aeb  kern/debug/panic.c
+d7ca78720834a50fe79748ca151ef148d2ef2f643cb63d9f456f36f1d42ea499  kern/driver/console.c
+964c039c962830691c15da313b6be9139a3fbca86512ade5fd5bae350bf5085b  kern/driver/console.h
+3eea2ae14145130990060e66a5819f829e42c4e7e906ac71b5efc0b339819934  kern/driver/dtb.c
+31cd8bea8aaa0f8043987b13f27adbea03a2eda66c96aab84a8efab176933bd3  kern/driver/dtb.h
+f0630f3fb418db50c1e436fb1903822a78f47481e000dd4e6b3a660e64c86261  kern/driver/fdt_memory.c
+fb82d8c9e71c7b3b18611d6565ff509ebb9b2ee2f9e636fd7b1d07dcb6053970  kern/init/init.c
+bfb8d86465315f26cfce15d5b9ec9728a0e473c411f651ae1c289843561e5cbc  kern/libs/stdio.c
+1496f5f70079f37273637645d2f2156b423e4bafdc9b7dd355d68dd4a0a9b91b  kern/mm/best_fit_pmm.c
+c14417cc5f71f8b724083b6039c4fbe278c81cfd0d76ceca258735ea08d99ba6  kern/mm/best_fit_pmm.h
+e7cd82988dccb7c9358c91235e6e55162edbfb53115e9566b3241ad8e2161ed4  kern/mm/best_fit_test.c
+1ff893c453d77522c758e624476af8094bff4dbc7fa715e9aa84729fdb8d1346  kern/mm/buddy_pmm.c
+2c15adc1e807d2525811c31212201bd20d086207cea82575d55e96d84a325201  kern/mm/buddy_pmm.h
+d0d58ce42280ff885847cae16ea0bd592f63055a6ba95406c4fa5ea3b59fc927  kern/mm/default_pmm.c
+85e13acb8f3f0b90c9de95016db21d4882db383213a71daa2374ec6b6a295645  kern/mm/default_pmm.h
+179b092ca8e035eaf72e1ed105e59e23885064f2efa8cb6b71b6b4e27906dd53  kern/mm/memlayout.h
+75057c4508aa70bdc990ccaa86a02470cd39548c2fdd398bc019db79635f29be  kern/mm/mmu.h
+0b06a0200f8b910bc1dd645c3be7c04b9f880df9d71e97b53b5302cc110c235a  kern/mm/pmm.c
+a1c97b722a50cb706e493215741d47bdb13eee22a14bc7034bed86883f170f48  kern/mm/pmm.h
+ad0b7c86a4d71dd41ac62329e6c7f4fd93c86231264ee5e32f3fa1cc74b98166  kern/mm/slub.c
+8c2dc0b86854f95c10aa3bbde8b4f28b91fb5351c10691a6a1d41bee154bfc58  kern/mm/slub.h
+c4b41b5fc794b03ec312d5452a97fc6f0c15defa5b399a7414088b652d6f8911  kern/mm/slub_test.c
+$ make clean
+rm -f -r obj bin
+$ make DEFS=-DLAB2_EXTENSIONS -DPMM_BUDDY -DSLUB_NEGATIVE_TEST=2
+make: Warning: File 'obj/libs/readline.d' has modification time 0.036 s in the future
++ cc kern/init/entry.S
++ cc kern/init/init.c
++ cc kern/libs/stdio.c
++ cc kern/debug/panic.c
++ cc kern/driver/console.c
++ cc kern/driver/dtb.c
++ cc kern/driver/fdt_memory.c
++ cc kern/mm/best_fit_pmm.c
++ cc kern/mm/best_fit_test.c
++ cc kern/mm/buddy_pmm.c
++ cc kern/mm/default_pmm.c
++ cc kern/mm/pmm.c
++ cc kern/mm/slub.c
++ cc kern/mm/slub_test.c
++ cc libs/printfmt.c
++ cc libs/readline.c
++ cc libs/sbi.c
++ cc libs/string.c
++ ld bin/kernel
+riscv64-unknown-elf-objcopy bin/kernel --strip-all -O binary bin/ucore.img
+make: warning:  Clock skew detected.  Your build may be incomplete.

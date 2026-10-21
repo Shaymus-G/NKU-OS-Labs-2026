@@ -1,0 +1,411 @@
+B verification environment and provenance
+Timestamp: 2026-10-21T02:28:01.471883+00:00
+$ git rev-parse HEAD
+35c479da0ca0ba300a777cf1830808857b5c3f76
+$ git status --short
+ M .gitignore
+ M Makefile
+ M docs/logs/a-after-c-best-fit-build.log
+ M docs/logs/a-after-c-buddy-build.log
+ M docs/logs/a-after-c-grade.log
+ M docs/logs/a-after-c-revision.log
+ M docs/logs/a-build-first-fit.log
+ M docs/logs/a-entry-disassembly-after-c.log
+ M docs/logs/a-entry-source-after-c.log
+ M docs/logs/a-environment.log
+ M docs/logs/a-page-init-debug.log
+ M docs/logs/a-paging-symbols-after-c.log
+ M docs/logs/a-paging-symbols.log
+ M docs/logs/a-paging-transition-after-c.log
+ M docs/logs/a-paging-transition-confirm.log
+ M docs/logs/a-qemu-pagewalk-body.log
+ M docs/logs/a-qemu-source-locations.log
+ M docs/logs/a-qemu-tlb-hit-after-c.log
+ M docs/logs/address-demo/live-confirm/build.log
+ M docs/logs/address-demo/live-confirm/decoder-tests.log
+ M docs/logs/address-demo/live-confirm/entry-disassembly.log
+ M docs/logs/address-demo/live-confirm/provenance.log
+ M docs/logs/address-demo/live-confirm/replay.html
+ M docs/logs/address-demo/live-confirm/trace.json
+ M docs/logs/address-demo/live-first/build.log
+ M docs/logs/address-demo/live-first/entry-disassembly.log
+ M docs/logs/b-integration-best-fit-run.log
+ M docs/logs/b-integration-buddy-run.log
+ M docs/logs/c-best-fit-build.log
+ M docs/logs/c-buddy-build.log
+ M docs/logs/c-delivery-review-2026-10-21.log
+ M docs/logs/c-final-audit.log
+ M docs/logs/c-grade-console-failure.log
+ M docs/logs/c-grade.log
+ M docs/logs/c-report-review-2026-10-20.log
+ M docs/logs/c-runs/2026-10-20-final/c-best-fit-build.log
+ M docs/logs/c-runs/2026-10-20-final/c-buddy-build.log
+ M docs/logs/c-runs/2026-10-20-final/c-grade.log
+ M docs/logs/dtb-parser-tests.log
+ M docs/logs/extensions-final-audit.log
+ M docs/logs/extensions-runs/dtb-memory-matrix/default-grade.log
+ M docs/logs/extensions-runs/dtb-memory-matrix/default-restored-build.log
+ M docs/logs/extensions-runs/dtb-memory-matrix/slub-best-fit-build.log
+ M docs/logs/extensions-runs/dtb-memory-matrix/slub-buddy-build.log
+ M docs/logs/extensions-runs/slub-first/default-restored-build.log
+ M docs/logs/extensions-runs/slub-first/slub-best-fit-build.log
+ M docs/logs/extensions-runs/slub-first/slub-buddy-build.log
+ M docs/logs/extensions-runs/slub-validation/default-restored-build.log
+ M docs/logs/extensions-runs/slub-validation/slub-best-fit-build.log
+ M docs/logs/extensions-runs/slub-validation/slub-best-fit-negative-1-build.log
+ M docs/logs/extensions-runs/slub-validation/slub-best-fit-negative-2-build.log
+ M docs/logs/extensions-runs/slub-validation/slub-best-fit-negative-3-build.log
+ M docs/logs/extensions-runs/slub-validation/slub-buddy-build.log
+ M docs/logs/extensions-runs/slub-validation/slub-buddy-negative-1-build.log
+ M docs/logs/extensions-runs/slub-validation/slub-buddy-negative-2-build.log
+ M docs/logs/extensions-runs/slub-validation/slub-buddy-negative-3-build.log
+ M docs/logs/report-results-review-2026-10-21.log
+ M docs/notes/b-progress.md
+ M docs/notes/c-delivery-review-2026-10-21.md
+ M docs/notes/c-final-review.md
+ M docs/notes/c-progress.md
+ M docs/notes/extension-plan.md
+ M docs/notes/final-actions.md
+ M docs/notes/prompt-method.md
+ M docs/notes/team-handoff-2026-10-21.md
+ M docs/parts/a-memory-debug.md
+ M docs/parts/address-demo.md
+ M docs/parts/c-buddy.md
+ M docs/parts/dtb-challenge.md
+ M docs/parts/slub.md
+ M docs/prompts/a-page-init.md
+ M docs/prompts/address-demo.md
+ M docs/prompts/c-buddy-tests.md
+ M docs/prompts/c-buddy.md
+ M docs/prompts/dtb-memory.md
+ M docs/prompts/slub.md
+ M docs/report/01-overview.md
+ M docs/report/02-memory.md
+ M docs/report/03-fit.md
+ M docs/report/04-buddy.md
+ M docs/report/05-slub.md
+ M docs/report/06-translation.md
+ M docs/report/07-validation.md
+ M docs/report/08-analysis.md
+ M docs/report/README.md
+ M kern/debug/assert.h
+ M kern/debug/panic.c
+ M kern/driver/console.c
+ M kern/driver/console.h
+ M kern/driver/dtb.c
+ M kern/driver/dtb.h
+ M kern/driver/fdt_memory.c
+ M kern/init/entry.S
+ M kern/init/init.c
+ M kern/libs/stdio.c
+ M kern/mm/best_fit_pmm.c
+ M kern/mm/best_fit_pmm.h
+ M kern/mm/buddy_pmm.c
+ M kern/mm/buddy_pmm.h
+ M kern/mm/default_pmm.c
+ M kern/mm/default_pmm.h
+ M kern/mm/memlayout.h
+ M kern/mm/mmu.h
+ M kern/mm/pmm.c
+ M kern/mm/pmm.h
+ M kern/mm/slub.c
+ M kern/mm/slub.h
+ M kern/mm/slub_test.c
+ M libs/defs.h
+ M libs/error.h
+ M libs/list.h
+ M libs/printfmt.c
+ M libs/readline.c
+ M libs/riscv.h
+ M libs/sbi.c
+ M libs/sbi.h
+ M libs/stdarg.h
+ M libs/stdio.h
+ M libs/string.c
+ M libs/string.h
+ M report.md
+ M tools/address-demo-template.html
+ M tools/assemble-lab2-report.py
+ M tools/boot.ld
+ M tools/check-buddy.py
+ M tools/check-extensions.py
+ M tools/check-lab2-report.py
+ M tools/demo-address-translation.py
+ M tools/function.mk
+ M tools/gdb_demo_driver.py
+ M tools/gdb_lab2.py
+ M tools/gdbinit
+ M tools/inject.py
+ M tools/kernel.ld
+ M tools/kernel_nopage.ld
+ M tools/qemu-grade-console.py
+ M tools/render-address-demo.py
+ M tools/render-c-evidence.ps1
+ M tools/sv39.py
+ M tools/test-dtb-parser.py
+ M tools/test-sv39.py
+ M tools/test_lab2.c
+ M tools/test_lab2.h
+?? docs/logs/b-extension-20261021-102252-suite.log
+?? docs/logs/b-extension-20261021-102252/
+$ uname -a
+Linux lenovo 6.6.87.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun  5 18:30:46 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+$ cat /etc/os-release
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.5 LTS (Noble Numbat)"
+VERSION_CODENAME=noble
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=noble
+LOGO=ubuntu-logo
+$ python3 --version
+Python 3.12.3
+$ riscv64-unknown-elf-gcc --version
+riscv64-unknown-elf-gcc (SiFive GCC-Metal 10.2.0-2020.12.8) 10.2.0
+Copyright (C) 2020 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+$ qemu-system-riscv64 --version
+QEMU emulator version 4.1.1
+Copyright (c) 2003-2019 Fabrice Bellard and the QEMU Project developers
+$ git diff -- tools/check-extensions.py
+diff --git a/tools/check-extensions.py b/tools/check-extensions.py
+index 912d6b6..bf1187a 100644
+--- a/tools/check-extensions.py
++++ b/tools/check-extensions.py
+@@ -1,107 +1,114 @@
+-#!/usr/bin/env python3
+-"""Run extension kernels on real QEMU; keep each invocation's evidence separate."""
+-import argparse
+-from datetime import datetime, timezone, timedelta
+-import hashlib
+-import os
+-from pathlib import Path
+-import signal
+-import subprocess
+-
+-ROOT = Path(__file__).resolve().parent.parent
+-os.chdir(ROOT)
+-parser = argparse.ArgumentParser(description=__doc__)
+-parser.add_argument('--log-dir', type=Path)
+-parser.add_argument('--negative-tests', action='store_true',
+-                    help='run isolated expected-panic tests in both PMMs')
+-parser.add_argument('--memory-matrix', action='store_true',
+-                    help='also boot 64/96/256 MiB machines with both PMMs')
+-args = parser.parse_args()
+-stamp = datetime.now(timezone(timedelta(hours=8))).strftime('%Y%m%d-%H%M%S-%f')
+-logs = (args.log_dir or Path('docs/logs/extensions-runs') / stamp).resolve()
+-if not logs.is_relative_to(ROOT):
+-    parser.error('log directory must be inside the workspace')
+-logs.mkdir(parents=True, exist_ok=False)
+-print('Evidence: ' + str(logs.relative_to(ROOT)), flush=True)
+-
+-
+-def provenance():
+-    text = 'Extension verification: ' + datetime.now(timezone(timedelta(hours=8))).isoformat() + '\n'
+-    text += 'HEAD: ' + subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True)
+-    for path in sorted(list(Path('kern').rglob('*.c')) + list(Path('kern').rglob('*.h'))):
+-        text += hashlib.sha256(path.read_bytes()).hexdigest() + '  ' + str(path) + '\n'
+-    return text
+-
+-
+-def build(name, defs):
+-    with (logs / (name + '-build.log')).open('w') as out:
+-        out.write(provenance())
+-        out.flush()
+-        for command in (['make', 'clean'], ['make', 'DEFS=' + defs]):
+-            out.write('$ ' + ' '.join(command) + '\n')
+-            out.flush()
+-            subprocess.run(command, stdout=out, stderr=subprocess.STDOUT, check=True)
+-
+-
+-def boot(name, defs, manager, markers, memory=128, expected_panic=False):
+-    command = ['make', 'qemu', 'DEFS=' + defs,
+-               'QEMU=qemu-system-riscv64 -m ' + str(memory) + 'M']
+-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+-                               start_new_session=True)
+-    try:
+-        output, _ = process.communicate(timeout=12)
+-    except subprocess.TimeoutExpired:
+-        os.killpg(process.pid, signal.SIGTERM)
+-        output, _ = process.communicate(timeout=5)
+-    text = output.decode(errors='replace')
+-    (logs / (name + '-run.log')).write_text(provenance() + '$ ' + ' '.join(command) +
+-        '\nHarness terminates the intentionally idle kernel after 12 seconds.\n' + text)
+-    assert ('kernel panic' in text) == expected_panic, name
+-    assert 'memory management: ' + manager in text, name
+-    for marker in markers:
+-        assert marker in text, (name, marker)
+-    print(name + ': PASS', flush=True)
+-
+-
+-markers = ['[SLUB] aligned cache, ctor, reuse, full/partial/empty, shrink: PASS',
+-           '[SLUB] kmalloc class boundaries, large blocks, content isolation: PASS',
+-           '[SLUB] 64 small objects share one physical page: PASS',
+-           '[SLUB] 1024 mixed objects, nonoverlap and byte-pattern oracle: PASS',
+-           '[SLUB] cache metadata exhaustion and recovery: PASS',
+-           '[SLUB] real page exhaustion, allocation failure, full recovery: PASS',
+-           '[SLUB] state restored:', 'check_alloc_page() succeeded!']
+-for label, defs, manager in [
+-    ('slub-best-fit', '-DLAB2_EXTENSIONS', 'best_fit_pmm_manager'),
+-    ('slub-buddy', '-DLAB2_EXTENSIONS -DPMM_BUDDY', 'buddy_pmm_manager'),
+-]:
+-    build(label, defs)
+-    boot(label, defs, manager, markers)
+-    if args.memory_matrix:
+-        for memory in (64, 96, 256):
+-            reported_end = 0x80000000 + (memory << 20)
+-            managed_end = min(reported_end, 0x88000000)
+-            boot(label + '-memory-' + str(memory), defs, manager, markers + [
+-                'Size: 0x%016x' % (memory << 20),
+-                'DTB range: [0x0000000080000000, 0x%016x)' % reported_end,
+-                'managed end: 0x%016x' % managed_end], memory=memory)
+-    if args.negative_tests:
+-        for case in (1, 2, 3):
+-            negative = label + '-negative-' + str(case)
+-            negative_defs = defs + ' -DSLUB_NEGATIVE_TEST=' + str(case)
+-            build(negative, negative_defs)
+-            boot(negative, negative_defs, manager,
+-                 ['[SLUB negative] case ' + str(case) + ': expect assertion panic',
+-                  'assertion failed:'], expected_panic=True)
+-# Restore the familiar default artifact, with no extension test enabled.
+-build('default-restored', '')
+-with (logs / 'default-grade.log').open('w') as out:
+-    out.write(provenance())
+-    out.flush()
+-    subprocess.run(['make', 'grade', 'QEMU=python3 tools/qemu-grade-console.py'],
+-                   stdout=out, stderr=subprocess.STDOUT, check=True)
+-assert 'Total Score: 20/20' in (logs / 'default-grade.log').read_text()
+-print('default-grade: 20/20', flush=True)
+-with (logs / 'default-restored-build.log').open('a') as out:
+-    out.write('\n$ make (restore after grade)\n')
+-    out.flush()
+-    subprocess.run(['make'], stdout=out, stderr=subprocess.STDOUT, check=True)
++#!/usr/bin/env python3
++"""Run extension kernels on real QEMU; keep each invocation's evidence separate."""
++import argparse
++from datetime import datetime, timezone, timedelta
++import hashlib
++import os
++from pathlib import Path
++import signal
++import subprocess
++
++ROOT = Path(__file__).resolve().parent.parent
++os.chdir(ROOT)
++parser = argparse.ArgumentParser(description=__doc__)
++parser.add_argument('--log-dir', type=Path)
++parser.add_argument('--negative-tests', action='store_true',
++                    help='run isolated expected-panic tests in both PMMs')
++parser.add_argument('--memory-matrix', action='store_true',
++                    help='also boot 64/96/256 MiB machines with both PMMs')
++parser.add_argument('--native-grade', action='store_true',
++                    help='use ordinary make grade (OpenSBI 0.4 environments)')
++args = parser.parse_args()
++stamp = datetime.now(timezone(timedelta(hours=8))).strftime('%Y%m%d-%H%M%S-%f')
++logs = (args.log_dir or Path('docs/logs/extensions-runs') / stamp).resolve()
++if not logs.is_relative_to(ROOT):
++    parser.error('log directory must be inside the workspace')
++logs.mkdir(parents=True, exist_ok=False)
++print('Evidence: ' + str(logs.relative_to(ROOT)), flush=True)
++
++
++def provenance():
++    text = 'Extension verification: ' + datetime.now(timezone(timedelta(hours=8))).isoformat() + '\n'
++    text += 'HEAD: ' + subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True)
++    for path in sorted(list(Path('kern').rglob('*.c')) + list(Path('kern').rglob('*.h'))):
++        text += hashlib.sha256(path.read_bytes()).hexdigest() + '  ' + str(path) + '\n'
++    return text
++
++
++def build(name, defs):
++    with (logs / (name + '-build.log')).open('w') as out:
++        out.write(provenance())
++        out.flush()
++        for command in (['make', 'clean'], ['make', 'DEFS=' + defs]):
++            out.write('$ ' + ' '.join(command) + '\n')
++            out.flush()
++            subprocess.run(command, stdout=out, stderr=subprocess.STDOUT, check=True)
++
++
++def boot(name, defs, manager, markers, memory=128, expected_panic=False):
++    command = ['make', 'qemu', 'DEFS=' + defs,
++               'QEMU=qemu-system-riscv64 -m ' + str(memory) + 'M']
++    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
++                               start_new_session=True)
++    try:
++        output, _ = process.communicate(timeout=12)
++    except subprocess.TimeoutExpired:
++        os.killpg(process.pid, signal.SIGTERM)
++        output, _ = process.communicate(timeout=5)
++    text = output.decode(errors='replace')
++    (logs / (name + '-run.log')).write_text(provenance() + '$ ' + ' '.join(command) +
++        '\nHarness terminates the intentionally idle kernel after 12 seconds.\n' + text)
++    assert ('kernel panic' in text) == expected_panic, name
++    assert 'memory management: ' + manager in text, name
++    for marker in markers:
++        assert marker in text, (name, marker)
++    print(name + ': PASS', flush=True)
++
++
++markers = ['[SLUB] aligned cache, ctor, reuse, full/partial/empty, shrink: PASS',
++           '[SLUB] kmalloc class boundaries, large blocks, content isolation: PASS',
++           '[SLUB] 64 small objects share one physical page: PASS',
++           '[SLUB] 1024 mixed objects, nonoverlap and byte-pattern oracle: PASS',
++           '[SLUB] cache metadata exhaustion and recovery: PASS',
++           '[SLUB] real page exhaustion, allocation failure, full recovery: PASS',
++           '[SLUB] state restored:', 'check_alloc_page() succeeded!']
++for label, defs, manager in [
++    ('slub-best-fit', '-DLAB2_EXTENSIONS', 'best_fit_pmm_manager'),
++    ('slub-buddy', '-DLAB2_EXTENSIONS -DPMM_BUDDY', 'buddy_pmm_manager'),
++]:
++    build(label, defs)
++    boot(label, defs, manager, markers)
++    if args.memory_matrix:
++        for memory in (64, 96, 256):
++            reported_end = 0x80000000 + (memory << 20)
++            managed_end = min(reported_end, 0x88000000)
++            boot(label + '-memory-' + str(memory), defs, manager, markers + [
++                'Size: 0x%016x' % (memory << 20),
++                'DTB range: [0x0000000080000000, 0x%016x)' % reported_end,
++                'managed end: 0x%016x' % managed_end], memory=memory)
++    if args.negative_tests:
++        for case in (1, 2, 3):
++            negative = label + '-negative-' + str(case)
++            negative_defs = defs + ' -DSLUB_NEGATIVE_TEST=' + str(case)
++            build(negative, negative_defs)
++            boot(negative, negative_defs, manager,
++                 ['[SLUB negative] case ' + str(case) + ': expect assertion panic',
++                  'assertion failed:'], expected_panic=True)
++# Restore the familiar default artifact, with no extension test enabled.
++build('default-restored', '')
++with (logs / 'default-grade.log').open('w') as out:
++    out.write(provenance())
++    out.flush()
++    grade_command = ['make', 'grade']
++    if not args.native_grade:
++        grade_command.append('QEMU=python3 tools/qemu-grade-console.py')
++    out.write('$ ' + ' '.join(grade_command) + '\n')
++    out.flush()
++    subprocess.run(grade_command,
++                   stdout=out, stderr=subprocess.STDOUT, check=True)
++assert 'Total Score: 20/20' in (logs / 'default-grade.log').read_text()
++print('default-grade: 20/20', flush=True)
++with (logs / 'default-restored-build.log').open('a') as out:
++    out.write('\n$ make (restore after grade)\n')
++    out.flush()
++    subprocess.run(['make'], stdout=out, stderr=subprocess.STDOUT, check=True)
+679871b9d6b06ae19eae3f8476ea6cdceaa981209399663ba8acd3ec78476994  tools/check-extensions.py
+558f9dbbd4cd7266458bc91e81961aac0df0b3c5dbde9d2ba7983e9d904d232a  tools/test-dtb-parser.py
+
+Final native-compatible Git verification (core.autocrlf=true; earlier Linux-default status above is a CRLF mismatch, not kernel edits):
+ M tools/check-extensions.py
+?? docs/logs/b-extension-20261021-102252-suite.log
+?? docs/logs/b-extension-20261021-102252/

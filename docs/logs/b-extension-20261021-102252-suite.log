@@ -1,0 +1,17 @@
+B extension verification; source HEAD 35c479da0ca0ba300a777cf1830808857b5c3f76; runner --native-grade added locally.
+Evidence: docs/logs/b-extension-20261021-102252
+slub-best-fit: PASS
+slub-best-fit-memory-64: PASS
+slub-best-fit-memory-96: PASS
+slub-best-fit-memory-256: PASS
+slub-best-fit-negative-1: PASS
+slub-best-fit-negative-2: PASS
+slub-best-fit-negative-3: PASS
+slub-buddy: PASS
+slub-buddy-memory-64: PASS
+slub-buddy-memory-96: PASS
+slub-buddy-memory-256: PASS
+slub-buddy-negative-1: PASS
+slub-buddy-negative-2: PASS
+slub-buddy-negative-3: PASS
+default-grade: 20/20

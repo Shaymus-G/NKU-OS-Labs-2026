@@ -1,0 +1,39 @@
+Git command environment: core.autocrlf=true, matching the Windows checkout; no persisted config change.
+Initial audit used Linux defaults and misread CRLF as whole-file edits; retained in source-report-audit-initial.log.
+$ python3 tools/check-extensions.py --help
+usage: check-extensions.py [-h] [--log-dir LOG_DIR] [--negative-tests]
+                           [--memory-matrix] [--native-grade]
+
+Run extension kernels on real QEMU; keep each invocation's evidence separate.
+
+options:
+  -h, --help         show this help message and exit
+  --log-dir LOG_DIR
+  --negative-tests   run isolated expected-panic tests in both PMMs
+  --memory-matrix    also boot 64/96/256 MiB machines with both PMMs
+  --native-grade     use ordinary make grade (OpenSBI 0.4 environments)
+$ python3 tools/check-lab2-report.py
+PASS: report.md matches 8 academic source chapters
+warning: in the working copy of '.gitattributes', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/logs/b-best-fit-behavior-build.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/logs/b-best-fit-behavior.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/logs/b-final-grade.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/logs/b-grade-behavior.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/logs/b-grade-fixed.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/logs/b-integration-best-fit-build.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/logs/b-integration-best-fit-run.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/logs/b-integration-buddy-build.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/logs/b-integration-buddy-run.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/logs/b-integration-environment.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/logs/b-integration-grade.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/parts/b-best-fit-tests.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/parts/b-first-best-fit.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/prompts/b-best-fit-tests.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/prompts/b-best-fit.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'kern/mm/best_fit_test.c', LF will be replaced by CRLF the next time Git touches it
+PASS: 33 documents, 251 local links, no non-delivered attachments linked
+PASS: old/new layouts, joint evidence and genuine owner-confirmation items retained
+$ git diff HEAD -- kern libs Makefile tools/grade.sh tools/inject.py tools/test_lab2.c tools/test_lab2.h
+PASS: teacher basic_check unchanged (LF-normalized byte comparison).
+PASS: teacher best_fit_check unchanged (LF-normalized byte comparison).
+PASS: kernel/library/build/teacher test sources match source HEAD; no algorithm change.

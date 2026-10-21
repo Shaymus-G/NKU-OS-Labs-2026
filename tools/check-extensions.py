@@ -16,6 +16,8 @@ parser.add_argument('--negative-tests', action='store_true',
                     help='run isolated expected-panic tests in both PMMs')
 parser.add_argument('--memory-matrix', action='store_true',
                     help='also boot 64/96/256 MiB machines with both PMMs')
+parser.add_argument('--native-grade', action='store_true',
+                    help='use ordinary make grade (OpenSBI 0.4 environments)')
 args = parser.parse_args()
 stamp = datetime.now(timezone(timedelta(hours=8))).strftime('%Y%m%d-%H%M%S-%f')
 logs = (args.log_dir or Path('docs/logs/extensions-runs') / stamp).resolve()
@@ -97,7 +99,12 @@ build('default-restored', '')
 with (logs / 'default-grade.log').open('w') as out:
     out.write(provenance())
     out.flush()
-    subprocess.run(['make', 'grade', 'QEMU=python3 tools/qemu-grade-console.py'],
+    grade_command = ['make', 'grade']
+    if not args.native_grade:
+        grade_command.append('QEMU=python3 tools/qemu-grade-console.py')
+    out.write('$ ' + ' '.join(grade_command) + '\n')
+    out.flush()
+    subprocess.run(grade_command,
                    stdout=out, stderr=subprocess.STDOUT, check=True)
 assert 'Total Score: 20/20' in (logs / 'default-grade.log').read_text()
 print('default-grade: 20/20', flush=True)
