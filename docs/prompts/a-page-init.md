@@ -41,4 +41,4 @@ static void page_init(void);
 
 ## 实际 AI 交互
 
-已记录在AI交互文档 a-ai-dialogue.md 中。
+已记录在 [AI 交互整理](a-ai-dialogue.md) 中；该文档注明整理范围，不是逐字聊天导出。
