@@ -1,6 +1,0 @@
-HEAD: 35c479da0ca0ba300a777cf1830808857b5c3f76
-$ riscv64-unknown-elf-nm bin/kernel (selected symbols)
-ffffffffc0202a40 R best_fit_pmm_manager
-ffffffffc0207058 B pmm_manager
-PASS: final artifact is default Best-Fit; Buddy and extension tests are not linked.
-84ee812f93867d817e7afa3b0ee1c14fb9a7388edca27877c6beb8d3a840bd34  bin/kernel

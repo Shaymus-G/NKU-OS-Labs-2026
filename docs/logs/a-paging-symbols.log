@@ -1,4 +1,0 @@
-ffffffffc0200000 T kern_entry
-ffffffffc02000d8 T kern_init
-ffffffffc0205000 D boot_page_table_sv39
-ffffffffc0205000 D bootstacktop
