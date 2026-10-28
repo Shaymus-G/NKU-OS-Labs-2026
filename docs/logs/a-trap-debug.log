@@ -1,0 +1,114 @@
+Breakpoint 1 at 0xffffffffc0200bec: file kern/trap/trapentry.S, line 108.
+Continuing.
+
+Breakpoint 1, __alltraps () at kern/trap/trapentry.S:108
+108	    SAVE_ALL
+=> 0xffffffffc0200bec <__alltraps>:	csrw	sscratch,sp
+   0xffffffffc0200bf0 <__alltraps+4>:	addi	sp,sp,-288
+   0xffffffffc0200bf2 <__alltraps+6>:	sd	zero,0(sp)
+$1 = 0xffffffffc0200bec
+$2 = 0xffffffffc0200bec
+$3 = 0x8000000000000005
+$4 = 0xffffffffc020009c
+$5 = 0x8000000000006120
+sp             0xffffffffc0205ff0	0xffffffffc0205ff0
+ra             0xffffffffc020009c	0xffffffffc020009c <kern_init+72>
+t0             0x0	0
+a0             0x1a	26
+Temporary breakpoint 2 at 0xffffffffc0200be0: file kern/trap/trap.c, line 170.
+Continuing.
+
+Temporary breakpoint 2, trap_dispatch (tf=0xffffffffc0205ed0) at kern/trap/trap.c:170
+170	    if ((intptr_t)tf->cause < 0) {
+$6 = 288
+$7 = 0xffffffffc0205ed0
+$8 = 0xffffffffc0205ed0
+$9 = 0xffffffffc0205ed0
+$10 = 1
+$11 = 288
+$12 = 288
+$13 = 0xffffffffc0205ff0
+$14 = 0xffffffffc020009c
+$15 = 0x8000000000006120
+$16 = 0x8000000000000005
+$17 = 1
+$18 = 1
+$19 = 1
+$20 = 1
+$21 = 1
+$22 = 1
+$23 = 1
+Temporary breakpoint 3 at 0xffffffffc0200c54: file kern/trap/trapentry.S, line 119.
+Continuing.
+
+Temporary breakpoint 3, __trapret () at kern/trap/trapentry.S:119
+119	    RESTORE_ALL
+$24 = 1
+$25 = 0xffffffffc020009c
+$26 = 1
+Dump of assembler code for function __trapret:
+=> 0xffffffffc0200c54 <+0>:	ld	t0,256(sp)
+   0xffffffffc0200c56 <+2>:	ld	t1,264(sp)
+   0xffffffffc0200c58 <+4>:	csrw	sstatus,t0
+   0xffffffffc0200c5c <+8>:	csrw	sepc,t1
+   0xffffffffc0200c60 <+12>:	ld	ra,8(sp)
+   0xffffffffc0200c62 <+14>:	ld	gp,24(sp)
+   0xffffffffc0200c64 <+16>:	ld	tp,32(sp)
+   0xffffffffc0200c66 <+18>:	ld	t0,40(sp)
+   0xffffffffc0200c68 <+20>:	ld	t1,48(sp)
+   0xffffffffc0200c6a <+22>:	ld	t2,56(sp)
+   0xffffffffc0200c6c <+24>:	ld	s0,64(sp)
+   0xffffffffc0200c6e <+26>:	ld	s1,72(sp)
+   0xffffffffc0200c70 <+28>:	ld	a0,80(sp)
+   0xffffffffc0200c72 <+30>:	ld	a1,88(sp)
+   0xffffffffc0200c74 <+32>:	ld	a2,96(sp)
+   0xffffffffc0200c76 <+34>:	ld	a3,104(sp)
+   0xffffffffc0200c78 <+36>:	ld	a4,112(sp)
+   0xffffffffc0200c7a <+38>:	ld	a5,120(sp)
+   0xffffffffc0200c7c <+40>:	ld	a6,128(sp)
+   0xffffffffc0200c7e <+42>:	ld	a7,136(sp)
+   0xffffffffc0200c80 <+44>:	ld	s2,144(sp)
+   0xffffffffc0200c82 <+46>:	ld	s3,152(sp)
+   0xffffffffc0200c84 <+48>:	ld	s4,160(sp)
+   0xffffffffc0200c86 <+50>:	ld	s5,168(sp)
+   0xffffffffc0200c88 <+52>:	ld	s6,176(sp)
+   0xffffffffc0200c8a <+54>:	ld	s7,184(sp)
+   0xffffffffc0200c8c <+56>:	ld	s8,192(sp)
+   0xffffffffc0200c8e <+58>:	ld	s9,200(sp)
+   0xffffffffc0200c90 <+60>:	ld	s10,208(sp)
+   0xffffffffc0200c92 <+62>:	ld	s11,216(sp)
+   0xffffffffc0200c94 <+64>:	ld	t3,224(sp)
+   0xffffffffc0200c96 <+66>:	ld	t4,232(sp)
+   0xffffffffc0200c98 <+68>:	ld	t5,240(sp)
+   0xffffffffc0200c9a <+70>:	ld	t6,248(sp)
+   0xffffffffc0200c9c <+72>:	ld	sp,16(sp)
+   0xffffffffc0200c9e <+74>:	sret
+End of assembler dump.
+Temporary breakpoint 4 at 0xffffffffc0200c9e: file kern/trap/trapentry.S, line 121.
+Continuing.
+
+Temporary breakpoint 4, __trapret () at kern/trap/trapentry.S:121
+121	    sret
+=> 0xffffffffc0200c9e <__trapret+74>:	sret
+sp             0xffffffffc0205ff0	0xffffffffc0205ff0
+ra             0xffffffffc020009c	0xffffffffc020009c <kern_init+72>
+t0             0x0	0
+a0             0x1a	26
+sp             0xffffffffc0205ff0	0xffffffffc0205ff0
+ra             0xffffffffc020009c	0xffffffffc020009c <kern_init+72>
+t0             0x0	0
+a0             0x1a	26
+$27 = 0xffffffffc020009c
+$28 = 1
+$29 = 1
+$30 = 1
+$31 = 1
+$32 = 1
+kern_init () at kern/init/init.c:39
+39	    while (1)
+$33 = 0xffffffffc020009c
+$34 = 0xffffffffc020009c
+$35 = 1
+=> 0xffffffffc020009c <kern_init+72>:	j	0xffffffffc020009c <kern_init+72>
+$36 = 0x8000000000000005
+$37 = 0xffffffffc020009c

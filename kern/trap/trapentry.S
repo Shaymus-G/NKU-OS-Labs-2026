@@ -112,7 +112,6 @@ __alltraps:
     # 将当前 TrapFrame 地址作为第一个参数传给 trap。
     mv a0, sp
     jal trap
-    
     # sp should be the same as before "jal trap"
 
     .globl __trapret
