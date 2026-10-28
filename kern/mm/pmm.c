@@ -106,16 +106,25 @@ page_init(void) {
     va_pa_offset = PHYSICAL_MEMORY_OFFSET;
 
     /*
+     * Lab3 使用 KERNBASE、KMEMSIZE 和 PHYSICAL_MEMORY_OFFSET
+     * 描述内核直接映射范围，据此计算对应的物理地址范围。
+     */
+    const uintptr_t kernel_begin_pa =
+        (uintptr_t)KERNBASE - (uintptr_t)PHYSICAL_MEMORY_OFFSET;
+    const uintptr_t physical_memory_end =
+        kernel_begin_pa + (uintptr_t)KMEMSIZE;
+
+    /*
      * reported_end 是 DTB 报告的末端；
-     * managed_end 是本框架实际管理的末端。
+     * managed_end 不得超过本框架支持的直接映射范围。
      */
     uintptr_t managed_end = reported_end;
-    if (managed_end > PHYSICAL_MEMORY_END) {
-        managed_end = PHYSICAL_MEMORY_END;
+    if (managed_end > physical_memory_end) {
+        managed_end = physical_memory_end;
     }
     managed_end = ROUNDDOWN(managed_end, PGSIZE);
 
-    if (managed_end <= KERNEL_BEGIN_PADDR) {
+    if (managed_end <= kernel_begin_pa) {
         panic("page_init: insufficient memory for kernel");
     }
 

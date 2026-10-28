@@ -1,0 +1,2 @@
++ cc kern/mm/pmm.c
++ cc kern/trap/trapentry.S
