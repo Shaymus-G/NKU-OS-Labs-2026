@@ -1,0 +1,11 @@
+Command: make -B obj/kern/mm/best_fit_pmm.o
+Compiler: riscv64-unknown-elf-gcc (SiFive GCC-Metal 10.2.0-2020.12.8) 10.2.0
+make: Warning: File 'obj/libs/printfmt.d' has modification time 0.011 s in the future
++ cc kern/mm/best_fit_pmm.c
+make: warning:  Clock skew detected.  Your build may be incomplete.
+Exit code: 0
+
+Rebuild after removing only obj/kern/mm/best_fit_pmm.o:
+Command: make obj/kern/mm/best_fit_pmm.o
++ cc kern/mm/best_fit_pmm.c
+Exit code: 0

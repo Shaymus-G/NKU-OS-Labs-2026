@@ -1,0 +1,7 @@
+B self-check: isolated First-Fit and Best-Fit builds
+Expected SHUTDOWN_AFTER: 10; normal shutdown after 1000 ticks
+kern/mm/best_fit_pmm.c SHA256 3ce9688146ec3a2a7bb6c7fa75fd9927821624d09412236fb89701155e674ff2
+kern/trap/trap.c SHA256 0b32fe4a9a9dc118286f21e35dd116a7a29c128255307126d89760889d78f0ca
+tools/b-selfcheck.py SHA256 257e7a7d5943780178db58c27143dfb6f49d9cca9506a3b218d03e6eb0a201ac
+riscv64-unknown-elf-gcc (SiFive GCC-Metal 10.2.0-2020.12.8) 10.2.0
+QEMU emulator version 4.1.1
