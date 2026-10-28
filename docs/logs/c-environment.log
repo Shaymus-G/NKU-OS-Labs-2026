@@ -1,0 +1,4 @@
+a8ca0599057cd16976d686abbf6af2ed5198639e
+riscv64-unknown-elf-gcc () 10.2.0
+QEMU emulator version 6.2.0 (Debian 1:6.2+dfsg-2ubuntu6.31)
+Linux LAPTOP-C2LGBAKT 6.18.33.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
