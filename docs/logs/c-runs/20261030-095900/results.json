@@ -1,0 +1,14 @@
+[
+  {
+    "manager": "default",
+    "pass": true,
+    "exception_probes": 64,
+    "timer_summaries": 10
+  },
+  {
+    "manager": "best_fit",
+    "pass": true,
+    "exception_probes": 64,
+    "timer_summaries": 10
+  }
+]

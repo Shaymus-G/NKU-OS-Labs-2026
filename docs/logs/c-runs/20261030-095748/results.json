@@ -1,0 +1,12 @@
+[
+  {
+    "manager": "default",
+    "mutant": "drop-t0",
+    "rejected": true
+  },
+  {
+    "manager": "best_fit",
+    "mutant": "drop-t0",
+    "rejected": true
+  }
+]

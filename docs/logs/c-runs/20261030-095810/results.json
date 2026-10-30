@@ -1,0 +1,12 @@
+[
+  {
+    "manager": "default",
+    "mutant": "epc-always4",
+    "rejected": true
+  },
+  {
+    "manager": "best_fit",
+    "mutant": "epc-always4",
+    "rejected": true
+  }
+]
