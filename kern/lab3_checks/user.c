@@ -7,7 +7,7 @@ static uintptr_t middle[512] __attribute__((aligned(4096)));
 static uintptr_t leaf[512] __attribute__((aligned(4096)));
 static char user_stack[4096] __attribute__((aligned(4096)));
 uintptr_t c_supervisor_sp, c_supervisor_ra;
-extern char c_user_code[], c_user_resume[];
+extern char c_user_code[], c_user_resume[], c_user_after_nx[];
 extern void c_user_enter(void), c_user_vector(void);
 extern uintptr_t boot_page_table_sv39[];
 static unsigned calls;
@@ -15,7 +15,14 @@ static unsigned faults;
 
 void c_user_trap(struct trapframe *tf) {
     assert(!(tf->status&SSTATUS_SPP));
+    assert((uintptr_t)tf==c_supervisor_sp-sizeof(*tf));
     assert(tf->gpr.sp==0x3000);
+    if(tf->cause==12) {
+        assert(calls==1 && faults==3 && tf->epc==0x2000 && tf->badvaddr==0x2000);
+        faults++;
+        tf->epc=0x1000+(c_user_after_nx-c_user_code);
+        return;
+    }
     assert(tf->epc>=0x1000 && tf->epc<0x2000);
     if(tf->cause!=CAUSE_USER_ECALL) {
         const uintptr_t expected[]={2,13,15};
@@ -32,7 +39,7 @@ void c_user_trap(struct trapframe *tf) {
         tf->gpr.a0=0x567;
         tf->epc+=4;
     } else {
-        assert(calls==2 && faults==3 && tf->gpr.a7==2 && tf->gpr.a0==0x567);
+        assert(calls==2 && faults==4 && tf->gpr.a7==2 && tf->gpr.a0==0x567);
         assert(tf->gpr.a1==0x123);
         tf->status|=SSTATUS_SPP;
         tf->epc=(uintptr_t)c_user_resume;
@@ -65,6 +72,9 @@ void c_user_check(void) {
     write_csr(sie,old_sie);
     write_csr(sstatus,old_status);
     assert(calls==2 && read_csr(satp)==old_satp && read_csr(stvec)==old_vector);
+    assert(read_csr(sstatus)==old_status && read_csr(sie)==old_sie);
+    assert(read_csr(sscratch)==old_scratch);
     cprintf("[C user] S->U->S->U->S, separate stack, ecall result: PASS\n");
     cprintf("[C user] user stack RW, supervisor CSR/kernel read/code write denied: PASS\n");
+    cprintf("[C user] stack execute denied, kernel stack and CSR restoration: PASS\n");
 }

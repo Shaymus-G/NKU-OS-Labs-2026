@@ -118,6 +118,10 @@ li t0, 0xffffffffc0200000
 ld t1, 0(t0)
 li t0, 0x1000
 sd zero, 0(t0)
+li t0, 0x2000
+jr t0
+.globl c_user_after_nx
+c_user_after_nx:
 li a7, 2
 ecall
 1: j 1b

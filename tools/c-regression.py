@@ -5,6 +5,7 @@ import argparse, datetime, hashlib, os, shutil, subprocess, tempfile
 
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--user-mode',action='store_true',help='optional exploration; legacy Challenge is not required this year')
+parser.add_argument('--vectors',action='store_true',help='exercise the handbook stvec extension using real traps')
 args=parser.parse_args()
 
 root=Path(__file__).resolve().parents[1]
@@ -31,6 +32,8 @@ for manager in ['default','best_fit']:
         hook='    extern void c_checks(void);\n    c_checks();\n'
         if args.user_mode:
             hook+='    extern void c_user_check(void);\n    c_user_check();\n'
+        if args.vectors:
+            hook+='    extern void c_vector_check(void);\n    c_vector_check();\n'
         text=text.replace('    clock_init();',hook+'    clock_init();')
         init.write_text(text.replace('    /* do nothing */','    extern void c_timer_checks(void);\n    c_timer_checks();\n    /* do nothing */'))
         if manager=='best_fit':
@@ -41,15 +44,18 @@ for manager in ['default','best_fit']:
         run(['make'],tree,manager+'-build.log')
         output=run(['make','qemu'],tree,manager+'-run.log',45)
         assert output.count('100 ticks\n')==10
-        assert output.count('Breakpoint at')==32
+        assert output.count('Breakpoint at')==32+int(args.vectors)
         assert output.count('Illegal instruction at')==32
         assert output.count('32 register slots: PASS')==4
         assert '[C] PMM success/failure, nested SIE preservation: PASS' in output
         assert '[C] real timer passed 100 and 200, SIE restored: PASS' in output
         if args.user_mode:
             assert '[C user] S->U->S->U->S, separate stack, ecall result: PASS' in output
+            assert '[C user] stack execute denied, kernel stack and CSR restoration: PASS' in output
         else:
             assert '[C user]' not in output
+        if args.vectors:
+            assert '[C vectors] sync at BASE, software IRQ at BASE+4, restored: PASS' in output
         assert 'panic' not in output.lower()
         assert 'memory management: '+manager+'_pmm_manager' in output
         print(manager+': independent checks and 1000-tick shutdown PASS',flush=True)
