@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """Independent Lab3 checks in disposable copies, no teacher/source mutation."""
 from pathlib import Path
-import datetime, hashlib, os, shutil, subprocess, tempfile
+import argparse, datetime, hashlib, os, shutil, subprocess, tempfile
+
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--user-mode',action='store_true',help='optional exploration; legacy Challenge is not required this year')
+args=parser.parse_args()
 
 root=Path(__file__).resolve().parents[1]
 logs=root/'docs/logs/c-runs'/datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
@@ -24,7 +28,10 @@ for manager in ['default','best_fit']:
         init=tree/'kern/init/init.c'
         text=init.read_text()
         assert text.count('    clock_init();')==1
-        text=text.replace('    clock_init();','    extern void c_checks(void), c_user_check(void);\n    c_checks();\n    c_user_check();\n    clock_init();')
+        hook='    extern void c_checks(void);\n    c_checks();\n'
+        if args.user_mode:
+            hook+='    extern void c_user_check(void);\n    c_user_check();\n'
+        text=text.replace('    clock_init();',hook+'    clock_init();')
         init.write_text(text.replace('    /* do nothing */','    extern void c_timer_checks(void);\n    c_timer_checks();\n    /* do nothing */'))
         if manager=='best_fit':
             pmm=tree/'kern/mm/pmm.c'
@@ -39,7 +46,10 @@ for manager in ['default','best_fit']:
         assert output.count('32 register slots: PASS')==4
         assert '[C] PMM success/failure, nested SIE preservation: PASS' in output
         assert '[C] real timer passed 100 and 200, SIE restored: PASS' in output
-        assert '[C user] S->U->S->U->S, separate stack, ecall result: PASS' in output
+        if args.user_mode:
+            assert '[C user] S->U->S->U->S, separate stack, ecall result: PASS' in output
+        else:
+            assert '[C user]' not in output
         assert 'panic' not in output.lower()
         assert 'memory management: '+manager+'_pmm_manager' in output
         print(manager+': independent checks and 1000-tick shutdown PASS',flush=True)
