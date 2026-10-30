@@ -85,7 +85,15 @@ S态通过sret进入U态。扩展向量用sscratch交换到保存的内核栈，
 
 扩展结束恢复satp、stvec、sscratch、sie、sstatus，并刷新地址转换缓存。两种PMM均通过上述断言，并继续通过原异常、SIE和1000 ticks关机回归。见 [First-Fit](docs/logs/c-runs/20261030-093858/default-run.log)、[Best-Fit](docs/logs/c-runs/20261030-093858/best_fit-run.log)、[源码清单](docs/logs/c-runs/20261030-093858/manifest.log) 与 [扩展规格](docs/prompts/c-user-challenge.md)。
 
-该实验是受控U源同步Trap：期间关闭中断，不处理S源或嵌套Trap；不是完整用户进程或通用系统调用子系统。栈NX已通过PTE设置，本轮没有执行栈取指负例。异常跳过仅适用于这三条已知指令，不代表修复页故障。2026-10-30用户提供课程通知，明确旧用户态Challenge今年无需完成；新版手册也已删除该注释。因此本节仅为自主探索，通过 `python3 tools/c-regression.py --user-mode` 显式运行，不作为课程完成条件。默认回归不执行它，见 [核心回归](docs/logs/c-runs/20261030-094209/default-run.log)；显式选项两配置均通过，见 [可选回归](docs/logs/c-runs/20261030-094316/best_fit-run.log)。
+后续质量复核还实际跳转至用户栈，捕获原因12的取指页故障，核对sepc/stval均为0x2000，并返回预设用户标签。处理器同时断言TrapFrame位于原内核sp减288的位置，最终检查原satp/stvec/sscratch/sie/sstatus全部恢复。因此栈NX、内核栈切换和状态恢复均有运行断言，而不仅是页表配置。
+
+该实验是受控U源同步Trap：期间关闭中断，不处理S源或嵌套Trap；不是完整用户进程或通用系统调用子系统。异常跳过和指定标签返回只适用于受控测试，不代表修复页故障。2026-10-30课程通知明确旧用户态Challenge今年无需完成；本节仅为自主探索，以 `--user-mode` 显式启用。默认回归和完整扩展回归分别见 [核心](docs/logs/c-runs/20261030-095900/results.json) 与 [扩展](docs/logs/c-runs/20261030-095832/results.json)。
+
+### 5.5 测试有效性与最终验收
+
+在临时副本中分别注入“漏恢复t0”和“异常一律推进4”两种错误，两种PMM都出现补充测试的assertion failed。运行器要求非零退出且存在断言证据，不能仅凭超时认定测试检出错误。见 [寄存器错误](docs/logs/c-runs/20261030-095748/results.json)、[EPC错误](docs/logs/c-runs/20261030-095810/results.json)。正式源码未应用这些变异。
+
+最终重新执行教师评分得到100/100，随后恢复默认镜像，普通运行输出十次统计后退出0。见 [最终评分](docs/logs/c-final-20261030/grade.log) 与 [默认运行](docs/logs/c-final-20261030/default-run.log)。运行器另记录启用选项、临时接入后的Makefile/init.c/PMM/Trap源码及ELF哈希，以区分源码HEAD与构建变换。
 
 ## 6. AI辅助过程与讨论
 
@@ -99,7 +107,9 @@ S态通过sret进入U态。扩展向量用sscratch交换到保存的内核栈，
 
 stvec低两位为MODE，其余位保存四字节对齐的BASE。Direct模式下，中断和同步异常均从BASE进入；Vectored模式下，同步异常仍从BASE进入，异步中断跳至BASE+4×cause。不应把同步异常也按原因编号偏移。当前框架把四字节对齐的__alltraps地址直接写入stvec，低位为00，因此采用Direct，由软件读取scause分发。
 
-使用地址原本因对齐而恒为零的低两位编码模式，保持旧的对齐入口地址数值不变、继续表示Direct，是新规范兼容旧软件配置的关键。它不意味着旧硬件必然支持新Vectored模式；实际软件还应考虑硬件支持及额外对齐约束。本实验不要求实现向量表。
+使用地址原本因对齐而恒为零的低两位编码模式，保持旧的对齐入口地址数值不变、继续表示Direct，是新规范兼容旧软件配置的关键。它不意味着旧硬件必然支持新Vectored模式；实际软件还应考虑硬件支持及额外对齐约束。
+
+为进一步验证本节扩展，另实现显式 `--vectors` 实验：256字节对齐的表禁用压缩，每槽一条4字节跳转。真实断点命中BASE路径一次；设置SSIP触发S软件中断，命中BASE+4路径一次，入口清除SSIP防止重复。两路探针保留临时寄存器后进入教师__alltraps，测试后恢复原stvec和中断状态，继续正常时钟回归。两种PMM均通过 [完整扩展运行](docs/logs/c-runs/20261030-095832/default-run.log)。该路由探针限定S源、无嵌套，不替代通用向量入口。
 
 ### 6.2 手册思考：do-while(0)与中断保护
 
