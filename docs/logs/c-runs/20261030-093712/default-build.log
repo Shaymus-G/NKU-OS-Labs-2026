@@ -1,0 +1,43 @@
+Makefile:117: warning: overriding recipe for target 'obj/kern/lab3_checks/user.d'
+Makefile:117: warning: ignoring old recipe for target 'obj/kern/lab3_checks/user.d'
+Makefile:117: warning: overriding recipe for target 'obj/kern/lab3_checks/user.o'
+Makefile:117: warning: ignoring old recipe for target 'obj/kern/lab3_checks/user.o'
+Makefile:117: warning: overriding recipe for target 'obj/kern/lab3_checks/user.d'
+Makefile:117: warning: ignoring old recipe for target 'obj/kern/lab3_checks/user.d'
+Makefile:117: warning: overriding recipe for target 'obj/kern/lab3_checks/user.o'
+Makefile:117: warning: ignoring old recipe for target 'obj/kern/lab3_checks/user.o'
++ cc kern/init/entry.S
++ cc kern/init/init.c
++ cc kern/lab3_checks/checks.c
++ cc kern/lab3_checks/context.S
++ cc kern/lab3_checks/user.c
++ cc kern/libs/stdio.c
++ cc kern/debug/kdebug.c
++ cc kern/debug/kmonitor.c
++ cc kern/debug/panic.c
++ cc kern/driver/clock.c
++ cc kern/driver/console.c
++ cc kern/driver/dtb.c
++ cc kern/driver/intr.c
++ cc kern/trap/trap.c
++ cc kern/trap/trapentry.S
++ cc kern/mm/best_fit_pmm.c
++ cc kern/mm/default_pmm.c
++ cc kern/mm/pmm.c
++ cc libs/printfmt.c
++ cc libs/readline.c
++ cc libs/sbi.c
++ cc libs/string.c
++ ld bin/kernel
+riscv64-unknown-elf-ld: obj/kern/lab3_checks/user.o: in function `c_user_trap':
+/tmp/lab3-c-3lk5x2rf/src/kern/lab3_checks/user.c:16: multiple definition of `c_user_trap'; obj/kern/lab3_checks/user.o:/tmp/lab3-c-3lk5x2rf/src/kern/lab3_checks/user.c:16: first defined here
+riscv64-unknown-elf-ld: obj/kern/lab3_checks/user.o: in function `c_user_check':
+/tmp/lab3-c-3lk5x2rf/src/kern/lab3_checks/user.c:33: multiple definition of `c_user_check'; obj/kern/lab3_checks/user.o:/tmp/lab3-c-3lk5x2rf/src/kern/lab3_checks/user.c:33: first defined here
+riscv64-unknown-elf-ld: obj/kern/lab3_checks/user.o:/tmp/lab3-c-3lk5x2rf/src/kern/lab3_checks/user.c:9: multiple definition of `c_supervisor_ra'; obj/kern/lab3_checks/user.o:/tmp/lab3-c-3lk5x2rf/src/kern/lab3_checks/user.c:9: first defined here
+riscv64-unknown-elf-ld: obj/kern/lab3_checks/user.o: in function `.LANCHOR1':
+/tmp/lab3-c-3lk5x2rf/src/kern/lab3_checks/user.c:9: multiple definition of `c_supervisor_sp'; obj/kern/lab3_checks/user.o:/tmp/lab3-c-3lk5x2rf/src/kern/lab3_checks/user.c:9: first defined here
+riscv64-unknown-elf-ld: obj/kern/lab3_checks/user.o: in function `c_user_check':
+/tmp/lab3-c-3lk5x2rf/src/kern/lab3_checks/user.c:43: undefined reference to `c_user_code'
+riscv64-unknown-elf-ld: /tmp/lab3-c-3lk5x2rf/src/kern/lab3_checks/user.c:46: undefined reference to `c_user_vector'
+riscv64-unknown-elf-ld: /tmp/lab3-c-3lk5x2rf/src/kern/lab3_checks/user.c:49: undefined reference to `c_user_enter'
+make: *** [Makefile:128: bin/kernel] Error 1
