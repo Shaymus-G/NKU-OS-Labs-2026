@@ -1,0 +1,3 @@
+default: independent checks and 1000-tick shutdown PASS
+best_fit: independent checks and 1000-tick shutdown PASS
+Evidence: docs/logs/c-runs/20261031-104605

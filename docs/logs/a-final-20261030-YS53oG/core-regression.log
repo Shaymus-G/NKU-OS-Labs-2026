@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "tools/c-regression.py", line 66, in <module>
+    output=run(['make','qemu'],tree,manager+'-run.log',45)
+  File "tools/c-regression.py", line 21, in run
+    assert p.returncode==0,(name,p.returncode,p.stdout[-2000:])
+AssertionError: ('default-run.log', 124, b'make: *** [Makefile:166: qemu] Terminated\n')

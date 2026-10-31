@@ -1,0 +1,136 @@
+
+OpenSBI v0.4 (Jul  2 2019 11:53:53)
+   ____                    _____ ____ _____
+  / __ \                  / ____|  _ \_   _|
+ | |  | |_ __   ___ _ __ | (___ | |_) || |
+ | |  | | '_ \ / _ \ '_ \ \___ \|  _ < | |
+ | |__| | |_) |  __/ | | |____) | |_) || |_
+  \____/| .__/ \___|_| |_|_____/|____/_____|
+        | |
+        |_|
+
+Platform Name          : QEMU Virt Machine
+Platform HART Features : RV64ACDFIMSU
+Platform Max HARTs     : 8
+Current Hart           : 0
+Firmware Base          : 0x80000000
+Firmware Size          : 112 KB
+Runtime SBI Version    : 0.1
+
+PMP0: 0x0000000080000000-0x000000008001ffff (A)
+PMP1: 0x0000000000000000-0xffffffffffffffff (A,R,W,X)
+DTB Init
+HartID: 0
+DTB Address: 0x82200000
+Physical Memory from DTB:
+  Base: 0x0000000080000000
+  Size: 0x0000000008000000 (128 MB)
+  End:  0x0000000087ffffff
+DTB init completed
+(THU.CST) os is loading ...
+Special kernel symbols:
+  entry  0xffffffffc0200054 (virtual)
+  etext  0xffffffffc02069cc (virtual)
+  edata  0xffffffffc020c028 (virtual)
+  end    0xffffffffc0211498 (virtual)
+Kernel executable memory footprint: 70KB
+memory management: default_pmm_manager
+physical memory map:
+  DTB range: [0x0000000080000000, 0x0000000088000000)
+  managed end: 0x0000000088000000
+  kernel end VA: 0xffffffffc0211498
+  pages VA: 0xffffffffc0212000, PA: 0x0000000080212000
+  descriptor count: 32768, bytes: 1310720
+  free range: [0x0000000080352000, 0x0000000088000000), pages: 31918
+check_alloc_page() succeeded!
+satp virtual address: 0xffffffffc020b000
+satp physical address: 0x000000008020b000
+Breakpoint at 0xffffffffc0204320
+Breakpoint at 0xffffffffc0204320
+Breakpoint at 0xffffffffc0204320
+Breakpoint at 0xffffffffc0204320
+Breakpoint at 0xffffffffc0204320
+Breakpoint at 0xffffffffc0204320
+Breakpoint at 0xffffffffc0204320
+Breakpoint at 0xffffffffc0204320
+Breakpoint at 0xffffffffc0204320
+Breakpoint at 0xffffffffc0204320
+Breakpoint at 0xffffffffc0204320
+Breakpoint at 0xffffffffc0204320
+Breakpoint at 0xffffffffc0204320
+Breakpoint at 0xffffffffc0204320
+Breakpoint at 0xffffffffc0204320
+Breakpoint at 0xffffffffc0204320
+[C] encoding 0: 16 returns, 32 register slots: PASS
+Breakpoint at 0xffffffffc02044fa
+Breakpoint at 0xffffffffc02044fa
+Breakpoint at 0xffffffffc02044fa
+Breakpoint at 0xffffffffc02044fa
+Breakpoint at 0xffffffffc02044fa
+Breakpoint at 0xffffffffc02044fa
+Breakpoint at 0xffffffffc02044fa
+Breakpoint at 0xffffffffc02044fa
+Breakpoint at 0xffffffffc02044fa
+Breakpoint at 0xffffffffc02044fa
+Breakpoint at 0xffffffffc02044fa
+Breakpoint at 0xffffffffc02044fa
+Breakpoint at 0xffffffffc02044fa
+Breakpoint at 0xffffffffc02044fa
+Breakpoint at 0xffffffffc02044fa
+Breakpoint at 0xffffffffc02044fa
+[C] encoding 1: 16 returns, 32 register slots: PASS
+Illegal instruction at 0xffffffffc02046d6
+Illegal instruction at 0xffffffffc02046d6
+Illegal instruction at 0xffffffffc02046d6
+Illegal instruction at 0xffffffffc02046d6
+Illegal instruction at 0xffffffffc02046d6
+Illegal instruction at 0xffffffffc02046d6
+Illegal instruction at 0xffffffffc02046d6
+Illegal instruction at 0xffffffffc02046d6
+Illegal instruction at 0xffffffffc02046d6
+Illegal instruction at 0xffffffffc02046d6
+Illegal instruction at 0xffffffffc02046d6
+Illegal instruction at 0xffffffffc02046d6
+Illegal instruction at 0xffffffffc02046d6
+Illegal instruction at 0xffffffffc02046d6
+Illegal instruction at 0xffffffffc02046d6
+Illegal instruction at 0xffffffffc02046d6
+[C] encoding 2: 16 returns, 32 register slots: PASS
+Illegal instruction at 0xffffffffc02048b0
+Illegal instruction at 0xffffffffc02048b0
+Illegal instruction at 0xffffffffc02048b0
+Illegal instruction at 0xffffffffc02048b0
+Illegal instruction at 0xffffffffc02048b0
+Illegal instruction at 0xffffffffc02048b0
+Illegal instruction at 0xffffffffc02048b0
+Illegal instruction at 0xffffffffc02048b0
+Illegal instruction at 0xffffffffc02048b0
+Illegal instruction at 0xffffffffc02048b0
+Illegal instruction at 0xffffffffc02048b0
+Illegal instruction at 0xffffffffc02048b0
+Illegal instruction at 0xffffffffc02048b0
+Illegal instruction at 0xffffffffc02048b0
+Illegal instruction at 0xffffffffc02048b0
+Illegal instruction at 0xffffffffc02048b0
+[C] encoding 3: 16 returns, 32 register slots: PASS
+[C] PMM success/failure, nested SIE preservation: PASS
+[C] synchronous checks complete; real timer follows
+sbi_emulate_csr_read: hartid0: invalid csr_num=0x100
+[C user] S->U->S->U->S, separate stack, ecall result: PASS
+[C user] user stack RW, supervisor CSR/kernel read/code write denied: PASS
+[C user] stack execute denied, kernel stack and CSR restoration: PASS
+Breakpoint at 0xffffffffc0203f20
+Supervisor software interrupt
+[C vectors] sync at BASE, software IRQ at BASE+4, restored: PASS
+++ setup timer interrupts
+100 ticks
+100 ticks
+[C] real timer passed 100 and 200, SIE restored: PASS
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks

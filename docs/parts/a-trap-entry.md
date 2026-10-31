@@ -398,3 +398,262 @@ AI 辅助提供了迁移范围建议、TrapFrame 布局解释、恢复汇编草�
 ## 12. 阶段结论与提交前整理
 
 A 已完成物理内存初始化迁移和 Trap 汇编实现；本机普通运行展示了 PMM 检查与持续时钟统计，教师评分达到 100/100。GDB 实测进一步验证了 288 字节 TrapFrame、C 参数传递、代表性寄存器保存恢复、时钟 EPC 保持不变及 sret 返回原位置。
+
+## 13. 最终联合版本复核与回归脚本修复（2026-10-31）
+
+### 13.1 复核目的与版本
+
+在 C 完成独立测试、用户态自主探索和 stvec 向量实验后，A 在自己的运行环境中复核相关成果，检查新增测试在 QEMU 4.1.1 环境中的兼容性，并重新确认教师评分和默认内核行为。
+
+本轮环境为：
+
+- WSL Ubuntu 20.04。
+- RISC-V GCC 10.2.0。
+- QEMU 4.1.1。
+- OpenSBI v0.4。
+- 默认物理内存 128 MiB。
+
+本轮记录的基线提交为：
+
+```text
+e4e536ac5c0ae30c4e300a17facd5b60ee9a7b50
+```
+
+验证过程中对 `tools/c-regression.py` 增加了标准输入处理，因此本轮修复后的测试状态应表述为“上述基线提交加回归脚本补丁”，不能只用基线提交号代替完整被测状态。
+
+补丁和版本记录分别保存于：
+
+- [commit.log](../logs/a-final-20261030-YS53oG/commit.log)
+- [c-regression.patch](../logs/a-final-20261030-YS53oG/c-regression.patch)
+
+证据目录名称中的 `20261030` 是创建目录时使用的日期，本节记录的成功复核发生在 2026 年 10 月 31 日。
+
+### 13.2 回归超时现象与排查
+
+首次运行 C 的核心回归脚本时，临时测试内核编译成功，但第一轮 First-Fit 的 QEMU 运行超过 45 秒，触发超时：
+
+```text
+AssertionError: ('default-run.log', 124,
+b'make: *** [Makefile:166: qemu] Terminated\n')
+```
+
+运行日志没有出现 OpenSBI 或内核启动输出，仅有终止信息。
+
+排查过程中确认：
+
+1. QEMU 环境变量和 PATH 均指向预期的 QEMU 4.1.1。
+2. 正式工程与临时副本的 `qemu` 目标都没有误用 `-S` 暂停参数。
+3. 没有遗留的 QEMU 或回归进程。
+4. 直接执行普通 `make qemu` 能正常启动、完成 PMM 自检并输出十次时钟统计。
+
+因此，没有直接把超时归因于 Trap 实现，也没有通过延长超时或删除测试断言来规避失败。
+
+进一步检查发现，脚本捕获了子进程输出，但仍让子进程继承交互终端输入。首先执行：
+
+```bash
+python3 tools/c-regression.py </dev/null
+```
+
+两种管理器均通过核心回归。随后在脚本中明确设置子进程的标准输入：
+
+```python
+p = subprocess.run(
+    ['timeout', str(timeout), *cmd],
+    cwd=cwd,
+    env=env,
+    stdin=subprocess.DEVNULL,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.STDOUT,
+)
+```
+
+修改后直接执行 `python3 tools/c-regression.py`，两种管理器也均通过。
+
+本次结果支持故障与继承交互终端输入有关。后台进程读取控制终端导致暂停是可能机制，但本次没有直接捕获 SIGTTIN，因此不将其写成已经实测确认的信号原因。
+
+该修复仅改变自动测试的输入来源，没有修改内核代码、教师测试、回归断言或超时阈值。
+
+### 13.3 两种管理器的核心回归
+
+本轮核心回归包含两次成功记录：
+
+| 运行方式 | 证据目录 | 结果 |
+|---|---|---|
+| 命令行重定向标准输入 | `20261031-104605` | First-Fit、Best-Fit 均通过 |
+| 脚本增加 DEVNULL 后直接运行 | `20261031-104918` | First-Fit、Best-Fit 均通过 |
+
+两份 `results.json` 均记录：
+
+```json
+[
+  {
+    "manager": "default",
+    "pass": true,
+    "exception_probes": 64,
+    "timer_summaries": 10
+  },
+  {
+    "manager": "best_fit",
+    "pass": true,
+    "exception_probes": 64,
+    "timer_summaries": 10
+  }
+]
+```
+
+根据脚本的执行路径和断言，通过结果包含异常输出数量、寄存器快照检查、PMM 与 SIE 状态检查、持续时钟检查，以及十次统计后的正常退出。
+
+结果文件：
+
+- [重定向输入后的核心回归](../logs/c-runs/20261031-104605/results.json)
+- [脚本修复后的核心回归](../logs/c-runs/20261031-104918/results.json)
+
+这里的 64 次异常探针是每种管理器各自的测试数量，不将自动回归与此前一次时钟中断的手工 GDB 检查混为同一项证据。
+
+### 13.4 用户态与 stvec 向量扩展复核
+
+核心回归通过后，执行：
+
+```bash
+python3 tools/c-regression.py --user-mode --vectors </dev/null
+```
+
+退出码为 0，证据目录为：
+
+```text
+docs/logs/c-runs/20261031-113452/
+```
+
+本次 `invocation.json` 明确记录：
+
+```json
+{
+  "user_mode": true,
+  "vectors": true,
+  "mutant": null
+}
+```
+
+First-Fit 和 Best-Fit 的运行日志均包含：
+
+```text
+[C user] S->U->S->U->S, separate stack, ecall result: PASS
+[C user] user stack RW, supervisor CSR/kernel read/code write denied: PASS
+[C user] stack execute denied, kernel stack and CSR restoration: PASS
+[C vectors] sync at BASE, software IRQ at BASE+4, restored: PASS
+```
+
+这些输出与脚本成功退出共同支持以下结论：
+
+- 本测试中的 U/S 往返、独立栈和 ecall 返回结果通过检查。
+- 用户栈允许读写，预设的 CSR 非法访问、内核页读取、代码页写入和栈取指保护场景通过检查。
+- stvec 向量模式下，同步异常进入 BASE，S 软件中断进入 BASE+4。
+- 相关测试结束后的恢复检查通过。
+
+证据：
+
+- [调用参数](../logs/c-runs/20261031-113452/invocation.json)
+- [两种管理器汇总结果](../logs/c-runs/20261031-113452/results.json)
+- [First-Fit 完整运行日志](../logs/c-runs/20261031-113452/default-run.log)
+- [Best-Fit 完整运行日志](../logs/c-runs/20261031-113452/best_fit-run.log)
+
+本轮使用 C 编写的测试进行 A 环境复测，不将这些测试代码描述为 A 独立设计或实现。
+
+用户态 Challenge 属于本组自主探索，不是本年度教师要求的必做内容。其实现范围仍受 C 交接中说明的限制：用户态入口限定关闭中断后的 U 源同步 Trap，向量探针限定单核 S 源无嵌套场景；预设权限故障按测试规定返回，不代表实现了通用页故障修复、完整用户进程或任意嵌套 Trap。
+
+### 13.5 教师评分与默认镜像复核
+
+在本轮版本上重新执行原始教师评分：
+
+```bash
+make grade
+```
+
+实际结果为：
+
+```text
+trap entry, register restore, and breakpoint EPC: PASS (35/35)
+illegal instruction EPC advance and return: PASS (25/25)
+re-armed supervisor timer and repeated trap return: PASS (40/40)
+Total Score: 100/100
+```
+
+评分退出码为 0：
+
+- [评分日志](../logs/a-final-20261030-YS53oG/grade.log)
+- [评分退出码](../logs/a-final-20261030-YS53oG/grade.exit)
+
+评分后执行 `make clean`、`make`，恢复并重新构建正式默认镜像。默认构建日志没有编译 `kern/lab3_checks` 中的补充探针，运行时管理器仍为 `default_pmm_manager`。
+
+默认运行再次观察到：
+
+```text
+check_alloc_page() succeeded!
+```
+
+随后输出十次 `100 ticks`。
+
+早先一次终端状态记录出现 130，另一次记录因遗漏保存 `PIPESTATUS` 而为空。这些记录不用于证明正常退出。最终使用同一个 shell 命令块，在管道结束后立即保存两个命令各自的状态：
+
+```bash
+(
+    set -o pipefail
+
+    make qemu 2>&1 | tee "$A_RUN_DIR/default-run-recheck.log"
+    qemu_status=("${PIPESTATUS[@]}")
+
+    printf 'make_qemu=%s\ntee=%s\n' \
+        "${qemu_status[0]}" "${qemu_status[1]}" \
+        | tee "$A_RUN_DIR/default-run-recheck.exit"
+)
+```
+
+程序输出十次统计后自行结束，实际状态为：
+
+```text
+make_qemu=0
+tee=0
+```
+
+因此，本轮默认运行的最终结论是：PMM 检查通过、持续时钟统计正常、默认内核按当前约定正常关机，日志写入成功。
+
+证据：
+
+- [默认镜像构建日志](../logs/a-final-20261030-YS53oG/default-build.log)
+- [最终默认运行复核日志](../logs/a-final-20261030-YS53oG/default-run-recheck.log)
+- [最终默认运行退出状态](../logs/a-final-20261030-YS53oG/default-run-recheck.exit)
+
+### 13.6 报告一致性检查
+
+执行：
+
+```bash
+python3 tools/assemble-lab3-report.py --check
+```
+
+本轮输出为：
+
+```text
+PASS: report source consistent; all report attachments exist
+```
+
+退出码为 0：
+
+- [报告检查日志](../logs/a-final-20261030-YS53oG/report-check.log)
+- [报告检查退出码](../logs/a-final-20261030-YS53oG/report-check.exit)
+
+该结果对应执行检查时的报告版本。后续将本节及本轮结果合入总报告后，应由汇总负责人重新生成并检查，不能把此前的检查结果自动视为所有后续文档修改均已验证。
+
+### 13.7 本轮贡献与结论
+
+本轮 A 在已有实现与 GDB 验证基础上，完成了以下工作：
+
+1. 排查自动回归无输出超时的问题，通过输入重定向验证并落实 DEVNULL 修复。
+2. 在 QEMU 4.1.1、OpenSBI 0.4 环境复测两种管理器的核心回归。
+3. 复测用户态自主探索与 stvec 向量实验，保留参数、断言输出和结果文件。
+4. 重新完成教师评分 100/100、默认镜像构建与正常关机验证。
+5. 完成当时版本的报告一致性检查，整理实测基线及工作区补丁。
+
+新增扩展已在 A 环境复测通过，不再仅有 C 环境的通过记录。但本轮没有重新执行 C 的两个 mutant 故意错误实验，其结果仍引用 C 原有证据。
+
+本节新增的是共同版本的环境复核与测试脚本修复。此前 GDB 截图继续作为原版本现场检查证据，不倒填为本轮扩展测试截图。后续由全组核对最终提交、更新报告源稿并完成课程提交。

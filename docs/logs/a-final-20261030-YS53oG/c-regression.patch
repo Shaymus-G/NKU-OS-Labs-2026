@@ -1,0 +1,20 @@
+diff --git a/tools/c-regression.py b/tools/c-regression.py
+index 9aff703..30eb9ec 100644
+--- a/tools/c-regression.py
++++ b/tools/c-regression.py
+@@ -13,7 +13,14 @@ root=Path(__file__).resolve().parents[1]
+ logs=root/'docs/logs/c-runs'/datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+ logs.mkdir(parents=True,exist_ok=False)
+ def run(cmd,cwd,name,timeout=120,env=None,expect_failure=False):
+-    p=subprocess.run(['timeout',str(timeout),*cmd],cwd=cwd,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
++    p = subprocess.run(
++        ['timeout', str(timeout), *cmd],
++        cwd=cwd,
++        env=env,
++        stdin=subprocess.DEVNULL,
++        stdout=subprocess.PIPE,
++        stderr=subprocess.STDOUT,
++    )
+     (logs/name).write_bytes(p.stdout)
+     if expect_failure:
+         assert p.returncode!=0 and b'assertion failed' in p.stdout,(name,p.returncode,p.stdout[-2000:])
