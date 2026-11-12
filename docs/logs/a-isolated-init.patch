@@ -1,0 +1,20 @@
+diff --git a/kern/init/init.c b/kern/init/init.c
+index 275f567..3a66945 100644
+--- a/kern/init/init.c
++++ b/kern/init/init.c
+@@ -36,12 +36,9 @@ int kern_init(void)
+     idt_init(); // init interrupt descriptor table
+ 
+     vmm_init();  // init virtual memory management
+-    proc_init(); // init process table
+-
+-    clock_init();  // init clock interrupt
+-    intr_enable(); // enable irq interrupt
+-
+-    cpu_idle(); // run idle process
++    cprintf("A-only check: PMM and VMM initialization returned\n");
++    while (1) {
++    }
+ }
+ 
+ static void
