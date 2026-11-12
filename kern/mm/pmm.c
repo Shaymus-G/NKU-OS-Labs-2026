@@ -88,6 +88,61 @@ size_t nr_free_pages(void)
 }
 
 //lab2 请补充你在lab2中的代码
+static void
+page_init(void)
+{
+    extern char end[];
+    const uint64_t mem_base = get_memory_base();
+    const uint64_t mem_size = get_memory_size();
+    const uint64_t reported_end = mem_base + mem_size;
+    if (mem_base != DRAM_BASE || mem_size == 0 || reported_end < mem_base) {
+        panic("page_init: invalid DTB memory range");
+    }
+
+    va_pa_offset = PHYSICAL_MEMORY_OFFSET;
+    const uintptr_t limit = PADDR(KERNTOP);
+    uintptr_t managed_end = reported_end < limit ? reported_end : limit;
+    managed_end = ROUNDDOWN(managed_end, PGSIZE);
+    if (managed_end <= PADDR(KERNBASE)) {
+        panic("page_init: insufficient memory for kernel");
+    }
+    npage = PPN(managed_end);
+
+    const uintptr_t pages_va = ROUNDUP((uintptr_t)end, PGSIZE);
+    const uintptr_t pages_pa = PADDR(pages_va);
+    const size_t count = npage - nbase;
+    if (pages_pa >= managed_end ||
+        count > (managed_end - pages_pa) / sizeof(struct Page)) {
+        panic("page_init: insufficient memory for page descriptors");
+    }
+
+    const uintptr_t free_begin =
+        ROUNDUP(pages_pa + count * sizeof(struct Page), PGSIZE);
+    if (free_begin >= managed_end) {
+        panic("page_init: no usable physical pages");
+    }
+
+    pages = (struct Page *)pages_va;
+    for (size_t i = 0; i < count; i++) {
+        struct Page *p = &pages[i];
+        p->flags = 0;
+        p->property = 0;
+        set_page_ref(p, 0);
+        list_init(&p->page_link);
+        list_init(&p->pra_page_link);
+        p->pra_vaddr = 0;
+        SetPageReserved(p);
+    }
+    const size_t free_count = (managed_end - free_begin) / PGSIZE;
+    init_memmap(pa2page(free_begin), free_count);
+    cprintf("PMM: DRAM [0x%lx, 0x%lx), managed end 0x%lx\n",
+            (unsigned long)mem_base, (unsigned long)reported_end,
+            (unsigned long)managed_end);
+    cprintf("PMM: %lu descriptors, sizeof(Page)=%lu, free=[0x%lx, 0x%lx), %lu pages\n",
+            (unsigned long)count, (unsigned long)sizeof(struct Page),
+            (unsigned long)free_begin, (unsigned long)managed_end,
+            (unsigned long)free_count);
+}
 
 static void enable_paging(void)
 {
@@ -176,33 +231,49 @@ void pmm_init(void)
 // return vaule: the kernel virtual address of this pte
 pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create)
 {
+    const pte_t leaf_bits = PTE_R | PTE_W | PTE_X;
     pde_t *pdep1 = &pgdir[PDX1(la)];
-    if (!(*pdep1 & PTE_V))
-    {
-        struct Page *page;
-        if (!create || (page = alloc_page()) == NULL)
-        {
+    struct Page *new_l1 = NULL;
+    pde_t *l1;
+    if (*pdep1 & PTE_V) {
+        if (*pdep1 & leaf_bits) {
+            return NULL;  /* A 1 GiB leaf is not a page-table pointer. */
+        }
+        l1 = KADDR(PDE_ADDR(*pdep1));
+    } else {
+        if (!create || (new_l1 = alloc_page()) == NULL) {
             return NULL;
         }
-        set_page_ref(page, 1);
-        uintptr_t pa = page2pa(page);
-        memset(KADDR(pa), 0, PGSIZE);
-        *pdep1 = pte_create(page2ppn(page), PTE_U | PTE_V);
+        l1 = page2kva(new_l1);
+        memset(l1, 0, PGSIZE);
     }
-    pde_t *pdep0 = &((pte_t *)KADDR(PDE_ADDR(*pdep1)))[PDX0(la)];
-    if (!(*pdep0 & PTE_V))
-    {
-        struct Page *page;
-        if (!create || (page = alloc_page()) == NULL)
-        {
+
+    pde_t *pdep0 = &l1[PDX0(la)];
+    if (*pdep0 & PTE_V) {
+        if (*pdep0 & leaf_bits) {
+            return NULL;  /* A 2 MiB leaf is not a page-table pointer. */
+        }
+    } else {
+        struct Page *new_l0;
+        if (!create || (new_l0 = alloc_page()) == NULL) {
+            if (new_l1 != NULL) {
+                free_page(new_l1);
+            }
             return NULL;
         }
-        set_page_ref(page, 1);
-        uintptr_t pa = page2pa(page);
-        memset(KADDR(pa), 0, PGSIZE);
-        *pdep0 = pte_create(page2ppn(page), PTE_U | PTE_V);
+        set_page_ref(new_l0, 1);
+        memset(page2kva(new_l0), 0, PGSIZE);
+        /* Preserve the starter's non-leaf flags expected by check_pgdir(). */
+        *pdep0 = pte_create(page2ppn(new_l0), PTE_U);
+        if (new_l1 != NULL) {
+            set_page_ref(new_l1, 1);
+            *pdep1 = pte_create(page2ppn(new_l1), PTE_U);
+        }
+        /* Publishing a non-leaf entry requires the broader fence. */
+        asm volatile("sfence.vma" ::: "memory");
     }
-    return &((pte_t *)KADDR(PDE_ADDR(*pdep0)))[PTX(la)];
+    pte_t *l0 = KADDR(PDE_ADDR(*pdep0));
+    return &l0[PTX(la)];
 }
 
 // get_page - get related Page struct for linear address la using PDT pgdir
@@ -222,19 +293,51 @@ struct Page *get_page(pde_t *pgdir, uintptr_t la, pte_t **ptep_store)
 
 //LAB4 function1 YOUR CODE
 
+int page_insert(pde_t *pgdir, struct Page *page, uintptr_t la, uint32_t perm)
+{
+    pte_t *ptep = get_pte(pgdir, la, 1);
+    if (ptep == NULL) {
+        return -E_NO_MEM;
+    }
 
+    struct Page *old = (*ptep & PTE_V) ? pte2page(*ptep) : NULL;
+    /* In this lab, perm=0 denotes a readable leaf, not a non-leaf. */
+    if ((perm & PTE_W) || !(perm & (PTE_R | PTE_W | PTE_X))) {
+        perm |= PTE_R;
+    }
 
+    if (old != page) {
+        page_ref_inc(page);
+    }
+    *ptep = pte_create(page2ppn(page), perm);
+    tlb_invalidate(pgdir, la);
 
+    if (old != NULL && old != page && page_ref_dec(old) == 0) {
+        free_page(old);
+    }
+    return 0;
+}
 
+void page_remove(pde_t *pgdir, uintptr_t la)
+{
+    pte_t *ptep = get_pte(pgdir, la, 0);
+    if (ptep == NULL || !(*ptep & PTE_V)) {
+        return;
+    }
 
+    struct Page *page = pte2page(*ptep);
+    *ptep = 0;
+    tlb_invalidate(pgdir, la);
+    if (page_ref_dec(page) == 0) {
+        free_page(page);
+    }
+}
 
-// invalidate a TLB entry, but only if the page tables being
-// edited are the ones currently in use by the processor.
+// Synchronize a leaf PTE update for this VA on the local hart.
 void tlb_invalidate(pde_t *pgdir, uintptr_t la)
 {
-    // flush_tlb();
-    // The flush_tlb flush the entire TLB, is there any better way?
-    asm volatile("sfence.vma %0" : : "r"(la));
+    (void)pgdir;
+    asm volatile("sfence.vma %0, zero" : : "r"(la) : "memory");
 }
 
 static void check_alloc_page(void)
