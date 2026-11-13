@@ -1,0 +1,43 @@
+The target architecture is set to "riscv:rv64".
+0x0000000000001000 in ?? ()
+Hardware assisted breakpoint 1 at 0xffffffffc0203e58: file kern/process/b-create-tests.inc, line 52.
+
+Breakpoint 1, b_create_checkpoint () at kern/process/b-create-tests.inc:52
+52	    asm volatile("nop" ::: "memory");
+B_GDB_PROC_INIT_COMPLETE
+$1 = (struct proc_struct *) 0xffffffffc0410010
+$2 = (struct proc_struct *) 0xffffffffc0410010
+$3 = (struct proc_struct *) 0xffffffffc0410110
+$4 = 2
+$5 = 232
+$6 = 112
+$7 = 288
+$8 = {state = PROC_RUNNABLE, pid = 0, runs = 0, kstack = 18446744072637939712, need_resched = 1, parent = 0x0, mm = 0x0, context = {ra = 0, sp = 0, s0 = 0, s1 = 0, s2 = 0, s3 = 0, s4 = 0, s5 = 0, s6 = 0, s7 = 0, s8 = 0, s9 = 0, s10 = 0, s11 = 0}, tf = 0x0, pgdir = 2149621760, flags = 0, name = "idle", '\000' <repeats 11 times>, list_link = {prev = 0xffffffffc04100d8, next = 0xffffffffc04100d8}, hash_link = {prev = 0xffffffffc04100e8, next = 0xffffffffc04100e8}}
+$9 = {state = PROC_RUNNABLE, pid = 1, runs = 0, kstack = 18446744072640077824, need_resched = 0, parent = 0xffffffffc0410010, mm = 0x0, context = {ra = 18446744072637919152, sp = 18446744072640085728, s0 = 0, s1 = 0, s2 = 0, s3 = 0, s4 = 0, s5 = 0, s6 = 0, s7 = 0, s8 = 0, s9 = 0, s10 = 0, s11 = 0}, tf = 0xffffffffc0413ee0, pgdir = 2149621760, flags = 0, name = "init", '\000' <repeats 11 times>, list_link = {prev = 0xffffffffc020f458 <proc_list>, next = 0xffffffffc020f458 <proc_list>}, hash_link = {prev = 0xffffffffc020dbc8 <hash_list+10112>, next = 0xffffffffc020dbc8 <hash_list+10112>}}
+$10 = 0x8020a000
+$11 = 0x8020a000
+$12 = 0xffffffffc0412000
+$13 = {ra = 0xffffffffc0202fb0, sp = 0xffffffffc0413ee0, s0 = 0x0, s1 = 0x0, s2 = 0x0, s3 = 0x0, s4 = 0x0, s5 = 0x0, s6 = 0x0, s7 = 0x0, s8 = 0x0, s9 = 0x0, s10 = 0x0, s11 = 0x0}
+$14 = {gpr = {zero = 0x0, ra = 0x0, sp = 0xffffffffc0413ee0, gp = 0x0, tp = 0x0, t0 = 0x0, t1 = 0x0, t2 = 0x0, s0 = 0xffffffffc020338e, s1 = 0xffffffffc02067b8, a0 = 0x0, a1 = 0x0, a2 = 0x0, a3 = 0x0, a4 = 0x0, a5 = 0x0, a6 = 0x0, a7 = 0x0, s2 = 0x0, s3 = 0x0, s4 = 0x0, s5 = 0x0, s6 = 0x0, s7 = 0x0, s8 = 0x0, s9 = 0x0, s10 = 0x0, s11 = 0x0, t3 = 0x0, t4 = 0x0, t5 = 0x0, t6 = 0x0}, status = 0x8000000000046120, epc = 0xffffffffc0202f8c, badvaddr = 0x0, cause = 0x0}
+$15 = 0xffffffffc0202fb0
+$16 = 0xffffffffc0202f8c
+0xffffffffc0413ee0:	0x0000000000000000	0x0000000000000000
+0xffffffffc0413ef0:	0xffffffffc0413ee0	0x0000000000000000
+0xffffffffc0413f00:	0x0000000000000000	0x0000000000000000
+0xffffffffc0413f10:	0x0000000000000000	0x0000000000000000
+0xffffffffc0413f20:	0xffffffffc020338e	0xffffffffc02067b8
+0xffffffffc0413f30:	0x0000000000000000	0x0000000000000000
+0xffffffffc0413f40:	0x0000000000000000	0x0000000000000000
+0xffffffffc0413f50:	0x0000000000000000	0x0000000000000000
+0xffffffffc0413f60:	0x0000000000000000	0x0000000000000000
+0xffffffffc0413f70:	0x0000000000000000	0x0000000000000000
+0xffffffffc0413f80:	0x0000000000000000	0x0000000000000000
+0xffffffffc0413f90:	0x0000000000000000	0x0000000000000000
+0xffffffffc0413fa0:	0x0000000000000000	0x0000000000000000
+0xffffffffc0413fb0:	0x0000000000000000	0x0000000000000000
+0xffffffffc0413fc0:	0x0000000000000000	0x0000000000000000
+0xffffffffc0413fd0:	0x0000000000000000	0x0000000000000000
+0xffffffffc0413fe0:	0x8000000000046120	0xffffffffc0202f8c
+0xffffffffc0413ff0:	0x0000000000000000	0x0000000000000000
+B_GDB_LAYOUT_CHECK_PASS
+[Inferior 1 (process 1) detached]

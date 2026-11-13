@@ -1,0 +1,93 @@
+--- formal/kern/process/proc.c
++++ isolated/kern/process/proc.c
+@@ -11,6 +11,14 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <assert.h>
++
++/* B test wrappers: temporary-copy injection only. */
++static void *b_test_kmalloc(size_t);
++static void b_test_kfree(void *);
++static struct Page *b_test_stack_alloc(size_t);
++static void b_test_stack_free(struct Page *, size_t);
++static int b_test_copy_mm(uint32_t, struct proc_struct *);
++
+ 
+ /* ------------- process/thread mechanism design&implementation -------------
+ (an simplified Linux process/thread mechanism )
+@@ -182,7 +190,7 @@
+ static int
+ setup_kstack(struct proc_struct *proc)
+ {
+-    struct Page *page = alloc_pages(KSTACKPAGE);
++    struct Page *page = b_test_stack_alloc(KSTACKPAGE);
+     if (page != NULL)
+     {
+         proc->kstack = (uintptr_t)page2kva(page);
+@@ -195,7 +203,7 @@
+ static void
+ put_kstack(struct proc_struct *proc)
+ {
+-    free_pages(kva2page((void *)(proc->kstack)), KSTACKPAGE);
++    b_test_stack_free(kva2page((void *)(proc->kstack)), KSTACKPAGE);
+ }
+ 
+ 
+@@ -223,7 +231,7 @@
+ static struct proc_struct *
+ alloc_proc(void)
+ {
+-    struct proc_struct *proc = kmalloc(sizeof(struct proc_struct));
++    struct proc_struct *proc = b_test_kmalloc(sizeof(struct proc_struct));
+     if (proc != NULL)
+     {
+         memset(proc, 0, sizeof(*proc));
+@@ -281,7 +289,7 @@
+     {
+         goto bad_proc;
+     }
+-    if ((ret = copy_mm(clone_flags, proc)) != 0)
++    if ((ret = b_test_copy_mm(clone_flags, proc)) != 0)
+     {
+         goto bad_kstack;
+     }
+@@ -299,7 +307,7 @@
+ bad_kstack:
+     put_kstack(proc);
+ bad_proc:
+-    kfree(proc);
++    b_test_kfree(proc);
+ out:
+     local_intr_restore(intr_flag);
+     return ret;
+@@ -350,3 +358,5 @@
+ 
+ 
+ //LAB4 function3 YOUR CODE
++
++#include "b-create-tests.inc"
+--- formal/kern/init/init.c
++++ isolated/kern/init/init.c
+@@ -13,6 +13,8 @@
+ #include <kmonitor.h>
+ #include <dtb.h>
+ 
++void b_create_checkpoint(void);
++void b_create_tests(void);
+ int kern_init(void) __attribute__((noreturn));
+ void grade_backtrace(void);
+ 
+@@ -38,10 +40,10 @@
+     vmm_init();  // init virtual memory management
+     proc_init(); // init process table
+ 
+-    clock_init();  // init clock interrupt
+-    intr_enable(); // enable irq interrupt
++    b_create_checkpoint();
++    b_create_tests();
++    while (1) {}
+ 
+-    cpu_idle(); // run idle process
+ }
+ 
+ static void

@@ -1,0 +1,45 @@
+set pagination off
+set confirm off
+set architecture riscv:rv64
+set remotetimeout 15
+file /mnt/d/3nd_grade/OS/lab/lab4/github/docs/logs/b-create-20261113-094247/isolated-kernel.elf
+target remote 127.0.0.1:35059
+hbreak b_create_checkpoint
+continue
+printf "B_GDB_PROC_INIT_COMPLETE\n"
+p current
+p idleproc
+p initproc
+p nr_process
+p sizeof(struct proc_struct)
+p sizeof(struct context)
+p sizeof(struct trapframe)
+p *idleproc
+p *initproc
+p/x boot_pgdir_pa
+p/x initproc->pgdir
+p/x initproc->kstack
+p/x initproc->context
+p/x *initproc->tf
+p/x &forkret
+p/x &kernel_thread_entry
+x/36gx initproc->tf
+if current != idleproc || nr_process != 2
+  quit 1
+end
+if idleproc->pid != 0 || initproc->pid != 1 || initproc->parent != idleproc
+  quit 1
+end
+if initproc->context.ra != (unsigned long)&forkret || initproc->context.sp != (unsigned long)initproc->tf
+  quit 1
+end
+if initproc->tf->epc != (unsigned long)&kernel_thread_entry || initproc->pgdir != boot_pgdir_pa
+  quit 1
+end
+if (initproc->tf->status & 0x122) != 0x120
+  quit 1
+end
+printf "B_GDB_LAYOUT_CHECK_PASS\n"
+delete breakpoints
+detach
+quit
