@@ -1,0 +1,28 @@
++ cc kern/init/entry.S
++ cc kern/init/init.c
++ cc kern/libs/readline.c
++ cc kern/libs/stdio.c
++ cc kern/debug/kdebug.c
++ cc kern/debug/kmonitor.c
++ cc kern/debug/panic.c
++ cc kern/driver/clock.c
++ cc kern/driver/console.c
++ cc kern/driver/dtb.c
++ cc kern/driver/intr.c
++ cc kern/driver/picirq.c
++ cc kern/trap/trap.c
++ cc kern/trap/trapentry.S
++ cc kern/mm/default_pmm.c
+make: *** No rule to make target 'kern/mm/best_fit_pmm.h', needed by 'obj/kern/mm/pmm.o'.  Stop.
+make: *** Waiting for unfinished jobs....
++ cc kern/mm/kmalloc.c
+kern/mm/kmalloc.c: In function '__slob_free_pages':
+kern/mm/kmalloc.c:92:22: warning: passing argument 1 of 'kva2page' makes pointer from integer without a cast [-Wint-conversion]
+   92 |  free_pages(kva2page(kva), 1 << order);
+      |                      ^~~
+      |                      |
+      |                      long unsigned int
+In file included from kern/mm/kmalloc.c:7:
+kern/mm/pmm.h:117:16: note: expected 'void *' but argument is of type 'long unsigned int'
+  117 | kva2page(void *kva)
+      |          ~~~~~~^~~
