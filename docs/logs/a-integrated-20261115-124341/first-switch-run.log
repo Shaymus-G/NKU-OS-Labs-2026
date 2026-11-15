@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/home/gjhjz/lab4-a-first-switch-36412b6b/tools/c-first-switch.py", line 43, in <module>
+    assert p.returncode==0 and b'C FIRST SWITCH GDB: PASS' in p.stdout,p.stdout[-2000:]
+AssertionError: b'0x0000000000001000 in ?? ()\nHardware assisted breakpoint 1 at 0xffffffffc020319c: file kern/process/switch.S, line 7.\n\nBreakpoint 1, switch_to () at kern/process/switch.S:7\n7\tSTORE ra, 0*REGBYTES(a0)\n/tmp/tmpncsrkkwh:6: Error in sourced command file:\nPython scripting is not supported in this copy of GDB.\n[Inferior 1 (process 1) detached]\n'

@@ -1,0 +1,114 @@
+riscv64-unknown-elf-gdb \
+    -ex 'file bin/kernel' \
+    -ex 'set arch riscv:rv64' \
+    -ex 'target remote localhost:1234'
+GNU gdb (SiFive GDB-Metal 10.1.0-2020.12.7) 10.1
+Copyright (C) 2020 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Type "show copying" and "show warranty" for details.
+This GDB was configured as "--host=x86_64-linux-gnu --target=riscv64-unknown-elf".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<https://github.com/sifive/freedom-tools/issues>.
+Find the GDB manual and other documentation resources online at:
+    <http://www.gnu.org/software/gdb/documentation/>.
+
+For help, type "help".
+Type "apropos word" to search for commands related to "word".
+Reading symbols from bin/kernel...
+The target architecture is set to "riscv:rv64".
+Remote debugging using localhost:1234
+0x0000000000001000 in ?? ()
+(gdb) set pagination off
+(gdb) info registers pc
+pc             0x1000	0x1000
+(gdb) thbreak kern/mm/pmm.c:383
+Hardware assisted breakpoint 1 at 0xffffffffc02027c6: file kern/mm/pmm.c, line 383.
+(gdb) continue
+Continuing.
+
+Temporary breakpoint 1, check_pgdir () at kern/mm/pmm.c:383
+383	    assert(page_insert(boot_pgdir_va, p1, PGSIZE, 0) == 0);
+(gdb) list
+378	    assert(*ptep & PTE_U);
+379	    assert(*ptep & PTE_W);
+380	    assert(boot_pgdir_va[0] & PTE_U);
+381	    assert(page_ref(p2) == 1);
+382
+383	    assert(page_insert(boot_pgdir_va, p1, PGSIZE, 0) == 0);
+384	    assert(page_ref(p1) == 2);
+385	    assert(page_ref(p2) == 0);
+386	    assert((ptep = get_pte(boot_pgdir_va, PGSIZE, 0)) != NULL);
+387	    assert(pte2page(*ptep) == p1);
+(gdb) x/i $pc
+=> 0xffffffffc02027c6 <pmm_init+768>:	li	a3,0
+(gdb) printf "\n=== BEFORE: replace mapping at VA 0x1000 ===\n"
+
+=== BEFORE: replace mapping at VA 0x1000 ===
+(gdb) <oot_pgdir_va[0] >> 10) << 12) + va_pa_offset)
+(gdb) <ong long)$l1[0] >> 10) << 12) + va_pa_offset)
+(gdb)
+(gdb) p/x $l0[0]
+$1 = 0x20103803
+(gdb) p/x $l0[1]
+$2 = 0x20104417
+(gdb)
+$3 = 0x20104417
+(gdb) < long long)$l0[0] >> 10) & ((1ULL << 44) - 1)
+(gdb) < long long)$l0[1] >> 10) & ((1ULL << 44) - 1)
+(gdb)
+(gdb) p/x $p1_ppn
+$4 = 0x8040e
+(gdb) p/x $old_ppn
+$5 = 0x80411
+(gdb) p $p1_ppn != $old_ppn
+$6 = 1
+(gdb) p pages[$p1_ppn - nbase].ref
+$7 = 1
+(gdb) p pages[$old_ppn - nbase].ref
+$8 = 1
+(gdb) thbreak kern/mm/pmm.c:390
+Hardware assisted breakpoint 2 at 0xffffffffc0202824: file kern/mm/pmm.c, line 390.
+(gdb) continue
+Continuing.
+
+Temporary breakpoint 2, check_pgdir () at kern/mm/pmm.c:390
+390	    page_remove(boot_pgdir_va, 0x0);
+(gdb) list
+385	    assert(page_ref(p2) == 0);
+386	    assert((ptep = get_pte(boot_pgdir_va, PGSIZE, 0)) != NULL);
+387	    assert(pte2page(*ptep) == p1);
+388	    assert((*ptep & PTE_U) == 0);
+389
+390	    page_remove(boot_pgdir_va, 0x0);
+391	    assert(page_ref(p1) == 1);
+392	    assert(page_ref(p2) == 0);
+393
+394	    page_remove(boot_pgdir_va, PGSIZE);
+(gdb) x/i $pc
+=> 0xffffffffc0202824 <pmm_init+862>:	ld	a0,0(s1)
+(gdb) printf "\n=== AFTER: mapping replaced, before removal ===\n"
+
+=== AFTER: mapping replaced, before removal ===
+(gdb) p/x $l0[0]
+$9 = 0x20103803
+(gdb) p/x $l0[1]
+$10 = 0x20103803
+(gdb)
+$11 = 0x20103803
+(gdb) < long long)$l0[1] >> 10) & ((1ULL << 44) - 1)
+(gdb) p/x $new_ppn
+$12 = 0x8040e
+(gdb) p $new_ppn == $p1_ppn
+$13 = 1
+(gdb) p pages[$p1_ppn - nbase].ref
+$14 = 2
+(gdb) p pages[$old_ppn - nbase].ref
+$15 = 0
+(gdb) detach
+Detaching from program: /home/gjhjz/NKU-OS-Labs-2026/bin/kernel, process 1
+Ending remote debugging.
+[Inferior 1 (process 1) detached]
+(gdb) quit

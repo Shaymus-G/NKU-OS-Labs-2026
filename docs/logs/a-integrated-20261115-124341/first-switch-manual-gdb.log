@@ -1,0 +1,84 @@
+riscv64-unknown-elf-gdb \
+    -ex 'file bin/kernel' \
+    -ex 'set arch riscv:rv64' \
+    -ex 'target remote localhost:1234'
+GNU gdb (SiFive GDB-Metal 10.1.0-2020.12.7) 10.1
+Copyright (C) 2020 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Type "show copying" and "show warranty" for details.
+This GDB was configured as "--host=x86_64-linux-gnu --target=riscv64-unknown-elf".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<https://github.com/sifive/freedom-tools/issues>.
+Find the GDB manual and other documentation resources online at:
+    <http://www.gnu.org/software/gdb/documentation/>.
+
+For help, type "help".
+Type "apropos word" to search for commands related to "word".
+Reading symbols from bin/kernel...
+The target architecture is set to "riscv:rv64".
+Remote debugging using localhost:1234
+0x0000000000001000 in ?? ()
+(gdb) set pagination off
+(gdb) target remote 127.0.0.1:1234
+A program is being debugged already.  Kill it? (y or n) <already.  Kill it? (y or n) info registers pc          
+Please answer y or n.
+A program is being debugged already.  Kill it? (y or n) n
+Program not killed.
+(gdb) info registers pc
+pc             0x1000	0x1000
+(gdb) thbreak *switch_to
+Hardware assisted breakpoint 1 at 0xffffffffc020319c: file kern/process/switch.S, line 7.
+(gdb) continue
+Continuing.
+
+Temporary breakpoint 1, switch_to () at kern/process/switch.S:7
+7	STORE ra, 0*REGBYTES(a0)
+(gdb) p current->pid
+$1 = 1
+(gdb) p/x $satp
+$2 = 0x8000000000080208
+(gdb) thbreak *forkret
+Hardware assisted breakpoint 2 at 0xffffffffc020324c: file kern/process/proc.c, line 151.
+(gdb) continue
+Continuing.
+
+Temporary breakpoint 2, forkret () at kern/process/proc.c:151
+151	    forkrets(current->tf);
+(gdb) p current->pid
+$3 = 1
+(gdb) p/x current->tf->epc
+$4 = 0xffffffffc0203194
+(gdb) thbreak *kernel_thread_entry
+Hardware assisted breakpoint 3 at 0xffffffffc0203194: file kern/process/entry.S, line 4.
+(gdb) continue
+Continuing.
+
+Temporary breakpoint 3, kernel_thread_entry () at kern/process/entry.S:4
+4		move a0, s1
+(gdb) p/x $sp
+$5 = 0xffffffffc0411ee0
+(gdb) p/x current->tf
+$6 = 0xffffffffc0411ee0
+(gdb) p (unsigned long long)$sp == (unsigned long long)current->tf
+$7 = 1
+(gdb) x/s $s1
+0xffffffffc0205570:	"Hello world!!"
+(gdb) thbreak *init_main
+Hardware assisted breakpoint 4 at 0xffffffffc020325a: file kern/process/proc.c, line 215.
+(gdb) continue
+Continuing.
+
+Temporary breakpoint 4, init_main (arg=0xffffffffc0205570) at kern/process/proc.c:215
+215	    cprintf("this initproc, pid = %d, name = \"%s\"\n", current->pid, get_proc_name(current));
+(gdb) p current->pid
+$8 = 1
+(gdb) x/s $a0
+0xffffffffc0205570:	"Hello world!!"
+(gdb) dpeatch      epath    tach
+Detaching from program: /home/gjhjz/NKU-OS-Labs-2026/bin/kernel, process 1
+Ending remote debugging.
+[Inferior 1 (process 1) detached]
+(gdb) quit
