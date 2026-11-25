@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <unistd.h>
 
 /* ------------- process/thread mechanism design&implementation -------------
 (an simplified Linux process/thread mechanism )
@@ -81,6 +82,11 @@ void kernel_thread_entry(void);
 void forkrets(struct trapframe *tf);
 void switch_to(struct context *from, struct context *to);
 
+//lab4 请补充你在lab4中的代码
+
+//lab5 function2 YOUR CODE update alloc_proc
+
+
 // set_proc_name - set the name of proc
 char *
 set_proc_name(struct proc_struct *proc, const char *name)
@@ -96,6 +102,40 @@ get_proc_name(struct proc_struct *proc)
     static char name[PROC_NAME_LEN + 1];
     memset(name, 0, sizeof(name));
     return memcpy(name, proc->name, PROC_NAME_LEN);
+}
+
+// set_links - set the relation links of process
+static void
+set_links(struct proc_struct *proc)
+{
+    list_add(&proc_list, &(proc->list_link));
+    proc->yptr = NULL;
+    if ((proc->optr = proc->parent->cptr) != NULL)
+    {
+        proc->optr->yptr = proc;
+    }
+    proc->parent->cptr = proc;
+    nr_process++;
+}
+
+// remove_links - clean the relation links of process
+static void
+remove_links(struct proc_struct *proc)
+{
+    list_del(&(proc->list_link));
+    if (proc->optr != NULL)
+    {
+        proc->optr->yptr = proc->yptr;
+    }
+    if (proc->yptr != NULL)
+    {
+        proc->yptr->optr = proc->optr;
+    }
+    else
+    {
+        proc->parent->cptr = proc->optr;
+    }
+    nr_process--;
 }
 
 // get_pid - alloc a unique pid for process
@@ -142,6 +182,10 @@ get_pid(void)
 }
 
 
+
+
+
+
 // forkret -- the first kernel entry point of a new thread/process
 // NOTE: the addr of forkret is setted in copy_thread function
 //       after switch_to, the current proc will execute here.
@@ -156,6 +200,13 @@ static void
 hash_proc(struct proc_struct *proc)
 {
     list_add(hash_list + pid_hashfn(proc->pid), &(proc->hash_link));
+}
+
+// unhash_proc - delete proc from proc hash_list
+static void
+unhash_proc(struct proc_struct *proc)
+{
+    list_del(&(proc->hash_link));
 }
 
 // find_proc - find proc frome proc hash_list according to pid
@@ -176,6 +227,8 @@ find_proc(int pid)
     }
     return NULL;
 }
+
+//lab5 function2 YOUR CODE update kernel_thread
 
 
 // setup_kstack - alloc pages with size KSTACKPAGE as process kernel stack
@@ -198,177 +251,64 @@ put_kstack(struct proc_struct *proc)
     free_pages(kva2page((void *)(proc->kstack)), KSTACKPAGE);
 }
 
-
-// do_exit - called by sys_exit
-//   1. call exit_mmap & put_pgdir & mm_destroy to free the almost all memory space of process
-//   2. set process' state as PROC_ZOMBIE, then call wakeup_proc(parent) to ask parent reclaim itself.
-//   3. call scheduler to switch to other process
-int do_exit(int error_code)
-{
-    panic("process exit!!.\n");
-}
-
-// init_main - the second kernel thread used to create user_main kernel threads
+// setup_pgdir - alloc one page as PDT
 static int
-init_main(void *arg)
+setup_pgdir(struct mm_struct *mm)
 {
-    cprintf("this initproc, pid = %d, name = \"%s\"\n", current->pid, get_proc_name(current));
-    cprintf("To U: \"%s\".\n", (const char *)arg);
-    cprintf("To U: \"en.., Bye, Bye. :)\"\n");
-    return 0;
-}
-
-//LAB4 function2 2412559
-// Allocate a private PCB; it is not visible to the scheduler until do_fork publishes it.
-static struct proc_struct *
-alloc_proc(void)
-{
-    struct proc_struct *proc = kmalloc(sizeof(struct proc_struct));
-    if (proc != NULL)
+    struct Page *page;
+    if ((page = alloc_page()) == NULL)
     {
-        memset(proc, 0, sizeof(*proc));
-        proc->state = PROC_UNINIT;
-        proc->pid = -1;
-        proc->pgdir = boot_pgdir_pa;
-        list_init(&proc->list_link);
-        list_init(&proc->hash_link);
+        return -E_NO_MEM;
     }
-    return proc;
-}
+    pde_t *pgdir = page2kva(page);
+    memcpy(pgdir, boot_pgdir_va, PGSIZE);
 
-// Lab4 creates kernel threads only: no user mm is copied or allocated here.
-static int
-copy_mm(uint32_t clone_flags, struct proc_struct *proc)
-{
-    assert(current != NULL && current->mm == NULL);
-    assert(proc->mm == NULL);
+    mm->pgdir = pgdir;
     return 0;
 }
 
-// Build the first switch_to -> forkret -> forkrets -> sret execution frame.
+// put_pgdir - free the memory space of PDT
 static void
-copy_thread(struct proc_struct *proc, uintptr_t esp, struct trapframe *tf)
+put_pgdir(struct mm_struct *mm)
 {
-    proc->tf = (struct trapframe *)(proc->kstack + KSTACKSIZE - sizeof(*tf));
-    *proc->tf = *tf;
-    proc->tf->gpr.a0 = 0;
-    proc->tf->gpr.sp = esp != 0 ? esp : (uintptr_t)proc->tf;
-    proc->context.ra = (uintptr_t)forkret;
-    proc->context.sp = (uintptr_t)proc->tf;
+    free_page(kva2page(mm->pgdir));
 }
 
-int
-do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf)
-{
-    int ret = -E_NO_FREE_PROC;
-    struct proc_struct *proc = NULL;
-    bool intr_flag;
-
-    // Single-hart lab: keep the count, parent and publication consistent.
-    // Allocators below are nonblocking and preserve this nested interrupt state.
-    local_intr_save(intr_flag);
-    if (nr_process >= MAX_PROCESS)
-    {
-        goto out;
-    }
-    ret = -E_NO_MEM;
-    if ((proc = alloc_proc()) == NULL)
-    {
-        goto out;
-    }
-    proc->parent = current;
-    if ((ret = setup_kstack(proc)) != 0)
-    {
-        goto bad_proc;
-    }
-    if ((ret = copy_mm(clone_flags, proc)) != 0)
-    {
-        goto bad_kstack;
-    }
-    copy_thread(proc, stack, tf);
-
-    // Publish only after every resource and the first-run frame are ready.
-    proc->pid = get_pid();
-    hash_proc(proc);
-    list_add_before(&proc_list, &proc->list_link);
-    nr_process++;
-    wakeup_proc(proc);
-    ret = proc->pid;
-    goto out;
-
-bad_kstack:
-    put_kstack(proc);
-bad_proc:
-    kfree(proc);
-out:
-    local_intr_restore(intr_flag);
-    return ret;
-}
-
-int
-kernel_thread(int (*fn)(void *), void *arg, uint32_t clone_flags)
-{
-    struct trapframe tf;
-    memset(&tf, 0, sizeof(tf));
-    tf.gpr.s0 = (uintptr_t)fn;
-    tf.gpr.s1 = (uintptr_t)arg;
-    tf.status = (read_csr(sstatus) | SSTATUS_SPP | SSTATUS_SPIE) & ~SSTATUS_SIE;
-    tf.epc = (uintptr_t)kernel_thread_entry;
-    return do_fork(clone_flags | CLONE_VM, 0, &tf);
-}
-
-void
-proc_init(void)
-{
-    const char idle_name[PROC_NAME_LEN + 1] = "idle";
-    const char init_name[PROC_NAME_LEN + 1] = "init";
-    list_init(&proc_list);
-    for (int i = 0; i < HASH_LIST_SIZE; i++)
-    {
-        list_init(&hash_list[i]);
-    }
-    if ((idleproc = alloc_proc()) == NULL)
-    {
-        panic("proc_init: cannot allocate idleproc");
-    }
-    idleproc->pid = 0;
-    idleproc->state = PROC_RUNNABLE;
-    idleproc->kstack = (uintptr_t)bootstack;
-    idleproc->need_resched = 1;
-    set_proc_name(idleproc, idle_name);
-    nr_process++;
-    current = idleproc;
-    // idleproc stays outside proc_list/hash_list; the scheduler uses it as fallback.
-    int pid = kernel_thread(init_main, "Hello world!!", 0);
-    if (pid <= 0 || (initproc = find_proc(pid)) == NULL)
-    {
-        panic("proc_init: cannot create initproc (%d)", pid);
-    }
-    set_proc_name(initproc, init_name);
-    assert(idleproc->pid == 0 && initproc->pid == 1);
-}
+//lab5 function3 YOUR CODE update copy_mm
 
 
-//LAB4 function3 2412456
-void cpu_idle(void)
-{
-    while (1) {
-        if (current->need_resched) schedule();
-    }
-}
 
-void proc_run(struct proc_struct *proc)
-{
-    assert(proc != NULL && proc->state == PROC_RUNNABLE);
-    if (proc != current) {
-        bool intr_flag;
-        local_intr_save(intr_flag);
-        struct proc_struct *prev = current;
-        current = proc;
-        assert((proc->pgdir & (PGSIZE - 1)) == 0);
-        write_csr(satp, ((uintptr_t)8 << 60) | (proc->pgdir >> 12));
-        flush_tlb();
-        switch_to(&prev->context, &proc->context);
-        local_intr_restore(intr_flag);
-    }
-}
+//lab5 function2 YOUR CODE
+
+
+//lab5 function3 YOUR CODE
+
+
+//lab5 function4 YOUR CODE
+
+
+#define __KERNEL_EXECVE(name, binary, size) ({           \
+    cprintf("kernel_execve: pid = %d, name = \"%s\".\n", \
+            current->pid, name);                         \
+    kernel_execve(name, binary, (size_t)(size));         \
+})
+
+#define KERNEL_EXECVE(x) ({                                    \
+    extern unsigned char _binary_obj___user_##x##_out_start[], \
+        _binary_obj___user_##x##_out_size[];                   \
+    __KERNEL_EXECVE(#x, _binary_obj___user_##x##_out_start,    \
+                    _binary_obj___user_##x##_out_size);        \
+})
+
+#define __KERNEL_EXECVE2(x, xstart, xsize) ({   \
+    extern unsigned char xstart[], xsize[];     \
+    __KERNEL_EXECVE(#x, xstart, (size_t)xsize); \
+})
+
+#define KERNEL_EXECVE2(x, xstart, xsize) __KERNEL_EXECVE2(x, xstart, xsize)
+
+
+//lab5 function2 YOUR CODE
+
+
+

@@ -6,12 +6,12 @@
 #include <mmu.h>
 #include <pmm.h>
 #include <sbi.h>
+#include <dtb.h>
 #include <stdio.h>
 #include <string.h>
 #include <sync.h>
 #include <vmm.h>
 #include <riscv.h>
-#include <dtb.h>
 
 // virtual address of physical page array
 struct Page *pages;
@@ -88,66 +88,6 @@ size_t nr_free_pages(void)
 }
 
 //lab2 请补充你在lab2中的代码
-static void
-page_init(void)
-{
-    extern char end[];
-    const uint64_t mem_base = get_memory_base();
-    const uint64_t mem_size = get_memory_size();
-    const uint64_t reported_end = mem_base + mem_size;
-    if (mem_base != DRAM_BASE || mem_size == 0 || reported_end < mem_base) {
-        panic("page_init: invalid DTB memory range");
-    }
-
-    va_pa_offset = PHYSICAL_MEMORY_OFFSET;
-    const uintptr_t limit = PADDR(KERNTOP);
-    uintptr_t managed_end = reported_end < limit ? reported_end : limit;
-    managed_end = ROUNDDOWN(managed_end, PGSIZE);
-    if (managed_end <= PADDR(KERNBASE)) {
-        panic("page_init: insufficient memory for kernel");
-    }
-    npage = PPN(managed_end);
-
-    const uintptr_t pages_va = ROUNDUP((uintptr_t)end, PGSIZE);
-    const uintptr_t pages_pa = PADDR(pages_va);
-    const size_t count = npage - nbase;
-    if (pages_pa >= managed_end ||
-        count > (managed_end - pages_pa) / sizeof(struct Page)) {
-        panic("page_init: insufficient memory for page descriptors");
-    }
-
-    const uintptr_t free_begin =
-        ROUNDUP(pages_pa + count * sizeof(struct Page), PGSIZE);
-    if (free_begin >= managed_end) {
-        panic("page_init: no usable physical pages");
-    }
-
-    pages = (struct Page *)pages_va;
-    for (size_t i = 0; i < count; i++) {
-        struct Page *p = &pages[i];
-        p->flags = 0;
-        p->property = 0;
-        set_page_ref(p, 0);
-        list_init(&p->page_link);
-        list_init(&p->pra_page_link);
-        p->pra_vaddr = 0;
-        SetPageReserved(p);
-    }
-    const size_t free_count = (managed_end - free_begin) / PGSIZE;
-    init_memmap(pa2page(free_begin), free_count);
-    cprintf("PMM: DRAM [0x%lx, 0x%lx), managed end 0x%lx\n",
-            (unsigned long)mem_base, (unsigned long)reported_end,
-            (unsigned long)managed_end);
-    cprintf("PMM: %lu descriptors, sizeof(Page)=%lu, free=[0x%lx, 0x%lx), %lu pages\n",
-            (unsigned long)count, (unsigned long)sizeof(struct Page),
-            (unsigned long)free_begin, (unsigned long)managed_end,
-            (unsigned long)free_count);
-}
-
-static void enable_paging(void)
-{
-    write_csr(satp, 0x8000000000000000 | (boot_pgdir_pa >> RISCV_PGSHIFT));
-}
 
 // boot_map_segment - setup&enable the paging mechanism
 // parameters
@@ -206,6 +146,7 @@ void pmm_init(void)
     // use pmm->check to verify the correctness of the alloc/free function in a
     // pmm
     check_alloc_page();
+
     // create boot_pgdir, an initial page directory(Page Directory Table, PDT)
     extern char boot_page_table_sv39[];
     boot_pgdir_va = (pte_t *)boot_page_table_sv39;
@@ -231,49 +172,34 @@ void pmm_init(void)
 // return vaule: the kernel virtual address of this pte
 pte_t *get_pte(pde_t *pgdir, uintptr_t la, bool create)
 {
-    const pte_t leaf_bits = PTE_R | PTE_W | PTE_X;
     pde_t *pdep1 = &pgdir[PDX1(la)];
-    struct Page *new_l1 = NULL;
-    pde_t *l1;
-    if (*pdep1 & PTE_V) {
-        if (*pdep1 & leaf_bits) {
-            return NULL;  /* A 1 GiB leaf is not a page-table pointer. */
-        }
-        l1 = KADDR(PDE_ADDR(*pdep1));
-    } else {
-        if (!create || (new_l1 = alloc_page()) == NULL) {
+    if (!(*pdep1 & PTE_V))
+    {
+        struct Page *page;
+        if (!create || (page = alloc_page()) == NULL)
+        {
             return NULL;
         }
-        l1 = page2kva(new_l1);
-        memset(l1, 0, PGSIZE);
+        set_page_ref(page, 1);
+        uintptr_t pa = page2pa(page);
+        memset(KADDR(pa), 0, PGSIZE);
+        *pdep1 = pte_create(page2ppn(page), PTE_U | PTE_V);
     }
 
-    pde_t *pdep0 = &l1[PDX0(la)];
-    if (*pdep0 & PTE_V) {
-        if (*pdep0 & leaf_bits) {
-            return NULL;  /* A 2 MiB leaf is not a page-table pointer. */
-        }
-    } else {
-        struct Page *new_l0;
-        if (!create || (new_l0 = alloc_page()) == NULL) {
-            if (new_l1 != NULL) {
-                free_page(new_l1);
-            }
+    pde_t *pdep0 = &((pde_t *)KADDR(PDE_ADDR(*pdep1)))[PDX0(la)];
+    if (!(*pdep0 & PTE_V))
+    {
+        struct Page *page;
+        if (!create || (page = alloc_page()) == NULL)
+        {
             return NULL;
         }
-        set_page_ref(new_l0, 1);
-        memset(page2kva(new_l0), 0, PGSIZE);
-        /* Preserve the starter's non-leaf flags expected by check_pgdir(). */
-        *pdep0 = pte_create(page2ppn(new_l0), PTE_U);
-        if (new_l1 != NULL) {
-            set_page_ref(new_l1, 1);
-            *pdep1 = pte_create(page2ppn(new_l1), PTE_U);
-        }
-        /* Publishing a non-leaf entry requires the broader fence. */
-        asm volatile("sfence.vma" ::: "memory");
+        set_page_ref(page, 1);
+        uintptr_t pa = page2pa(page);
+        memset(KADDR(pa), 0, PGSIZE);
+        *pdep0 = pte_create(page2ppn(page), PTE_U | PTE_V);
     }
-    pte_t *l0 = KADDR(PDE_ADDR(*pdep0));
-    return &l0[PTX(la)];
+    return &((pte_t *)KADDR(PDE_ADDR(*pdep0)))[PTX(la)];
 }
 
 // get_page - get related Page struct for linear address la using PDT pgdir
@@ -291,53 +217,143 @@ struct Page *get_page(pde_t *pgdir, uintptr_t la, pte_t **ptep_store)
     return NULL;
 }
 
-//LAB4 function1 2412082
-
-int page_insert(pde_t *pgdir, struct Page *page, uintptr_t la, uint32_t perm)
+// page_remove_pte - free an Page sturct which is related linear address la
+//                - and clean(invalidate) pte which is related linear address la
+// note: PT is changed, so the TLB need to be invalidate
+static inline void page_remove_pte(pde_t *pgdir, uintptr_t la, pte_t *ptep)
 {
-    pte_t *ptep = get_pte(pgdir, la, 1);
-    if (ptep == NULL) {
-        return -E_NO_MEM;
-    }
-
-    struct Page *old = (*ptep & PTE_V) ? pte2page(*ptep) : NULL;
-    /* In this lab, perm=0 denotes a readable leaf, not a non-leaf. */
-    if ((perm & PTE_W) || !(perm & (PTE_R | PTE_W | PTE_X))) {
-        perm |= PTE_R;
-    }
-
-    if (old != page) {
-        page_ref_inc(page);
-    }
-    *ptep = pte_create(page2ppn(page), perm);
-    tlb_invalidate(pgdir, la);
-
-    if (old != NULL && old != page && page_ref_dec(old) == 0) {
-        free_page(old);
-    }
-    return 0;
-}
-
-void page_remove(pde_t *pgdir, uintptr_t la)
-{
-    pte_t *ptep = get_pte(pgdir, la, 0);
-    if (ptep == NULL || !(*ptep & PTE_V)) {
-        return;
-    }
-
-    struct Page *page = pte2page(*ptep);
-    *ptep = 0;
-    tlb_invalidate(pgdir, la);
-    if (page_ref_dec(page) == 0) {
-        free_page(page);
+    if (*ptep & PTE_V)
+    {
+        struct Page *page = pte2page(*ptep);
+        page_ref_dec(page);
+        if (page_ref(page) == 0)
+        {
+            free_page(page);
+        }
+        *ptep = 0;
+        tlb_invalidate(pgdir, la);
     }
 }
 
-// Synchronize a leaf PTE update for this VA on the local hart.
+void unmap_range(pde_t *pgdir, uintptr_t start, uintptr_t end)
+{
+    assert(start % PGSIZE == 0 && end % PGSIZE == 0);
+    assert(USER_ACCESS(start, end));
+
+    do
+    {
+        pte_t *ptep = get_pte(pgdir, start, 0);
+        if (ptep == NULL)
+        {
+            start = ROUNDDOWN(start + PTSIZE, PTSIZE);
+            continue;
+        }
+        if (*ptep != 0)
+        {
+            page_remove_pte(pgdir, start, ptep);
+        }
+        start += PGSIZE;
+    } while (start != 0 && start < end);
+}
+
+void exit_range(pde_t *pgdir, uintptr_t start, uintptr_t end)
+{
+    assert(start % PGSIZE == 0 && end % PGSIZE == 0);
+    assert(USER_ACCESS(start, end));
+
+    uintptr_t d1start, d0start;
+    int free_pt, free_pd0;
+    pde_t *pd0, *pt, pde1, pde0;
+    d1start = ROUNDDOWN(start, PDSIZE);
+    d0start = ROUNDDOWN(start, PTSIZE);
+    do
+    {
+        // level 1 page directory entry
+        pde1 = pgdir[PDX1(d1start)];
+        // if there is a valid entry, get into level 0
+        // and try to free all page tables pointed to by
+        // all valid entries in level 0 page directory,
+        // then try to free this level 0 page directory
+        // and update level 1 entry
+        if (pde1 & PTE_V)
+        {
+            pd0 = page2kva(pde2page(pde1));
+            // try to free all page tables
+            free_pd0 = 1;
+            do
+            {
+                pde0 = pd0[PDX0(d0start)];
+                if (pde0 & PTE_V)
+                {
+                    pt = page2kva(pde2page(pde0));
+                    // try to free page table
+                    free_pt = 1;
+                    for (int i = 0; i < NPTEENTRY; i++)
+                        if (pt[i] & PTE_V)
+                        {
+                            free_pt = 0;
+                            break;
+                        }
+                    // free it only when all entry are already invalid
+                    if (free_pt)
+                    {
+                        free_page(pde2page(pde0));
+                        pd0[PDX0(d0start)] = 0;
+                    }
+                }
+                else
+                    free_pd0 = 0;
+                d0start += PTSIZE;
+            } while (d0start != 0 && d0start < d1start + PDSIZE && d0start < end);
+            // free level 0 page directory only when all pde0s in it are already invalid
+            if (free_pd0)
+            {
+                free_page(pde2page(pde1));
+                pgdir[PDX1(d1start)] = 0;
+            }
+        }
+        d1start += PDSIZE;
+        d0start = d1start;
+    } while (d1start != 0 && d1start < end);
+}
+
+
+//lab5 function3 YOUR CODE 
+
+
+//lab4 请补充你在lab4中的代码
+
+
+// invalidate a TLB entry, but only if the page tables being
+// edited are the ones currently in use by the processor.
 void tlb_invalidate(pde_t *pgdir, uintptr_t la)
 {
-    (void)pgdir;
-    asm volatile("sfence.vma %0, zero" : : "r"(la) : "memory");
+    asm volatile("sfence.vma %0" : : "r"(la));
+}
+
+// pgdir_alloc_page - call alloc_page & page_insert functions to
+//                  - allocate a page size memory & setup an addr map
+//                  - pa<->la with linear address la and the PDT pgdir
+struct Page *pgdir_alloc_page(pde_t *pgdir, uintptr_t la, uint32_t perm)
+{
+    struct Page *page = alloc_page();
+    if (page != NULL)
+    {
+        if (page_insert(pgdir, page, la, perm) != 0)
+        {
+            free_page(page);
+            return NULL;
+        }
+        // swap_map_swappable(check_mm_struct, la, page, 0);
+        page->pra_vaddr = la;
+        assert(page_ref(page) == 1);
+        // cprintf("get No. %d  page: pra_vaddr %x, pra_link.prev %x,
+        // pra_link_next %x in pgdir_alloc_page\n", (page-pages),
+        // page->pra_vaddr,page->pra_page_link.prev,
+        // page->pra_page_link.next);
+    }
+
+    return page;
 }
 
 static void check_alloc_page(void)
