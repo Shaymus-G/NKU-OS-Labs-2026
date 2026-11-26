@@ -87,12 +87,12 @@ static void *__slob_get_free_pages(gfp_t gfp, int order)
 
 #define __slob_get_free_page(gfp) __slob_get_free_pages(gfp, 0)
 
-static inline void __slob_free_pages(unsigned long kva, int order)
+static inline void __slob_free_pages(void *kva, int order)
 {
 	free_pages(kva2page(kva), 1 << order);
 }
 
-static void slob_free(void *b, int size);
+static void slob_free(void *b, int size, bool reclaim);
 
 static void *slob_alloc(size_t size, gfp_t gfp, int align)
 {
@@ -148,14 +148,20 @@ static void *slob_alloc(size_t size, gfp_t gfp, int align)
 			if (!cur)
 				return 0;
 
-			slob_free(cur, PAGE_SIZE);
+			slob_free(cur, PAGE_SIZE, 0);
 			spin_lock_irqsave(&slob_lock, flags);
 			cur = slobfree;
 		}
 	}
 }
 
-static void slob_free(void *block, int size)
+static bool same_slob_page(slob_t *left, slob_t *right)
+{
+	return ROUNDDOWN((uintptr_t)left, PAGE_SIZE) ==
+	       ROUNDDOWN((uintptr_t)right, PAGE_SIZE);
+}
+
+static void slob_free(void *block, int size, bool reclaim)
 {
 	slob_t *cur, *b = (slob_t *)block;
 	unsigned long flags;
@@ -172,7 +178,8 @@ static void slob_free(void *block, int size)
 		if (cur >= cur->next && (b > cur || b < cur->next))
 			break;
 
-	if (b + b->units == cur->next)
+	// Keep each free run within one backing page so whole pages can be returned.
+	if (same_slob_page(b, cur->next) && b + b->units == cur->next)
 	{
 		b->units += cur->next->units;
 		b->next = cur->next->next;
@@ -180,14 +187,21 @@ static void slob_free(void *block, int size)
 	else
 		b->next = cur->next;
 
-	if (cur + cur->units == b)
+	if (same_slob_page(cur, b) && cur + cur->units == b)
 	{
 		cur->units += b->units;
 		cur->next = b->next;
+		b = cur;
 	}
 	else
 		cur->next = b;
 
+	if (reclaim && b->units == SLOB_UNITS(PAGE_SIZE)) {
+		assert(PGOFF(b) == 0);
+		while (cur->next != b) cur = cur->next;
+		cur->next = b->next;
+		__slob_free_pages(b, 0);
+	}
 	slobfree = cur;
 
 	spin_unlock_irqrestore(&slob_lock, flags);
@@ -253,7 +267,7 @@ static void *__kmalloc(size_t size, gfp_t gfp)
 		return bb->pages;
 	}
 
-	slob_free(bb, sizeof(bigblock_t));
+	slob_free(bb, sizeof(bigblock_t), 1);
 	return 0;
 }
 
@@ -281,15 +295,15 @@ void kfree(void *block)
 			{
 				*last = bb->next;
 				spin_unlock_irqrestore(&block_lock, flags);
-				__slob_free_pages((unsigned long)block, bb->order);
-				slob_free(bb, sizeof(bigblock_t));
+				__slob_free_pages(block, bb->order);
+				slob_free(bb, sizeof(bigblock_t), 1);
 				return;
 			}
 		}
 		spin_unlock_irqrestore(&block_lock, flags);
 	}
 
-	slob_free((slob_t *)block - 1, 0);
+	slob_free((slob_t *)block - 1, 0, 1);
 	return;
 }
 
