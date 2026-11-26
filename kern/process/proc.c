@@ -83,6 +83,22 @@ void forkrets(struct trapframe *tf);
 void switch_to(struct context *from, struct context *to);
 
 //lab4 请补充你在lab4中的代码
+void
+proc_run(struct proc_struct *proc)
+{
+    if (proc == current) return;
+
+    bool intr_flag;
+    local_intr_save(intr_flag);
+    struct proc_struct *prev = current;
+    current = proc;
+    if (proc->pgdir != prev->pgdir) {
+        lsatp(proc->pgdir);
+        flush_tlb();
+    }
+    switch_to(&prev->context, &proc->context);
+    local_intr_restore(intr_flag);
+}
 
 //lab5 function2 2412559 update alloc_proc
 static struct proc_struct *
