@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build B's tests in a fresh /tmp copy. Run in WSL with the lab tool PATH.
 
-Never changes production startup, C's empty regions, or teacher tests.
+Never changes production startup, C's implementations, or teacher tests.
 """
 import hashlib
 import json
@@ -38,7 +38,16 @@ manifest['base_commit'] = subprocess.check_output(
     ['git', '-c', 'safe.directory=' + str(root), 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
 
 proc = tree / 'kern/process/proc.c'
-proc.write_text(proc.read_text() + '\n' + (root / 'tools/b-isolated/harness.c').read_text())
+# Keep the kernel-side doubles usable after C's implementations land. Rename
+# definitions only, so the loader and wait still call the harness doubles.
+text = proc.read_text()
+for name in ('do_fork', 'do_exit', 'do_yield', 'do_kill', 'proc_run'):
+    text = re.sub(r'^' + name + r'(?=\()', 'b_unused_' + name, text, flags=re.M)
+proc.write_text(text + '\n' + (root / 'tools/b-isolated/harness.c').read_text())
+sched = tree / 'kern/schedule/sched.c'
+sched.write_text(sched.read_text().replace('void schedule(', 'void b_unused_schedule('))
+switch = tree / 'kern/process/switch.S'
+switch.write_text(switch.read_text().replace('switch_to', 'b_unused_switch_to'))
 init = tree / 'kern/init/init.c'
 text = init.read_text().replace('    proc_init(); // init process table',
     '    extern void b_isolated_tests(void);\n    b_isolated_tests();\n    for (;;) ;')

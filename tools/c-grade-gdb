@@ -1,0 +1,21 @@
+#!/usr/bin/env python3
+"""Append OpenSBI console packets printed by GDB to the grader's serial log."""
+import os
+from pathlib import Path
+import sys
+
+args = sys.argv[1:]
+if "-x" in args:
+    position = args.index("-x")
+    port = Path(".lab5-gdb-port").read_text().strip()
+    commands = []
+    for line in Path(args[position + 1]).read_text().splitlines():
+        if line.startswith("target remote "):
+            line = f"target remote 127.0.0.1:{port}"
+        commands.extend(["-ex", line])
+    args[position:position + 2] = commands
+
+with open(".qemu.out", "ab", buffering=0) as serial_log:
+    os.dup2(serial_log.fileno(), sys.stdout.fileno())
+    os.dup2(serial_log.fileno(), sys.stderr.fileno())
+    os.execvp("riscv64-unknown-elf-gdb", ["riscv64-unknown-elf-gdb", "bin/kernel", *args])
