@@ -88,6 +88,61 @@ size_t nr_free_pages(void)
 }
 
 //lab2 请补充你在lab2中的代码
+static void
+page_init(void)
+{
+    extern char end[];
+    const uint64_t mem_base = get_memory_base();
+    const uint64_t mem_size = get_memory_size();
+    const uint64_t reported_end = mem_base + mem_size;
+    if (mem_base != DRAM_BASE || mem_size == 0 || reported_end < mem_base) {
+        panic("page_init: invalid DTB memory range");
+    }
+
+    va_pa_offset = PHYSICAL_MEMORY_OFFSET;
+    const uintptr_t limit = PADDR(KERNTOP);
+    uintptr_t managed_end = reported_end < limit ? reported_end : limit;
+    managed_end = ROUNDDOWN(managed_end, PGSIZE);
+    if (managed_end <= PADDR(KERNBASE)) {
+        panic("page_init: insufficient memory for kernel");
+    }
+    npage = PPN(managed_end);
+
+    const uintptr_t pages_va = ROUNDUP((uintptr_t)end, PGSIZE);
+    const uintptr_t pages_pa = PADDR(pages_va);
+    const size_t count = npage - nbase;
+    if (pages_pa >= managed_end ||
+        count > (managed_end - pages_pa) / sizeof(struct Page)) {
+        panic("page_init: insufficient memory for page descriptors");
+    }
+
+    const uintptr_t free_begin =
+        ROUNDUP(pages_pa + count * sizeof(struct Page), PGSIZE);
+    if (free_begin >= managed_end) {
+        panic("page_init: no usable physical pages");
+    }
+
+    pages = (struct Page *)pages_va;
+    for (size_t i = 0; i < count; i++) {
+        struct Page *p = &pages[i];
+        p->flags = 0;
+        p->property = 0;
+        set_page_ref(p, 0);
+        list_init(&p->page_link);
+        list_init(&p->pra_page_link);
+        p->pra_vaddr = 0;
+        SetPageReserved(p);
+    }
+    const size_t free_count = (managed_end - free_begin) / PGSIZE;
+    init_memmap(pa2page(free_begin), free_count);
+    cprintf("PMM: DRAM [0x%lx, 0x%lx), managed end 0x%lx\n",
+            (unsigned long)mem_base, (unsigned long)reported_end,
+            (unsigned long)managed_end);
+    cprintf("PMM: %lu descriptors, sizeof(Page)=%lu, free=[0x%lx, 0x%lx), %lu pages\n",
+            (unsigned long)count, (unsigned long)sizeof(struct Page),
+            (unsigned long)free_begin, (unsigned long)managed_end,
+            (unsigned long)free_count);
+}
 
 // boot_map_segment - setup&enable the paging mechanism
 // parameters
@@ -322,6 +377,45 @@ void exit_range(pde_t *pgdir, uintptr_t start, uintptr_t end)
 
 
 //lab4 请补充你在lab4中的代码
+int page_insert(pde_t *pgdir, struct Page *page, uintptr_t la, uint32_t perm)
+{
+    pte_t *ptep = get_pte(pgdir, la, 1);
+    if (ptep == NULL) {
+        return -E_NO_MEM;
+    }
+
+    struct Page *old = (*ptep & PTE_V) ? pte2page(*ptep) : NULL;
+    /* In this lab, perm=0 denotes a readable leaf, not a non-leaf. */
+    if ((perm & PTE_W) || !(perm & (PTE_R | PTE_W | PTE_X))) {
+        perm |= PTE_R;
+    }
+
+    if (old != page) {
+        page_ref_inc(page);
+    }
+    *ptep = pte_create(page2ppn(page), perm);
+    tlb_invalidate(pgdir, la);
+
+    if (old != NULL && old != page && page_ref_dec(old) == 0) {
+        free_page(old);
+    }
+    return 0;
+}
+
+void page_remove(pde_t *pgdir, uintptr_t la)
+{
+    pte_t *ptep = get_pte(pgdir, la, 0);
+    if (ptep == NULL || !(*ptep & PTE_V)) {
+        return;
+    }
+
+    struct Page *page = pte2page(*ptep);
+    *ptep = 0;
+    tlb_invalidate(pgdir, la);
+    if (page_ref_dec(page) == 0) {
+        free_page(page);
+    }
+}
 
 
 // invalidate a TLB entry, but only if the page tables being

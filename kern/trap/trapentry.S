@@ -67,14 +67,68 @@ _save_context:
 
     .macro RESTORE_ALL
 
-    #lab3：填写你在lab3中实现的代码，并进行修改补充
+    # 从 trapframe 取得返回时的 sstatus 和 sepc。
+    LOAD t0, 32*REGBYTES(sp)
+    LOAD t1, 33*REGBYTES(sp)
+
+    # SPP=0 表示将返回用户态。
+    # 返回用户态时，把 trapframe 之上的内核栈顶保存到 sscratch。
+    # 用户态下次发生 trap 时，SAVE_ALL 会通过 sscratch 切回此栈。
+    andi t2, t0, SSTATUS_SPP
+    bnez t2, 1f
+    addi t2, sp, 36*REGBYTES
+    csrw sscratch, t2
+
+1:
+    # 返回内核态时，sscratch 保持为 SAVE_ALL 设置的 0。
+    csrw sstatus, t0
+    csrw sepc, t1
+
+    # 恢复通用寄存器；暂时保留 sp 作为 trapframe 的基址。
+    LOAD x1, 1*REGBYTES(sp)
+    LOAD x3, 3*REGBYTES(sp)
+    LOAD x4, 4*REGBYTES(sp)
+    LOAD x5, 5*REGBYTES(sp)
+    LOAD x6, 6*REGBYTES(sp)
+    LOAD x7, 7*REGBYTES(sp)
+    LOAD x8, 8*REGBYTES(sp)
+    LOAD x9, 9*REGBYTES(sp)
+    LOAD x10, 10*REGBYTES(sp)
+    LOAD x11, 11*REGBYTES(sp)
+    LOAD x12, 12*REGBYTES(sp)
+    LOAD x13, 13*REGBYTES(sp)
+    LOAD x14, 14*REGBYTES(sp)
+    LOAD x15, 15*REGBYTES(sp)
+    LOAD x16, 16*REGBYTES(sp)
+    LOAD x17, 17*REGBYTES(sp)
+    LOAD x18, 18*REGBYTES(sp)
+    LOAD x19, 19*REGBYTES(sp)
+    LOAD x20, 20*REGBYTES(sp)
+    LOAD x21, 21*REGBYTES(sp)
+    LOAD x22, 22*REGBYTES(sp)
+    LOAD x23, 23*REGBYTES(sp)
+    LOAD x24, 24*REGBYTES(sp)
+    LOAD x25, 25*REGBYTES(sp)
+    LOAD x26, 26*REGBYTES(sp)
+    LOAD x27, 27*REGBYTES(sp)
+    LOAD x28, 28*REGBYTES(sp)
+    LOAD x29, 29*REGBYTES(sp)
+    LOAD x30, 30*REGBYTES(sp)
+    LOAD x31, 31*REGBYTES(sp)
+
+    # 最后恢复原始 sp：之后不能再通过 sp 访问当前 trapframe。
+    LOAD x2, 2*REGBYTES(sp)
+
     .endm
 
     .globl __alltraps
 __alltraps:
     SAVE_ALL
 
-    #lab3:填写你在lab3中实现的代码
+    # 将 trapframe 地址作为第一个参数传给 C 函数 trap。
+    mv a0, sp
+    jal trap
+
     # sp should be the same as before "jal trap"
 
     .globl __trapret
