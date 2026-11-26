@@ -1,0 +1,561 @@
+diff --git a/kern/mm/pmm.c b/kern/mm/pmm.c
+index abe5541..915c36e 100644
+--- a/kern/mm/pmm.c
++++ b/kern/mm/pmm.c
+@@ -615,3 +615,134 @@ static int get_pgtable_items(size_t left, size_t right, size_t start,
+     }
+     return 0;
+ }
++
++/*
++ * print_pgdir: 输出当前 satp 指向的 Sv39 页表。
++ *
++ * 这是调试用途的有限输出：
++ * 最多打印 PGDIR_PRINT_LIMIT 个有效页表项，避免输出过多。
++ */
++#define PGDIR_PRINT_LIMIT 128
++
++static uintptr_t
++sv39_canonical_va(uintptr_t va)
++{
++    /*
++     * Sv39 的虚拟地址位 63:39 必须等于位 38。
++     * 如果位 38 为 1，则进行符号扩展。
++     */
++    if (va & ((uintptr_t)1 << 38)) {
++        va |= ~(((uintptr_t)1 << 39) - 1);
++    }
++    return va;
++}
++
++static bool
++pgdir_table_pa_valid(uintptr_t pa)
++{
++    /*
++     * 下级页表应当位于当前 PMM 管理的物理页范围内。
++     * 只有检查通过后才通过 KADDR 转为内核虚拟地址。
++     */
++    size_t ppn = PPN(pa);
++
++    return (pa % PGSIZE == 0) &&
++           (ppn >= nbase) &&
++           (ppn < npage);
++}
++
++static void
++print_pgdir_level(pte_t *table, int level,
++                  uintptr_t va_prefix, size_t *printed)
++{
++    for (size_t i = 0; i < NPTEENTRY; i++) {
++        pte_t entry = table[i];
++
++        if (!(entry & PTE_V)) {
++            continue;
++        }
++
++        if (*printed >= PGDIR_PRINT_LIMIT) {
++            return;
++        }
++
++        uintptr_t va =
++            va_prefix | ((uintptr_t)i << (PGSHIFT + 9 * level));
++
++        uintptr_t pa = PTE_ADDR(entry);
++        uintptr_t flags = entry & 0x3ff;
++        bool leaf = (entry & (PTE_R | PTE_W | PTE_X)) != 0;
++
++        cprintf("  L%d VA 0x%016lx PTE 0x%016lx PA 0x%016lx flags 0x%03lx%s\n",
++                level,
++                (unsigned long)sv39_canonical_va(va),
++                (unsigned long)entry,
++                (unsigned long)pa,
++                (unsigned long)flags,
++                leaf ? " leaf" : " table");
++
++        (*printed)++;
++
++        /*
++         * 叶子项可以出现在 Sv39 的任一级：
++         * L2 为 1 GiB，L1 为 2 MiB，L0 为 4 KiB。
++         */
++        if (leaf) {
++            continue;
++        }
++
++        if (level == 0) {
++            cprintf("    invalid non-leaf entry at L0\n");
++            continue;
++        }
++
++        if (!pgdir_table_pa_valid(pa)) {
++            cprintf("    next-level table PA is outside managed memory\n");
++            continue;
++        }
++
++        pte_t *next = (pte_t *)KADDR(pa);
++
++        print_pgdir_level(next, level - 1, va, printed);
++    }
++}
++
++void
++print_pgdir(void)
++{
++    uintptr_t satp = read_csr(satp);
++
++    /*
++     * RV64 satp：
++     * MODE 位于 63:60；Sv39 的 MODE 为 8；
++     * 根页表 PPN 位于 43:0。
++     */
++    uintptr_t mode = satp >> 60;
++    uintptr_t root_ppn =
++        satp & ((((uintptr_t)1) << 44) - 1);
++    uintptr_t root_pa = root_ppn << PGSHIFT;
++
++    cprintf("Sv39 page table: satp=0x%016lx root PA=0x%016lx\n",
++            (unsigned long)satp,
++            (unsigned long)root_pa);
++
++    if (mode != 8) {
++        cprintf("  current address translation mode is not Sv39\n");
++        return;
++    }
++
++    if (!pgdir_table_pa_valid(root_pa)) {
++        cprintf("  root page table PA is outside managed memory\n");
++        return;
++    }
++
++    size_t printed = 0;
++    pte_t *root = (pte_t *)KADDR(root_pa);
++
++    print_pgdir_level(root, 2, 0, &printed);
++
++    if (printed >= PGDIR_PRINT_LIMIT) {
++        cprintf("  output limited to %d valid entries\n",
++                PGDIR_PRINT_LIMIT);
++    }
++}
+\ No newline at end of file
+diff --git a/kern/syscall/syscall.c b/kern/syscall/syscall.c
+index f9ef066..958e53e 100644
+--- a/kern/syscall/syscall.c
++++ b/kern/syscall/syscall.c
+@@ -1,24 +1,139 @@
++#include <defs.h>
+ #include <unistd.h>
+ #include <proc.h>
+ #include <syscall.h>
+ #include <trap.h>
+ #include <stdio.h>
+ #include <pmm.h>
+-#include <assert.h>
++#include <console.h>
++#include <error.h>
+ 
++/*
++ * 系统调用包装函数。
++ *
++ * arg[0] 对应用户态 a1；
++ * arg[1] 对应用户态 a2；
++ * 以此类推。
++ */
+ 
++static int
++sys_exit(uint64_t arg[])
++{
++    return do_exit((int)arg[0]);
++}
++
++static int
++sys_fork(uint64_t arg[])
++{
++    /*
++     * 普通 fork 不指定 CLONE_VM；
++     * stack 为 0，实际子进程现场由 do_fork/copy_thread 处理。
++     */
++    return do_fork(0, 0, current->tf);
++}
++
++static int
++sys_wait(uint64_t arg[])
++{
++    int pid = (int)arg[0];
++    int *store = (int *)(uintptr_t)arg[1];
++
++    /*
++     * 用户指针是否合法、退出码如何复制回用户空间，
++     * 需要 do_wait 按 B 的实现完成检查。
++     */
++    return do_wait(pid, store);
++}
++
++static int
++sys_exec(uint64_t arg[])
++{
++    const char *name = (const char *)(uintptr_t)arg[0];
++    size_t len = (size_t)arg[1];
++    unsigned char *binary = (unsigned char *)(uintptr_t)arg[2];
++    size_t size = (size_t)arg[3];
++
++    /*
++     * 用户地址及程序映像参数的检查和装载由 do_execve 负责。
++     * 后续与 B 确认 kernel_execve 的参数顺序一致。
++     */
++    return do_execve(name, len, binary, size);
++}
++
++static int
++sys_yield(uint64_t arg[])
++{
++    return do_yield();
++}
++
++static int
++sys_kill(uint64_t arg[])
++{
++    return do_kill((int)arg[0]);
++}
++
++static int
++sys_getpid(uint64_t arg[])
++{
++    return current->pid;
++}
++
++static int
++sys_putc(uint64_t arg[])
++{
++    cons_putc((int)arg[0]);
++    return 0;
++}
++
++static int
++sys_pgdir(uint64_t arg[])
++{
++    print_pgdir();
++    return 0;
++}
++
++/*
++ * 系统调用分发表。
++ *
++ * 这里使用指定下标初始化，因此编号未使用的位置为 NULL。
++ */
+ static int (*syscalls[])(uint64_t arg[]) = {
+-    [SYS_exit]              sys_exit,
+-    [SYS_fork]              sys_fork,
+-    [SYS_wait]              sys_wait,
+-    [SYS_exec]              sys_exec,
+-    [SYS_yield]             sys_yield,
+-    [SYS_kill]              sys_kill,
+-    [SYS_getpid]            sys_getpid,
+-    [SYS_putc]              sys_putc,
+-    [SYS_pgdir]             sys_pgdir,
++    [SYS_exit]   = sys_exit,
++    [SYS_fork]   = sys_fork,
++    [SYS_wait]   = sys_wait,
++    [SYS_exec]   = sys_exec,
++    [SYS_yield]  = sys_yield,
++    [SYS_kill]   = sys_kill,
++    [SYS_getpid] = sys_getpid,
++    [SYS_putc]   = sys_putc,
++    [SYS_pgdir]  = sys_pgdir,
+ };
+ 
+-#define NUM_SYSCALLS        ((sizeof(syscalls)) / (sizeof(syscalls[0])))
++#define NUM_SYSCALLS (sizeof(syscalls) / sizeof(syscalls[0]))
++
++// lab5 function1 2412082
++void
++syscall(void)
++{
++    struct trapframe *tf = current->tf;
++
++    uintptr_t num = tf->gpr.a0;
++
++    uint64_t args[5] = {
++        tf->gpr.a1,
++        tf->gpr.a2,
++        tf->gpr.a3,
++        tf->gpr.a4,
++        tf->gpr.a5,
++    };
+ 
+-//lab5 function1 YOUR CODE
++    if (num < NUM_SYSCALLS && syscalls[num] != NULL) {
++        tf->gpr.a0 = syscalls[num](args);
++    } else {
++        /*
++         * 对非法编号返回 -E_INVAL。
++         * 这与当前老师提供的 test_lab5_syscall() 预期一致。
++         */
++        tf->gpr.a0 = -E_INVAL;
++    }
++}
+diff --git a/kern/trap/trap.c b/kern/trap/trap.c
+index 5a8c79a..776d96f 100644
+--- a/kern/trap/trap.c
++++ b/kern/trap/trap.c
+@@ -18,13 +18,9 @@
+ 
+ #define TICK_NUM 100
+ 
+-static void print_ticks()
++static void print_ticks(void)
+ {
+     cprintf("%d ticks\n", TICK_NUM);
+-#ifdef DEBUG_GRADE
+-    cprintf("End of Test.\n");
+-    panic("EOT: kernel seems ok.");
+-#endif
+ }
+ 
+ /* idt_init - initialize IDT to each of the entry points in kern/trap/vectors.S */
+@@ -95,9 +91,105 @@ void print_regs(struct pushregs *gpr)
+ 
+ extern struct mm_struct *check_mm_struct;
+ 
+-//lab3 请补充你在lab3中的代码
++/*
++ * Lab3 中断处理适配到 Lab5。
++ *
++ * scause 最高位表示中断，剩余位表示中断编号。
++ */
++void
++interrupt_handler(struct trapframe *tf)
++{
++    const uintptr_t interrupt_bit =
++        (uintptr_t)1 << (sizeof(uintptr_t) * 8 - 1);
++
++    uintptr_t cause = tf->cause & ~interrupt_bit;
++
++    switch (cause) {
++    case IRQ_S_TIMER:
++        /*
++         * 时钟中断后重新设置下一次时钟事件。
++         */
++        clock_set_next_event();
++        ticks++;
++
++        if (ticks % TICK_NUM == 0) {
++            print_ticks();
++        }
++
++        /*
++         * 请求在适当时机重新调度。
++         *
++         * trap() 会在返回用户态前检查 need_resched；
++         * 内核态的后续调度时机还需要结合 C 的调度实现验证。
++         */
++        if (current != NULL) {
++            current->need_resched = 1;
++        }
++        break;
++
++    case IRQ_S_SOFT:
++        /*
++         * 如果后续测试使用 S 态软件中断，需要清除对应 pending 位。
++         */
++        clear_csr(sip, MIP_SSIP);
++        break;
++
++    case IRQ_S_EXT:
++        /*
++         * 保留外部中断入口。具体设备中断的识别与应答依赖当前平台
++         * 和中断控制器实现，不能仅凭本分支认定外部中断已经完成。
++         */
++        cprintf("Supervisor external interrupt\n");
++        break;
++
++    default:
++        cprintf("Unhandled interrupt: cause %lu\n",
++                (unsigned long)cause);
++        print_trapframe(tf);
++        break;
++    }
++}
++
++/*
++ * Lab5 功能一：异常处理。
++ *
++ * 用户态 ecall 是 32 位指令，返回位置应前移 4 字节。
++ */
++// lab5 function1 2412082
++void
++exception_handler(struct trapframe *tf)
++{
++    switch (tf->cause) {
++    case CAUSE_USER_ECALL:
++        tf->epc += 4;
++        syscall();
++        return;
++
++    default:
++        /*
++         * 当前阶段尚未实现页面按需分配或 COW 缺页处理。
++         * 对未处理的异常，先输出发生异常时的现场。
++         */
++        print_trapframe(tf);
++
++        if (trap_in_kernel(tf)) {
++            panic("unhandled exception in kernel");
++        }
+ 
+-//lab5 function1 YOUR CODE update exception_handler
++        /*
++         * 用户态异常不能一直返回到出错指令，否则会反复陷入。
++         * 进程退出及资源释放由 C 的 do_exit 实现。
++         */
++        cprintf("user process %d killed by exception\n",
++                current != NULL ? current->pid : -1);
++
++        if (current != NULL) {
++            do_exit(-E_KILLED);
++        }
++
++        panic("cannot handle user exception");
++    }
++}
+ 
+ 
+ static inline void trap_dispatch(struct trapframe *tf)
+diff --git a/user/libs/syscall.c b/user/libs/syscall.c
+index 3eee7cb..d531bf2 100644
+--- a/user/libs/syscall.c
++++ b/user/libs/syscall.c
+@@ -1,73 +1,92 @@
+ #include <defs.h>
+ #include <unistd.h>
+-#include <stdarg.h>
+ #include <syscall.h>
+ 
+-#define MAX_ARGS            5
+-
++/*
++ * 本实验的系统调用约定：
++ *
++ * a0：系统调用编号，同时保存返回值
++ * a1～a5：最多五个参数
++ *
++ * 所有参数由调用者明确提供，未使用的参数填 0。
++ */
+ static inline int
+-syscall(int64_t num, ...) {
+-    va_list ap;
+-    va_start(ap, num);
+-    uint64_t a[MAX_ARGS];
+-    int i, ret;
+-    for (i = 0; i < MAX_ARGS; i ++) {
+-        a[i] = va_arg(ap, uint64_t);
+-    }
+-    va_end(ap);
++syscall5(uint64_t num,
++         uint64_t arg1,
++         uint64_t arg2,
++         uint64_t arg3,
++         uint64_t arg4,
++         uint64_t arg5)
++{
++    register uint64_t a0 asm("a0") = num;
++    register uint64_t a1 asm("a1") = arg1;
++    register uint64_t a2 asm("a2") = arg2;
++    register uint64_t a3 asm("a3") = arg3;
++    register uint64_t a4 asm("a4") = arg4;
++    register uint64_t a5 asm("a5") = arg5;
+ 
++    /*
++     * 系统调用入口保存用户寄存器，并将返回值放入 a0。
++     * memory 表示编译器不能随意将内存访问跨越 ecall 重排。
++     */
+     asm volatile (
+-        "ld a0, %1\n"
+-        "ld a1, %2\n"
+-        "ld a2, %3\n"
+-        "ld a3, %4\n"
+-        "ld a4, %5\n"
+-    	"ld a5, %6\n"
+-        "ecall\n"
+-        "sd a0, %0"
+-        : "=m" (ret)
+-        : "m"(num), "m"(a[0]), "m"(a[1]), "m"(a[2]), "m"(a[3]), "m"(a[4])
+-        :"memory");
+-    return ret;
++        "ecall"
++        : "+r" (a0)
++        : "r" (a1), "r" (a2), "r" (a3),
++          "r" (a4), "r" (a5)
++        : "memory"
++    );
++
++    return (int)a0;
+ }
+ 
+ int
+-sys_exit(int64_t error_code) {
+-    return syscall(SYS_exit, error_code);
++sys_exit(int64_t error_code)
++{
++    return syscall5(SYS_exit, (uint64_t)error_code, 0, 0, 0, 0);
+ }
+ 
+ int
+-sys_fork(void) {
+-    return syscall(SYS_fork);
++sys_fork(void)
++{
++    return syscall5(SYS_fork, 0, 0, 0, 0, 0);
+ }
+ 
+ int
+-sys_wait(int64_t pid, int *store) {
+-    return syscall(SYS_wait, pid, store);
++sys_wait(int64_t pid, int *store)
++{
++    return syscall5(SYS_wait,
++                    (uint64_t)pid,
++                    (uint64_t)(uintptr_t)store,
++                    0, 0, 0);
+ }
+ 
+ int
+-sys_yield(void) {
+-    return syscall(SYS_yield);
++sys_yield(void)
++{
++    return syscall5(SYS_yield, 0, 0, 0, 0, 0);
+ }
+ 
+ int
+-sys_kill(int64_t pid) {
+-    return syscall(SYS_kill, pid);
++sys_kill(int64_t pid)
++{
++    return syscall5(SYS_kill, (uint64_t)pid, 0, 0, 0, 0);
+ }
+ 
+ int
+-sys_getpid(void) {
+-    return syscall(SYS_getpid);
++sys_getpid(void)
++{
++    return syscall5(SYS_getpid, 0, 0, 0, 0, 0);
+ }
+ 
+ int
+-sys_putc(int64_t c) {
+-    return syscall(SYS_putc, c);
++sys_putc(int64_t c)
++{
++    return syscall5(SYS_putc, (uint64_t)c, 0, 0, 0, 0);
+ }
+ 
+ int
+-sys_pgdir(void) {
+-    return syscall(SYS_pgdir);
++sys_pgdir(void)
++{
++    return syscall5(SYS_pgdir, 0, 0, 0, 0, 0);
+ }
+-

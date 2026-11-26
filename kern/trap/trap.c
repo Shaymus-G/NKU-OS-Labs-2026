@@ -18,13 +18,9 @@
 
 #define TICK_NUM 100
 
-static void print_ticks()
+static void print_ticks(void)
 {
     cprintf("%d ticks\n", TICK_NUM);
-#ifdef DEBUG_GRADE
-    cprintf("End of Test.\n");
-    panic("EOT: kernel seems ok.");
-#endif
 }
 
 /* idt_init - initialize IDT to each of the entry points in kern/trap/vectors.S */
@@ -95,9 +91,105 @@ void print_regs(struct pushregs *gpr)
 
 extern struct mm_struct *check_mm_struct;
 
-//lab3 请补充你在lab3中的代码
+/*
+ * Lab3 中断处理适配到 Lab5。
+ *
+ * scause 最高位表示中断，剩余位表示中断编号。
+ */
+void
+interrupt_handler(struct trapframe *tf)
+{
+    const uintptr_t interrupt_bit =
+        (uintptr_t)1 << (sizeof(uintptr_t) * 8 - 1);
 
-//lab5 function1 YOUR CODE update exception_handler
+    uintptr_t cause = tf->cause & ~interrupt_bit;
+
+    switch (cause) {
+    case IRQ_S_TIMER:
+        /*
+         * 时钟中断后重新设置下一次时钟事件。
+         */
+        clock_set_next_event();
+        ticks++;
+
+        if (ticks % TICK_NUM == 0) {
+            print_ticks();
+        }
+
+        /*
+         * 请求在适当时机重新调度。
+         *
+         * trap() 会在返回用户态前检查 need_resched；
+         * 内核态的后续调度时机还需要结合 C 的调度实现验证。
+         */
+        if (current != NULL) {
+            current->need_resched = 1;
+        }
+        break;
+
+    case IRQ_S_SOFT:
+        /*
+         * 如果后续测试使用 S 态软件中断，需要清除对应 pending 位。
+         */
+        clear_csr(sip, MIP_SSIP);
+        break;
+
+    case IRQ_S_EXT:
+        /*
+         * 保留外部中断入口。具体设备中断的识别与应答依赖当前平台
+         * 和中断控制器实现，不能仅凭本分支认定外部中断已经完成。
+         */
+        cprintf("Supervisor external interrupt\n");
+        break;
+
+    default:
+        cprintf("Unhandled interrupt: cause %lu\n",
+                (unsigned long)cause);
+        print_trapframe(tf);
+        break;
+    }
+}
+
+/*
+ * Lab5 功能一：异常处理。
+ *
+ * 用户态 ecall 是 32 位指令，返回位置应前移 4 字节。
+ */
+// lab5 function1 2412082
+void
+exception_handler(struct trapframe *tf)
+{
+    switch (tf->cause) {
+    case CAUSE_USER_ECALL:
+        tf->epc += 4;
+        syscall();
+        return;
+
+    default:
+        /*
+         * 当前阶段尚未实现页面按需分配或 COW 缺页处理。
+         * 对未处理的异常，先输出发生异常时的现场。
+         */
+        print_trapframe(tf);
+
+        if (trap_in_kernel(tf)) {
+            panic("unhandled exception in kernel");
+        }
+
+        /*
+         * 用户态异常不能一直返回到出错指令，否则会反复陷入。
+         * 进程退出及资源释放由 C 的 do_exit 实现。
+         */
+        cprintf("user process %d killed by exception\n",
+                current != NULL ? current->pid : -1);
+
+        if (current != NULL) {
+            do_exit(-E_KILLED);
+        }
+
+        panic("cannot handle user exception");
+    }
+}
 
 
 static inline void trap_dispatch(struct trapframe *tf)

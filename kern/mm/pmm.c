@@ -615,3 +615,134 @@ static int get_pgtable_items(size_t left, size_t right, size_t start,
     }
     return 0;
 }
+
+/*
+ * print_pgdir: 输出当前 satp 指向的 Sv39 页表。
+ *
+ * 这是调试用途的有限输出：
+ * 最多打印 PGDIR_PRINT_LIMIT 个有效页表项，避免输出过多。
+ */
+#define PGDIR_PRINT_LIMIT 128
+
+static uintptr_t
+sv39_canonical_va(uintptr_t va)
+{
+    /*
+     * Sv39 的虚拟地址位 63:39 必须等于位 38。
+     * 如果位 38 为 1，则进行符号扩展。
+     */
+    if (va & ((uintptr_t)1 << 38)) {
+        va |= ~(((uintptr_t)1 << 39) - 1);
+    }
+    return va;
+}
+
+static bool
+pgdir_table_pa_valid(uintptr_t pa)
+{
+    /*
+     * 下级页表应当位于当前 PMM 管理的物理页范围内。
+     * 只有检查通过后才通过 KADDR 转为内核虚拟地址。
+     */
+    size_t ppn = PPN(pa);
+
+    return (pa % PGSIZE == 0) &&
+           (ppn >= nbase) &&
+           (ppn < npage);
+}
+
+static void
+print_pgdir_level(pte_t *table, int level,
+                  uintptr_t va_prefix, size_t *printed)
+{
+    for (size_t i = 0; i < NPTEENTRY; i++) {
+        pte_t entry = table[i];
+
+        if (!(entry & PTE_V)) {
+            continue;
+        }
+
+        if (*printed >= PGDIR_PRINT_LIMIT) {
+            return;
+        }
+
+        uintptr_t va =
+            va_prefix | ((uintptr_t)i << (PGSHIFT + 9 * level));
+
+        uintptr_t pa = PTE_ADDR(entry);
+        uintptr_t flags = entry & 0x3ff;
+        bool leaf = (entry & (PTE_R | PTE_W | PTE_X)) != 0;
+
+        cprintf("  L%d VA 0x%016lx PTE 0x%016lx PA 0x%016lx flags 0x%03lx%s\n",
+                level,
+                (unsigned long)sv39_canonical_va(va),
+                (unsigned long)entry,
+                (unsigned long)pa,
+                (unsigned long)flags,
+                leaf ? " leaf" : " table");
+
+        (*printed)++;
+
+        /*
+         * 叶子项可以出现在 Sv39 的任一级：
+         * L2 为 1 GiB，L1 为 2 MiB，L0 为 4 KiB。
+         */
+        if (leaf) {
+            continue;
+        }
+
+        if (level == 0) {
+            cprintf("    invalid non-leaf entry at L0\n");
+            continue;
+        }
+
+        if (!pgdir_table_pa_valid(pa)) {
+            cprintf("    next-level table PA is outside managed memory\n");
+            continue;
+        }
+
+        pte_t *next = (pte_t *)KADDR(pa);
+
+        print_pgdir_level(next, level - 1, va, printed);
+    }
+}
+
+void
+print_pgdir(void)
+{
+    uintptr_t satp = read_csr(satp);
+
+    /*
+     * RV64 satp：
+     * MODE 位于 63:60；Sv39 的 MODE 为 8；
+     * 根页表 PPN 位于 43:0。
+     */
+    uintptr_t mode = satp >> 60;
+    uintptr_t root_ppn =
+        satp & ((((uintptr_t)1) << 44) - 1);
+    uintptr_t root_pa = root_ppn << PGSHIFT;
+
+    cprintf("Sv39 page table: satp=0x%016lx root PA=0x%016lx\n",
+            (unsigned long)satp,
+            (unsigned long)root_pa);
+
+    if (mode != 8) {
+        cprintf("  current address translation mode is not Sv39\n");
+        return;
+    }
+
+    if (!pgdir_table_pa_valid(root_pa)) {
+        cprintf("  root page table PA is outside managed memory\n");
+        return;
+    }
+
+    size_t printed = 0;
+    pte_t *root = (pte_t *)KADDR(root_pa);
+
+    print_pgdir_level(root, 2, 0, &printed);
+
+    if (printed >= PGDIR_PRINT_LIMIT) {
+        cprintf("  output limited to %d valid entries\n",
+                PGDIR_PRINT_LIMIT);
+    }
+}
