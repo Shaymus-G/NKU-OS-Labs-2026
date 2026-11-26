@@ -205,6 +205,11 @@ out:
 //lab5 function3 2412456
 int dup_mmap(struct mm_struct *to, struct mm_struct *from)
 {
+#ifdef LAB5_EAGER_FORK
+    const bool share = 0;
+#else
+    const bool share = 1;
+#endif
     list_entry_t *list = &from->mmap_list;
     for (list_entry_t *entry = list_next(list); entry != list; entry = list_next(entry)) {
         struct vma_struct *source = le2vma(entry, list_link);
@@ -212,11 +217,49 @@ int dup_mmap(struct mm_struct *to, struct mm_struct *from)
         if (vma == NULL) return -E_NO_MEM;
         // Record the VMA first so exit_mmap can reclaim a partially copied range.
         insert_vma_struct(to, vma);
-        int ret = copy_range(to->pgdir, from->pgdir, vma->vm_start, vma->vm_end, 0);
+        int ret = copy_range(to->pgdir, from->pgdir, vma->vm_start, vma->vm_end, share);
         if (ret != 0) return ret;
     }
-    asm volatile("fence.i" ::: "memory");
+    if (share) {
+        // The caller holds the source mm lock and has not published the child.
+        for (list_entry_t *entry = list_next(list); entry != list; entry = list_next(entry)) {
+            struct vma_struct *vma = le2vma(entry, list_link);
+            cow_protect_range(from->pgdir, vma->vm_start, vma->vm_end);
+        }
+        flush_tlb();
+    } else {
+        asm volatile("fence.i" ::: "memory");
+    }
     return 0;
+}
+
+// Requires the mm lock. No changes are made if a private page cannot be allocated.
+int resolve_cow_write(struct mm_struct *mm, uintptr_t addr)
+{
+    struct vma_struct *vma = find_vma(mm, addr);
+    if (vma == NULL || !(vma->vm_flags & VM_WRITE)) return -E_FAULT;
+
+    uintptr_t va = ROUNDDOWN(addr, PGSIZE);
+    pte_t *pte = get_pte(mm->pgdir, va, 0);
+    const uint32_t required = PTE_V | PTE_U | PTE_R | PTE_COW;
+    if (pte == NULL || (*pte & (required | PTE_W)) != required) return -E_FAULT;
+
+    struct Page *source = pte2page(*pte);
+    assert(page_ref(source) > 0);
+    if (page_ref(source) == 1) {
+        *pte = (*pte & ~PTE_COW) | PTE_W;
+        tlb_invalidate(mm->pgdir, va);
+        return 0;
+    }
+
+    struct Page *page = alloc_page();
+    if (page == NULL) return -E_NO_MEM;
+    memcpy(page2kva(page), page2kva(source), PGSIZE);
+    uint32_t perm = (*pte & (PTE_U | PTE_R | PTE_X)) | PTE_W;
+    int ret = page_insert(mm->pgdir, page, va, perm);
+    if (ret != 0) free_page(page);
+    if (perm & PTE_X) asm volatile("fence.i" ::: "memory");
+    return ret;
 }
 
 

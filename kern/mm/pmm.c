@@ -358,9 +358,12 @@ int copy_range(pde_t *to, pde_t *from, uintptr_t start, uintptr_t end, bool shar
             continue;
         }
         if (*pte & PTE_V) {
-            const uint32_t perm = *pte & (PTE_U | PTE_R | PTE_W | PTE_X);
+            uint32_t perm = *pte & (PTE_U | PTE_R | PTE_W | PTE_X | PTE_COW);
             struct Page *source = pte2page(*pte), *page = source;
-            if (!share) {
+            if (share) {
+                if (perm & PTE_W) perm = (perm & ~PTE_W) | PTE_COW;
+            } else {
+                if (perm & PTE_COW) perm = (perm & ~PTE_COW) | PTE_W;
                 if ((page = alloc_page()) == NULL) return -E_NO_MEM;
                 memcpy(page2kva(page), page2kva(source), PGSIZE);
             }
@@ -373,6 +376,22 @@ int copy_range(pde_t *to, pde_t *from, uintptr_t start, uintptr_t end, bool shar
         start += PGSIZE;
     }
     return 0;
+}
+
+// Called only once the complete child mapping has succeeded.
+void cow_protect_range(pde_t *pgdir, uintptr_t start, uintptr_t end)
+{
+    while (start < end) {
+        pte_t *pte = get_pte(pgdir, start, 0);
+        if (pte == NULL) {
+            start = ROUNDDOWN(start + PTSIZE, PTSIZE);
+            continue;
+        }
+        if ((*pte & (PTE_V | PTE_U | PTE_W)) == (PTE_V | PTE_U | PTE_W)) {
+            *pte = (*pte & ~PTE_W) | PTE_COW;
+        }
+        start += PGSIZE;
+    }
 }
 
 
@@ -422,7 +441,7 @@ void page_remove(pde_t *pgdir, uintptr_t la)
 // edited are the ones currently in use by the processor.
 void tlb_invalidate(pde_t *pgdir, uintptr_t la)
 {
-    asm volatile("sfence.vma %0" : : "r"(la));
+    asm volatile("sfence.vma %0" : : "r"(la) : "memory");
 }
 
 // pgdir_alloc_page - call alloc_page & page_insert functions to

@@ -164,10 +164,18 @@ exception_handler(struct trapframe *tf)
         tf->epc += 4;
         syscall();
         return;
+    case CAUSE_STORE_PAGE_FAULT:
+        if (!trap_in_kernel(tf) && current != NULL && current->mm != NULL) {
+            struct mm_struct *mm = current->mm;
+            lock_mm(mm);
+            int ret = resolve_cow_write(mm, tf->tval);
+            unlock_mm(mm);
+            if (ret == 0) return;  // Retry the same store at sepc.
+        }
+        // Fall through to the unhandled exception path.
 
     default:
         /*
-         * 当前阶段尚未实现页面按需分配或 COW 缺页处理。
          * 对未处理的异常，先输出发生异常时的现场。
          */
         print_trapframe(tf);

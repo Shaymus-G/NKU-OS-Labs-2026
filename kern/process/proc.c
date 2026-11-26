@@ -377,8 +377,9 @@ proc_mem_access(struct mm_struct *mm, uintptr_t addr, size_t len, bool write)
     // Preflight the entire range before a write, including cross-page stores.
     for (uintptr_t at = addr; at < addr + len;) {
         pte_t *pte = get_pte(mm->pgdir, at, 0);
-        uint32_t required = PTE_V | PTE_U | (write ? PTE_W : PTE_R);
+        uint32_t required = PTE_V | PTE_U | PTE_R;
         if (pte == NULL || (*pte & required) != required) return 0;
+        if (write && !(*pte & (PTE_W | PTE_COW))) return 0;
         at += ((addr + len - at < PGSIZE - PGOFF(at)) ?
                addr + len - at : PGSIZE - PGOFF(at));
     }
@@ -395,6 +396,14 @@ proc_mem_copy(struct mm_struct *mm, void *buffer, uintptr_t addr,
         if (to_user) memcpy((void *)addr, buffer, len);
         else memcpy(buffer, (void *)addr, len);
         return 1;
+    }
+    if (to_user) {
+        // Writes through the kernel alias bypass the user PTE permissions.
+        uintptr_t end = addr + len;
+        for (uintptr_t va = ROUNDDOWN(addr, PGSIZE); va < end; va += PGSIZE) {
+            if ((*get_pte(mm->pgdir, va, 0) & PTE_COW) &&
+                resolve_cow_write(mm, va) != 0) return 0;
+        }
     }
     char *bytes = buffer;
     while (len != 0) {

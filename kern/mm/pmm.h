@@ -48,6 +48,7 @@ struct Page *pgdir_alloc_page(pde_t *pgdir, uintptr_t la, uint32_t perm);
 void unmap_range(pde_t *pgdir, uintptr_t start, uintptr_t end);
 void exit_range(pde_t *pgdir, uintptr_t start, uintptr_t end);
 int copy_range(pde_t *to, pde_t *from, uintptr_t start, uintptr_t end, bool share);
+void cow_protect_range(pde_t *pgdir, uintptr_t start, uintptr_t end);
 
 void print_pgdir(void);
 
@@ -163,7 +164,7 @@ page_ref_dec(struct Page *page)
 
 static inline void flush_tlb()
 {
-    asm volatile("sfence.vma");
+    asm volatile("sfence.vma" ::: "memory");
 }
 
 // construct PTE from a page and permission bits
