@@ -656,7 +656,69 @@ free_proc:
 }
 
 
-//lab5 function4 YOUR CODE
+//lab5 function4 2412456
+int
+do_exit(int error_code)
+{
+    assert(current != idleproc && current != initproc);
+    bool intr_flag;
+    local_intr_save(intr_flag);
+    struct mm_struct *mm = current->mm;
+    if (mm != NULL) {
+        current->mm = NULL;
+        current->pgdir = boot_pgdir_pa;
+        lsatp(boot_pgdir_pa);
+        flush_tlb();
+        if (mm_count_dec(mm) == 0) destroy_private_mm(mm);
+    }
+
+    current->exit_code = error_code;
+    current->state = PROC_ZOMBIE;
+    if (current->parent->wait_state == WT_CHILD) wakeup_proc(current->parent);
+
+    while (current->cptr != NULL) {
+        struct proc_struct *child = current->cptr;
+        current->cptr = child->optr;
+        child->parent = initproc;
+        child->yptr = NULL;
+        child->optr = initproc->cptr;
+        if (child->optr != NULL) child->optr->yptr = child;
+        initproc->cptr = child;
+        if (child->state == PROC_ZOMBIE && initproc->wait_state == WT_CHILD) {
+            wakeup_proc(initproc);
+        }
+    }
+
+    // The parent reclaims the PCB and this stack after we stop using them.
+    schedule();
+    panic("exited process resumed");
+}
+
+int
+do_yield(void)
+{
+    current->need_resched = 1;
+    return 0;
+}
+
+int
+do_kill(int pid)
+{
+    bool intr_flag;
+    local_intr_save(intr_flag);
+    struct proc_struct *proc = find_proc(pid);
+    int ret = -E_INVAL;
+    if (proc != NULL && proc != initproc && proc->state != PROC_ZOMBIE) {
+        ret = -E_KILLED;
+        if (!(proc->flags & PF_EXITING)) {
+            proc->flags |= PF_EXITING;
+            if (proc->wait_state & WT_INTERRUPTED) wakeup_proc(proc);
+            ret = 0;
+        }
+    }
+    local_intr_restore(intr_flag);
+    return ret;
+}
 
 
 #define __KERNEL_EXECVE(name, binary, size) ({           \
