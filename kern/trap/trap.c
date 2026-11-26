@@ -116,15 +116,7 @@ interrupt_handler(struct trapframe *tf)
             print_ticks();
         }
 
-        /*
-         * 请求在适当时机重新调度。
-         *
-         * trap() 会在返回用户态前检查 need_resched；
-         * 内核态的后续调度时机还需要结合 C 的调度实现验证。
-         */
-        if (current != NULL) {
-            current->need_resched = 1;
-        }
+        sched_tick();
         break;
 
     case IRQ_S_SOFT:
@@ -239,13 +231,13 @@ void trap(struct trapframe *tf)
         current->tf = otf;
         if (!in_kernel)
         {
+            if (current->need_resched && !(current->flags & PF_EXITING))
+            {
+                schedule();
+            }
             if (current->flags & PF_EXITING)
             {
                 do_exit(-E_KILLED);
-            }
-            if (current->need_resched)
-            {
-                schedule();
             }
         }
     }

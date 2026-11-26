@@ -4,6 +4,16 @@
 #include <sched.h>
 #include <assert.h>
 
+enum { ROUND_ROBIN_TICKS = 4 };
+static unsigned ticks_left;
+
+void sched_tick(void)
+{
+    if (current != NULL && (ticks_left == 0 || --ticks_left == 0)) {
+        current->need_resched = 1;
+    }
+}
+
 void wakeup_proc(struct proc_struct *proc)
 {
     assert(proc->state != PROC_ZOMBIE);
@@ -43,6 +53,7 @@ void schedule(void)
         }
     } while (entry != start);
 
+    ticks_left = ROUND_ROBIN_TICKS;
     next->runs++;
     proc_run(next);
     local_intr_restore(intr_flag);
