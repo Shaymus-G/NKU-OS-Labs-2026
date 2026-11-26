@@ -1,0 +1,520 @@
+diff --git a/kern/mm/pmm.c b/kern/mm/pmm.c
+index 915c36e..89e122f 100644
+--- a/kern/mm/pmm.c
++++ b/kern/mm/pmm.c
+@@ -311,65 +311,38 @@ void unmap_range(pde_t *pgdir, uintptr_t start, uintptr_t end)
+     } while (start != 0 && start < end);
+ }
+ 
++// B 2412559: reclaim a directory only after checking ALL of its entries.
++static bool page_table_empty(pde_t *table)
++{
++    for (unsigned i = 0; i < NPTEENTRY; i++)
++        if (table[i] & PTE_V) return 0;
++    return 1;
++}
++
+ void exit_range(pde_t *pgdir, uintptr_t start, uintptr_t end)
+ {
+     assert(start % PGSIZE == 0 && end % PGSIZE == 0);
+     assert(USER_ACCESS(start, end));
+-
+-    uintptr_t d1start, d0start;
+-    int free_pt, free_pd0;
+-    pde_t *pd0, *pt, pde1, pde0;
+-    d1start = ROUNDDOWN(start, PDSIZE);
+-    d0start = ROUNDDOWN(start, PTSIZE);
+-    do
+-    {
+-        // level 1 page directory entry
+-        pde1 = pgdir[PDX1(d1start)];
+-        // if there is a valid entry, get into level 0
+-        // and try to free all page tables pointed to by
+-        // all valid entries in level 0 page directory,
+-        // then try to free this level 0 page directory
+-        // and update level 1 entry
+-        if (pde1 & PTE_V)
+-        {
+-            pd0 = page2kva(pde2page(pde1));
+-            // try to free all page tables
+-            free_pd0 = 1;
+-            do
+-            {
+-                pde0 = pd0[PDX0(d0start)];
+-                if (pde0 & PTE_V)
+-                {
+-                    pt = page2kva(pde2page(pde0));
+-                    // try to free page table
+-                    free_pt = 1;
+-                    for (int i = 0; i < NPTEENTRY; i++)
+-                        if (pt[i] & PTE_V)
+-                        {
+-                            free_pt = 0;
+-                            break;
+-                        }
+-                    // free it only when all entry are already invalid
+-                    if (free_pt)
+-                    {
+-                        free_page(pde2page(pde0));
+-                        pd0[PDX0(d0start)] = 0;
+-                    }
+-                }
+-                else
+-                    free_pd0 = 0;
+-                d0start += PTSIZE;
+-            } while (d0start != 0 && d0start < d1start + PDSIZE && d0start < end);
+-            // free level 0 page directory only when all pde0s in it are already invalid
+-            if (free_pd0)
+-            {
+-                free_page(pde2page(pde1));
+-                pgdir[PDX1(d1start)] = 0;
++    for (uintptr_t va = ROUNDDOWN(start, PTSIZE); va < end; va += PTSIZE) {
++        pde_t *root = &pgdir[PDX1(va)];
++        if (!(*root & PTE_V)) continue;
++        // User address spaces in this lab use 4 KiB leaves only.
++        assert(!(*root & (PTE_R | PTE_W | PTE_X)));
++        pde_t *middle = page2kva(pde2page(*root));
++        pde_t *entry = &middle[PDX0(va)];
++        if (*entry & PTE_V) {
++            assert(!(*entry & (PTE_R | PTE_W | PTE_X)));
++            pte_t *leaf = page2kva(pde2page(*entry));
++            if (page_table_empty(leaf)) {
++                free_page(pde2page(*entry));
++                *entry = 0;
+             }
+         }
+-        d1start += PDSIZE;
+-        d0start = d1start;
+-    } while (d1start != 0 && d1start < end);
++        if (page_table_empty(middle)) {
++            free_page(pde2page(*root));
++            *root = 0;
++        }
++    }
+ }
+ 
+ 
+diff --git a/kern/process/proc.c b/kern/process/proc.c
+index 4caf2d6..ef56e79 100644
+--- a/kern/process/proc.c
++++ b/kern/process/proc.c
+@@ -84,7 +84,21 @@ void switch_to(struct context *from, struct context *to);
+ 
+ //lab4 请补充你在lab4中的代码
+ 
+-//lab5 function2 YOUR CODE update alloc_proc
++//lab5 function2 2412559 update alloc_proc
++static struct proc_struct *
++alloc_proc(void)
++{
++    struct proc_struct *proc = kmalloc(sizeof(*proc));
++    if (proc != NULL) {
++        memset(proc, 0, sizeof(*proc));
++        proc->state = PROC_UNINIT;
++        proc->pid = -1;
++        proc->pgdir = boot_pgdir_pa;
++        list_init(&proc->list_link);
++        list_init(&proc->hash_link);
++    }
++    return proc;
++}
+ 
+ 
+ // set_proc_name - set the name of proc
+@@ -92,7 +106,7 @@ char *
+ set_proc_name(struct proc_struct *proc, const char *name)
+ {
+     memset(proc->name, 0, sizeof(proc->name));
+-    return memcpy(proc->name, name, PROC_NAME_LEN);
++    return strncpy(proc->name, name, PROC_NAME_LEN);
+ }
+ 
+ // get_proc_name - get the name of proc
+@@ -228,7 +242,18 @@ find_proc(int pid)
+     return NULL;
+ }
+ 
+-//lab5 function2 YOUR CODE update kernel_thread
++//lab5 function2 2412559 update kernel_thread
++int
++kernel_thread(int (*fn)(void *), void *arg, uint32_t clone_flags)
++{
++    struct trapframe tf;
++    memset(&tf, 0, sizeof(tf));
++    tf.gpr.s0 = (uintptr_t)fn;
++    tf.gpr.s1 = (uintptr_t)arg;
++    tf.status = (read_csr(sstatus) | SSTATUS_SPP | SSTATUS_SPIE) & ~SSTATUS_SIE;
++    tf.epc = (uintptr_t)kernel_thread_entry;
++    return do_fork(clone_flags | CLONE_VM, 0, &tf);
++}
+ 
+ 
+ // setup_kstack - alloc pages with size KSTACKPAGE as process kernel stack
+@@ -278,7 +303,281 @@ put_pgdir(struct mm_struct *mm)
+ 
+ 
+ 
+-//lab5 function2 YOUR CODE
++//lab5 function2 2412559
++// C calls this only after allocating the private child kernel stack.
++static void
++copy_thread(struct proc_struct *proc, uintptr_t stack, struct trapframe *tf)
++{
++    static_assert(sizeof(struct trapframe) == 36 * sizeof(uintptr_t));
++    proc->tf = (struct trapframe *)(proc->kstack + KSTACKSIZE - sizeof(*tf));
++    *proc->tf = *tf;
++    proc->tf->gpr.a0 = 0;
++    if (tf->status & SSTATUS_SPP) {
++        proc->tf->gpr.sp = (uintptr_t)proc->tf;
++    } else if (stack != 0) {
++        proc->tf->gpr.sp = stack;
++    }
++    proc->tf->status = (proc->tf->status | SSTATUS_SPIE) & ~SSTATUS_SIE;
++    proc->context.ra = (uintptr_t)forkret;
++    proc->context.sp = (uintptr_t)proc->tf;
++}
++
++/* Copy through kernel aliases, not a raw user VA. VMA and leaf permissions
++ * must both agree; no SUM setting or demand paging is assumed here. */
++static bool
++proc_mem_access(struct mm_struct *mm, uintptr_t addr, size_t len, bool write)
++{
++    if (len == 0) return 1;
++    if (addr + len < addr || !user_mem_check(mm, addr, len, write)) return 0;
++    if (mm == NULL) return 1;
++    // Preflight the entire range before a write, including cross-page stores.
++    for (uintptr_t at = addr; at < addr + len;) {
++        pte_t *pte = get_pte(mm->pgdir, at, 0);
++        uint32_t required = PTE_V | PTE_U | (write ? PTE_W : PTE_R);
++        if (pte == NULL || (*pte & required) != required) return 0;
++        at += ((addr + len - at < PGSIZE - PGOFF(at)) ?
++               addr + len - at : PGSIZE - PGOFF(at));
++    }
++    return 1;
++}
++
++static bool
++proc_mem_copy(struct mm_struct *mm, void *buffer, uintptr_t addr,
++              size_t len, bool to_user)
++{
++    if (!proc_mem_access(mm, addr, len, to_user)) return 0;
++    if (len == 0) return 1;
++    if (mm == NULL) {
++        if (to_user) memcpy((void *)addr, buffer, len);
++        else memcpy(buffer, (void *)addr, len);
++        return 1;
++    }
++    char *bytes = buffer;
++    while (len != 0) {
++        pte_t *pte = get_pte(mm->pgdir, addr, 0);
++        char *alias = (char *)page2kva(pte2page(*pte)) + PGOFF(addr);
++        size_t n = PGSIZE - PGOFF(addr);
++        if (n > len) n = len;
++        if (to_user) memcpy(alias, bytes, n);
++        else memcpy(bytes, alias, n);
++        bytes += n; addr += n; len -= n;
++    }
++    return 1;
++}
++
++static void
++destroy_private_mm(struct mm_struct *mm)
++{
++    assert(mm_count(mm) == 0);
++    if (mm->pgdir != NULL) {
++        exit_mmap(mm);
++        put_pgdir(mm);
++    }
++    mm_destroy(mm);
++}
++
++static bool
++read_image(struct mm_struct *source, unsigned char *binary, size_t size,
++           size_t offset, void *dst, size_t len)
++{
++    return offset <= size && len <= size - offset &&
++           proc_mem_copy(source, dst, (uintptr_t)binary + offset, len, 0);
++}
++
++// Validate before allocating or calling mm_map (which asserts on overlaps).
++static int
++check_elf(struct mm_struct *source, unsigned char *binary, size_t size,
++          struct elfhdr *elf)
++{
++    if ((uintptr_t)binary + size < (uintptr_t)binary ||
++        !user_mem_check(source, (uintptr_t)binary, size, 0) ||
++        !read_image(source, binary, size, 0, elf, sizeof(*elf))) return -E_INVAL_ELF;
++    if (elf->e_magic != ELF_MAGIC || elf->e_elf[0] != 2 ||
++        elf->e_elf[1] != 1 || elf->e_elf[2] != 1 || elf->e_machine != 243 ||
++        elf->e_type != 2 || elf->e_version != 1 || elf->e_ehsize != sizeof(*elf) ||
++        elf->e_phentsize != sizeof(struct proghdr) || elf->e_phnum == 0 ||
++        elf->e_phoff > size ||
++        elf->e_phnum > (size - elf->e_phoff) / sizeof(struct proghdr)) return -E_INVAL_ELF;
++    bool entry_ok = 0;
++    for (unsigned i = 0; i < elf->e_phnum; i++) {
++        struct proghdr ph;
++        if (!read_image(source, binary, size, elf->e_phoff + i * sizeof(ph),
++                        &ph, sizeof(ph))) return -E_INVAL_ELF;
++        if (ph.p_type != ELF_PT_LOAD) continue;
++        if (ph.p_filesz > ph.p_memsz || ph.p_offset > size ||
++            ph.p_filesz > size - ph.p_offset ||
++            ph.p_va < USERBASE || ph.p_va >= USTACKTOP - USTACKSIZE ||
++            ph.p_memsz > USTACKTOP - USTACKSIZE - ph.p_va ||
++            !(ph.p_flags & (ELF_PF_R | ELF_PF_X)) ||
++            ((ph.p_flags & ELF_PF_W) && !(ph.p_flags & ELF_PF_R)) ||
++            (ph.p_flags & ~(ELF_PF_R | ELF_PF_W | ELF_PF_X)) ||
++            (ph.p_align > 1 && ((ph.p_align & (ph.p_align - 1)) ||
++             ((ph.p_va - ph.p_offset) & (ph.p_align - 1))))) return -E_INVAL_ELF;
++        if (ph.p_memsz == 0) continue;
++        if ((ph.p_flags & ELF_PF_X) && elf->e_entry >= ph.p_va &&
++            elf->e_entry - ph.p_va < ph.p_memsz) entry_ok = 1;
++        for (unsigned j = 0; j < i; j++) {
++            struct proghdr prev;
++            if (!read_image(source, binary, size, elf->e_phoff + j * sizeof(prev),
++                            &prev, sizeof(prev))) return -E_INVAL_ELF;
++            if (prev.p_type == ELF_PT_LOAD && prev.p_memsz != 0 &&
++                ROUNDDOWN(ph.p_va, PGSIZE) < ROUNDUP(prev.p_va + prev.p_memsz, PGSIZE) &&
++                ROUNDDOWN(prev.p_va, PGSIZE) < ROUNDUP(ph.p_va + ph.p_memsz, PGSIZE))
++                return -E_INVAL_ELF;
++        }
++    }
++    return entry_ok ? 0 : -E_INVAL_ELF;
++}
++
++// Build privately first: invalid images and OOM leave the old mm/tf intact.
++static int
++load_icode(unsigned char *binary, size_t size)
++{
++    struct mm_struct *old = current->mm, *mm = NULL;
++    struct elfhdr elf;
++    struct trapframe tf;
++    int ret;
++    lock_mm(old);
++    if ((ret = check_elf(old, binary, size, &elf)) != 0) goto out;
++    ret = -E_NO_MEM;
++    if ((mm = mm_create()) == NULL) goto out;
++    if (setup_pgdir(mm) != 0) goto fail;
++    for (unsigned i = 0; i < elf.e_phnum; i++) {
++        struct proghdr ph;
++        if (!read_image(old, binary, size, elf.e_phoff + i * sizeof(ph), &ph, sizeof(ph))) {
++            ret = -E_INVAL_ELF; goto fail;
++        }
++        if (ph.p_type != ELF_PT_LOAD || ph.p_memsz == 0) continue;
++        uint32_t flags = 0, perm = PTE_U;
++        if (ph.p_flags & ELF_PF_R) { flags |= VM_READ; perm |= PTE_R; }
++        if (ph.p_flags & ELF_PF_W) { flags |= VM_WRITE; perm |= PTE_W; }
++        if (ph.p_flags & ELF_PF_X) { flags |= VM_EXEC; perm |= PTE_X; }
++        if ((ret = mm_map(mm, ph.p_va, ph.p_memsz, flags, NULL)) != 0) goto fail;
++        for (uintptr_t va = ROUNDDOWN(ph.p_va, PGSIZE);
++             va < ph.p_va + ph.p_memsz; va += PGSIZE) {
++            struct Page *page = pgdir_alloc_page(mm->pgdir, va, perm);
++            if (page == NULL) { ret = -E_NO_MEM; goto fail; }
++            memset(page2kva(page), 0, PGSIZE);
++            uintptr_t begin = va < ph.p_va ? ph.p_va : va;
++            uintptr_t end = va + PGSIZE;
++            if (end > ph.p_va + ph.p_filesz) end = ph.p_va + ph.p_filesz;
++            if (begin < end && !read_image(old, binary, size,
++                    ph.p_offset + begin - ph.p_va,
++                    (char *)page2kva(page) + PGOFF(begin), end - begin)) {
++                ret = -E_INVAL_ELF; goto fail;
++            }
++        }
++    }
++    if ((ret = mm_map(mm, USTACKTOP - USTACKSIZE, USTACKSIZE,
++                     VM_READ | VM_WRITE | VM_STACK, NULL)) != 0) goto fail;
++    // No demand paging: eagerly back the stack except its bottom guard page.
++    for (uintptr_t va = USTACKTOP - USTACKSIZE + PGSIZE; va < USTACKTOP; va += PGSIZE) {
++        struct Page *page = pgdir_alloc_page(mm->pgdir, va, PTE_U | PTE_R | PTE_W);
++        if (page == NULL) { ret = -E_NO_MEM; goto fail; }
++        memset(page2kva(page), 0, PGSIZE);
++    }
++    memset(&tf, 0, sizeof(tf));
++    tf.epc = elf.e_entry;
++    tf.gpr.sp = USTACKTOP;
++    tf.status = SSTATUS_SPIE; // SPP=0, SIE=0, SUM=0; sret enters U mode.
++    unlock_mm(old);
++    bool intr_flag;
++    local_intr_save(intr_flag);
++    set_mm_count(mm, 1);
++    current->mm = mm;
++    current->pgdir = PADDR(mm->pgdir);
++    *current->tf = tf;
++    lsatp(current->pgdir);
++    flush_tlb();
++    asm volatile("fence.i" ::: "memory");
++    if (old != NULL && mm_count_dec(old) == 0) destroy_private_mm(old);
++    local_intr_restore(intr_flag);
++    return 0;
++fail:
++    destroy_private_mm(mm);
++out:
++    unlock_mm(old);
++    return ret;
++}
++
++int
++do_execve(const char *name, size_t len, unsigned char *binary, size_t size)
++{
++    if (current == NULL || current->tf == NULL || name == NULL || binary == NULL ||
++        len == 0 || len > PROC_NAME_LEN || size < sizeof(struct elfhdr)) return -E_INVAL;
++    // Only a real kernel thread may use trusted kernel arguments.
++    if (current->mm == NULL && !(current->tf->status & SSTATUS_SPP)) return -E_INVAL;
++    char local_name[PROC_NAME_LEN + 1];
++    memset(local_name, 0, sizeof(local_name));
++    lock_mm(current->mm);
++    bool valid = proc_mem_copy(current->mm, local_name, (uintptr_t)name, len, 0);
++    unlock_mm(current->mm);
++    if (!valid) return -E_INVAL;
++    int ret = load_icode(binary, size);
++    if (ret == 0) set_proc_name(current, local_name);
++    return ret;
++}
++
++int
++do_wait(int pid, int *code_store)
++{
++    if (pid < 0 || pid >= MAX_PID) return -E_BAD_PROC;
++    for (;;) {
++        struct mm_struct *mm = current->mm;
++        lock_mm(mm);
++        // Validate output even when the child has not exited yet.
++        bool valid = code_store == NULL ||
++            proc_mem_access(mm, (uintptr_t)code_store, sizeof(int), 1);
++        if (!valid) { unlock_mm(mm); return -E_INVAL; }
++        bool intr_flag, has_child = 0;
++        struct proc_struct *child = NULL;
++        local_intr_save(intr_flag);
++        if (pid > 0) {
++            child = find_proc(pid);
++            if (child != NULL && child->parent == current) has_child = 1;
++            else child = NULL;
++            if (child != NULL && child->state != PROC_ZOMBIE) child = NULL;
++        } else {
++            for (struct proc_struct *p = current->cptr; p != NULL; p = p->optr) {
++                has_child = 1;
++                if (p->state == PROC_ZOMBIE) { child = p; break; }
++            }
++        }
++        if (child != NULL) {
++            int code = child->exit_code;
++            if (code_store != NULL && !proc_mem_copy(mm, &code,
++                                    (uintptr_t)code_store, sizeof(code), 1)) {
++                local_intr_restore(intr_flag); unlock_mm(mm); return -E_INVAL;
++            }
++            assert(child != idleproc && child != initproc && child->mm == NULL);
++            unhash_proc(child);
++            remove_links(child);
++            put_kstack(child);
++            kfree(child);
++            local_intr_restore(intr_flag);
++            unlock_mm(mm);
++            return 0;
++        }
++        if (!has_child) {
++            local_intr_restore(intr_flag); unlock_mm(mm); return -E_BAD_PROC;
++        }
++        if (current->flags & PF_EXITING) {
++            local_intr_restore(intr_flag); unlock_mm(mm);
++            do_exit(-E_KILLED);
++            panic("do_exit returned to wait");
++        }
++        current->state = PROC_SLEEPING;
++        current->wait_state = WT_CHILD;
++        unlock_mm(mm);
++        // Keep interrupts masked until schedule consumes the sleeping state.
++        schedule();
++        local_intr_restore(intr_flag);
++        if (current->flags & PF_EXITING) {
++            do_exit(-E_KILLED);
++            panic("do_exit returned to wait");
++        }
++    }
++}
+ 
+ 
+ //lab5 function3 YOUR CODE
+@@ -308,7 +607,83 @@ put_pgdir(struct mm_struct *mm)
+ #define KERNEL_EXECVE2(x, xstart, xsize) __KERNEL_EXECVE2(x, xstart, xsize)
+ 
+ 
+-//lab5 function2 YOUR CODE
++//lab5 function2 2412559
++static int
++kernel_execve(const char *name, unsigned char *binary, size_t size)
++{
++    assert(current->mm == NULL && current->tf != NULL);
++    assert((uintptr_t)current->tf == current->kstack + KSTACKSIZE - sizeof(*current->tf));
++    bool intr_flag;
++    local_intr_save(intr_flag);
++    int ret = do_execve(name, strlen(name), binary, size);
++    if (ret == 0) {
++        // The reserved tf is above the live C stack; do not restore SIE here.
++        forkrets(current->tf);
++        panic("forkrets returned");
++    }
++    local_intr_restore(intr_flag);
++    return ret;
++}
++
++static int
++user_main(void *arg)
++{
++#ifdef TEST
++    return KERNEL_EXECVE2(TEST, TESTSTART, TESTSIZE);
++#else
++    return KERNEL_EXECVE(hello);
++#endif
++}
++
++static int
++init_main(void *arg)
++{
++    size_t free_before = nr_free_pages();
++    int pid = kernel_thread(user_main, NULL, 0);
++    assert(pid > 0);
++    int ret;
++    while ((ret = do_wait(0, NULL)) == 0) schedule();
++    assert(ret == -E_BAD_PROC);
++    cprintf("all user-mode processes have quit.\n");
++    assert(nr_process == 2 && initproc->cptr == NULL && idleproc->cptr == initproc);
++    assert(list_next(&proc_list) == &initproc->list_link &&
++           list_prev(&proc_list) == &initproc->list_link);
++    assert(nr_free_pages() == free_before);
++    cprintf("init check memory pass.\n");
++    // init must remain alive to adopt orphans; it must never return to do_exit.
++    for (;;) {
++        int adopted = do_wait(0, NULL);
++        assert(adopted == 0 || adopted == -E_BAD_PROC);
++        schedule();
++    }
++}
++
++void
++proc_init(void)
++{
++    list_init(&proc_list);
++    for (unsigned i = 0; i < HASH_LIST_SIZE; i++) list_init(&hash_list[i]);
++    assert(nr_process == 0);
++    idleproc = alloc_proc();
++    assert(idleproc != NULL);
++    idleproc->pid = 0;
++    idleproc->state = PROC_RUNNABLE;
++    idleproc->kstack = (uintptr_t)bootstack;
++    idleproc->need_resched = 1;
++    set_proc_name(idleproc, "idle");
++    current = idleproc;
++    nr_process = 1; // idle stays outside the ordinary list and PID hash.
++    int pid = kernel_thread(init_main, NULL, 0);
++    assert(pid > 0 && (initproc = find_proc(pid)) != NULL);
++    set_proc_name(initproc, "init");
++    assert(initproc->pid == 1 && initproc->parent == idleproc);
++}
++
++void
++cpu_idle(void)
++{
++    for (;;) if (current->need_resched) schedule();
++}
+ 
+ 
+ 

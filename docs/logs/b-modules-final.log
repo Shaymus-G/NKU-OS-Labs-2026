@@ -1,0 +1,5 @@
+Command: make -B obj/kern/process/proc.o obj/kern/mm/pmm.o
++ cc kern/process/proc.c
++ cc kern/mm/pmm.c
+
+Exit: 0

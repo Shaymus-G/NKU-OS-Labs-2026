@@ -1,0 +1,33 @@
+{
+  "temporary_tree": "/tmp/lab5-b-isolated-8_nvvz7e",
+  "source_root": "/mnt/d/3nd_grade/OS/lab/lab5/github",
+  "time": "20261126-211915",
+  "scope": "RV64 QEMU kernel-side tests with explicit C interface doubles",
+  "sha256": {
+    "kern/process/proc.c": "bbf001d186068bcbfb675fea4050b1d20f89d833d40520fcd71b5272b5187929",
+    "kern/mm/pmm.c": "88ed4fdce67e75ffc997ceb224c3fb1808537b72334927ecd01e198a76253f49",
+    "tools/b-isolated/harness.c": "b4adc72bf73ae5ddc6d7373ac2cd05b2b01be29b6aabe2be03aa43bccdac1871",
+    "tools/b-isolated/run.py": "dcfe2a399aec5cb0441ef24ada9928ebde25db4cc9a991d3d5eea7c6712bef8e"
+  },
+  "gcc": "riscv64-unknown-elf-gcc (SiFive GCC-Metal 10.2.0-2020.12.8) 10.2.0",
+  "qemu": "QEMU emulator version 4.1.1",
+  "base_commit": "872551b72e8175b21fa9f2977a3476c4da2666a3",
+  "commands": [
+    [
+      "make",
+      "-j2"
+    ],
+    [
+      "qemu-system-riscv64",
+      "-machine",
+      "virt",
+      "-nographic",
+      "-bios",
+      "default",
+      "-device",
+      "loader,file=bin/ucore.img,addr=0x80200000"
+    ]
+  ],
+  "build_exit": 0,
+  "qemu_exit": 0
+}

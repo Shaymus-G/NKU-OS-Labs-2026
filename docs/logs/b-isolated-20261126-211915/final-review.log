@@ -1,0 +1,5 @@
+Final source/test hashes match QEMU manifest.
+Python syntax and local Markdown links: PASS
+Git diff --check: PASS
+A files, C regions/files, formal startup and teacher tests preserved.
+No commit or push performed.
