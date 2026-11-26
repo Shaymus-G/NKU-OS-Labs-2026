@@ -315,7 +315,34 @@ put_pgdir(struct mm_struct *mm)
     free_page(kva2page(mm->pgdir));
 }
 
-//lab5 function3 YOUR CODE update copy_mm
+static void destroy_private_mm(struct mm_struct *mm);
+
+//lab5 function3 2412456 update copy_mm
+static int
+copy_mm(uint32_t clone_flags, struct proc_struct *proc)
+{
+    struct mm_struct *source = current->mm;
+    if (source == NULL) return 0;
+
+    struct mm_struct *mm = source;
+    if (!(clone_flags & CLONE_VM)) {
+        if ((mm = mm_create()) == NULL) return -E_NO_MEM;
+        int ret = setup_pgdir(mm);
+        if (ret == 0) {
+            lock_mm(source);
+            ret = dup_mmap(mm, source);
+            unlock_mm(source);
+        }
+        if (ret != 0) {
+            destroy_private_mm(mm);
+            return ret;
+        }
+    }
+    mm_count_inc(mm);
+    proc->mm = mm;
+    proc->pgdir = PADDR(mm->pgdir);
+    return 0;
+}
 
 
 
@@ -596,7 +623,37 @@ do_wait(int pid, int *code_store)
 }
 
 
-//lab5 function3 YOUR CODE
+//lab5 function3 2412456
+int
+do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf)
+{
+    if (nr_process >= MAX_PROCESS) return -E_NO_FREE_PROC;
+    struct proc_struct *proc = alloc_proc();
+    if (proc == NULL) return -E_NO_MEM;
+
+    int ret = setup_kstack(proc);
+    if (ret != 0) goto free_proc;
+    ret = copy_mm(clone_flags, proc);
+    if (ret != 0) goto free_stack;
+    copy_thread(proc, stack, tf);
+
+    bool intr_flag;
+    local_intr_save(intr_flag);
+    proc->parent = current;
+    proc->pid = get_pid();
+    ret = proc->pid;
+    hash_proc(proc);
+    set_links(proc);
+    wakeup_proc(proc);
+    local_intr_restore(intr_flag);
+    return ret;
+
+free_stack:
+    put_kstack(proc);
+free_proc:
+    kfree(proc);
+    return ret;
+}
 
 
 //lab5 function4 YOUR CODE

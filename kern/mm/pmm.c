@@ -346,7 +346,34 @@ void exit_range(pde_t *pgdir, uintptr_t start, uintptr_t end)
 }
 
 
-//lab5 function3 YOUR CODE 
+//lab5 function3 2412456
+int copy_range(pde_t *to, pde_t *from, uintptr_t start, uintptr_t end, bool share)
+{
+    assert(start <= end && start % PGSIZE == 0 && end % PGSIZE == 0);
+    assert(USER_ACCESS(start, end));
+    while (start < end) {
+        pte_t *pte = get_pte(from, start, 0);
+        if (pte == NULL) {
+            start = ROUNDDOWN(start + PTSIZE, PTSIZE);
+            continue;
+        }
+        if (*pte & PTE_V) {
+            const uint32_t perm = *pte & (PTE_U | PTE_R | PTE_W | PTE_X);
+            struct Page *source = pte2page(*pte), *page = source;
+            if (!share) {
+                if ((page = alloc_page()) == NULL) return -E_NO_MEM;
+                memcpy(page2kva(page), page2kva(source), PGSIZE);
+            }
+            int ret = page_insert(to, page, start, perm);
+            if (ret != 0) {
+                if (!share) free_page(page);
+                return ret;
+            }
+        }
+        start += PGSIZE;
+    }
+    return 0;
+}
 
 
 //lab4 请补充你在lab4中的代码

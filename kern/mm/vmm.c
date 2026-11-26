@@ -202,7 +202,22 @@ out:
     return ret;
 }
 
-//lab5 function3 YOUR CODE 
+//lab5 function3 2412456
+int dup_mmap(struct mm_struct *to, struct mm_struct *from)
+{
+    list_entry_t *list = &from->mmap_list;
+    for (list_entry_t *entry = list_next(list); entry != list; entry = list_next(entry)) {
+        struct vma_struct *source = le2vma(entry, list_link);
+        struct vma_struct *vma = vma_create(source->vm_start, source->vm_end, source->vm_flags);
+        if (vma == NULL) return -E_NO_MEM;
+        // Record the VMA first so exit_mmap can reclaim a partially copied range.
+        insert_vma_struct(to, vma);
+        int ret = copy_range(to->pgdir, from->pgdir, vma->vm_start, vma->vm_end, 0);
+        if (ret != 0) return ret;
+    }
+    asm volatile("fence.i" ::: "memory");
+    return 0;
+}
 
 
 
