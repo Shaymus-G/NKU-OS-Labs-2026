@@ -1,0 +1,33 @@
+{
+  "temporary_tree": "/tmp/lab5-b-isolated-2k2es1_g",
+  "source_root": "/home/swx/NKU-OS-Labs-2026",
+  "time": "20261127-012904",
+  "scope": "RV64 QEMU kernel-side tests with explicit C interface doubles",
+  "sha256": {
+    "kern/process/proc.c": "63fb369d97fb7bf0a0d623a330bfeff98dc22cec7767d0934255e9880f7b56e0",
+    "kern/mm/pmm.c": "9bbe49d093614423a3ccd1beac63613d1c1169cf39e83860ec6d17646e7284ef",
+    "tools/b-isolated/harness.c": "b4adc72bf73ae5ddc6d7373ac2cd05b2b01be29b6aabe2be03aa43bccdac1871",
+    "tools/b-isolated/run.py": "4d6cec201ef898c6451110ad5f9d93eabc389c692509589c2320b4710dd567b3"
+  },
+  "gcc": "riscv64-unknown-elf-gcc () 10.2.0",
+  "qemu": "QEMU emulator version 6.2.0 (Debian 1:6.2+dfsg-2ubuntu6.31)",
+  "base_commit": "06c35035bf2e57390ac4fb07f3f92e35ddf69c0a",
+  "commands": [
+    [
+      "make",
+      "-j2"
+    ],
+    [
+      "qemu-system-riscv64",
+      "-machine",
+      "virt",
+      "-nographic",
+      "-bios",
+      "default",
+      "-device",
+      "loader,file=bin/ucore.img,addr=0x80200000"
+    ]
+  ],
+  "build_exit": 0,
+  "qemu_exit": 0
+}

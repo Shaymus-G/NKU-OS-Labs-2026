@@ -1,0 +1,115 @@
+add symbol table from file "obj/__user_hello.out"
+0x0000000000001000 in ?? ()
+Hardware assisted breakpoint 1 at 0x800020: file user/libs/initcode.S, line 5.
+
+OpenSBI v1.3
+   ____                    _____ ____ _____
+  / __ \                  / ____|  _ \_   _|
+ | |  | |_ __   ___ _ __ | (___ | |_) || |
+ | |  | | '_ \ / _ \ '_ \ \___ \|  _ < | |
+ | |__| | |_) |  __/ | | |____) | |_) || |_
+  \____/| .__/ \___|_| |_|_____/|___/_____|
+        | |
+        |_|
+
+Platform Name             : riscv-virtio,qemu
+Platform Features         : medeleg
+Platform HART Count       : 1
+Platform IPI Device       : aclint-mswi
+Platform Timer Device     : aclint-mtimer @ 10000000Hz
+Platform Console Device   : semihosting
+Platform HSM Device       : ---
+Platform PMU Device       : ---
+Platform Reboot Device    : sifive_test
+Platform Shutdown Device  : sifive_test
+Platform Suspend Device   : ---
+Platform CPPC Device      : ---
+Firmware Base             : 0x80000000
+Firmware Size             : 194 KB
+Firmware RW Offset        : 0x20000
+Firmware RW Size          : 66 KB
+Firmware Heap Offset      : 0x28000
+Firmware Heap Size        : 34 KB (total), 2 KB (reserved), 9 KB (used), 22 KB (free)
+Firmware Scratch Size     : 4096 B (total), 760 B (used), 3336 B (free)
+Runtime SBI Version       : 1.0
+
+Domain0 Name              : root
+Domain0 Boot HART         : 0
+Domain0 HARTs             : 0*
+Domain0 Region00          : 0x0000000002000000-0x000000000200ffff M: (I,R,W) S/U: ()
+Domain0 Region01          : 0x0000000080000000-0x000000008001ffff M: (R,X) S/U: ()
+Domain0 Region02          : 0x0000000080020000-0x000000008003ffff M: (R,W) S/U: ()
+Domain0 Region03          : 0x0000000000000000-0xffffffffffffffff M: (R,W,X) S/U: (R,W,X)
+Domain0 Next Address      : 0x0000000080200000
+Domain0 Next Arg1         : 0x0000000087000000
+Domain0 Next Mode         : S-mode
+Domain0 SysReset          : yes
+Domain0 SysSuspend        : yes
+
+Boot HART ID              : 0
+Boot HART Domain          : root
+Boot HART Priv Version    : v1.10
+Boot HART Base ISA        : rv64imafdc
+Boot HART ISA Extensions  : time
+Boot HART PMP Count       : 16
+Boot HART PMP Granularity : 4
+Boot HART PMP Address Bits: 54
+Boot HART MHPM Count      : 0
+Boot HART MIDELEG         : 0x0000000000000222
+Boot HART MEDELEG         : 0x000000000000b109
+DTB Init
+HartID: 0
+DTB Address: 0x87000000
+Physical Memory from DTB:
+  Base: 0x0000000080000000
+  Size: 0x0000000008000000 (128 MB)
+  End:  0x0000000087ffffff
+DTB init completed
+(THU.CST) os is loading ...
+
+Special kernel symbols:
+  entry  0xc020004a (virtual)
+  etext  0xc02061ec (virtual)
+  edata  0xc02ae0d0 (virtual)
+  end    0xc02b2578 (virtual)
+Kernel executable memory footprint: 714KB
+memory management: default_pmm_manager
+PMM: DRAM [0x80000000, 0x88000000), managed end 0x88000000
+PMM: 32768 descriptors, sizeof(Page)=64, free=[0x804b3000, 0x88000000), 31565 pages
+check_alloc_page() succeeded!
+check_pgdir() succeeded!
+check_boot_pgdir() succeeded!
+use SLOB allocator
+kmalloc_init() succeeded!
+check_vma_struct() succeeded!
+check_vmm() succeeded.
+++ setup timer interrupts
+kernel_execve: pid = 2, name = "hello".
+
+Breakpoint 1, _start () at user/libs/initcode.S:5
+5	    call umain
+first user instruction: pc=0x800020 sp=0x80000000 satp=0x80000000000804b8
+=> 0x800020 <_start>:	jal	ra,0x8000ca <umain>
+Hardware assisted breakpoint 2 at 0xffffffffc0200e00: file kern/trap/trapentry.S, line 126.
+
+Breakpoint 2, __alltraps () at kern/trap/trapentry.S:126
+126	    SAVE_ALL
+user ecall entry: scause=0x8 sepc=0x8000aa sstatus=0x20 sp=0x7ffffef0 sscratch=0xffffffffc04b8000 a0=30
+Hardware assisted breakpoint 3 at 0xffffffffc0205ca8: file kern/syscall/syscall.c, line 118.
+
+Breakpoint 3, syscall () at kern/syscall/syscall.c:118
+118	    struct trapframe *tf = current->tf;
+syscall dispatch: pc=0xffffffffc0205ca8 sp=0xffffffffc04b7ec0 tf.epc=0x8000ae saved_sp=0x7ffffef0 syscall=30
+Hardware assisted breakpoint 4 at 0xffffffffc0200eca: file kern/trap/trapentry.S, line 138.
+H
+Breakpoint 4, __trapret () at kern/trap/trapentry.S:138
+138	    sret
+before sret: sepc=0x8000ae sstatus=0x20 sp=0x7ffffef0 sscratch=0xffffffffc04b8000
+=> 0xffffffffc0200eca <__trapret+90>:	sret
+Hardware assisted breakpoint 5 at 0x8000ae: file user/libs/syscall.c, line 40.
+
+Breakpoint 5, sys_putc (c=72) at user/libs/syscall.c:40
+40	    return (int)a0;
+back in user code: pc=0x8000ae sp=0x7ffffef0 a0=0
+=> 0x8000ae <sys_putc+16>:	sext.w	a0,a0
+[Inferior 1 (process 1) detached]

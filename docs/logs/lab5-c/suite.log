@@ -1,0 +1,16 @@
+cow/hello: PASS
+cow/exit: PASS
+cow/yield: PASS
+cow/spin: PASS
+cow/forktest: PASS
+cow/forktree: PASS
+cow/waitkill: PASS
+cow/c_lifecycle: PASS
+eager/hello: PASS
+eager/exit: PASS
+eager/yield: PASS
+eager/spin: PASS
+eager/forktest: PASS
+eager/forktree: PASS
+eager/waitkill: PASS
+eager/c_lifecycle: PASS

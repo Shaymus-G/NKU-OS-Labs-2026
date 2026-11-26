@@ -1,0 +1,4 @@
+riscv64-unknown-elf-gcc () 10.2.0
+QEMU emulator version 6.2.0 (Debian 1:6.2+dfsg-2ubuntu6.31)
+GNU gdb (Ubuntu 12.1-0ubuntu1~22.04.2) 12.1
+a9bb8a1d62470e848cebb02e97f5cbdaefba93f7
