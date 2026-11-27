@@ -1,0 +1,14 @@
+First U instruction pc=0x800074 <_start> sp=0x80000000
+Host first U state priv=0 satp=9223372036855301304
+Before user ecall pc=0x800054 a0=30
+TCG trans_ecall ctx.pc_next=8388692
+Runtime raise_exception cause=8 priv=0 pc=8388692
+After trap delivery priv=1 scause=8 sepc=8388692 pc=18446744072637910532
+Kernel dispatch tf.epc=8388696 saved_sp=2147483376
+Before sret pc=0xffffffffc0200ece <__trapret+90> tf.epc=8388696 sp=0x7ffffef0
+Host return state sepc=8388696 sscratch=18446744072640757760 mstatus=32
+TCG trans_sret ctx.pc_next=18446744072637910734
+helper_sret before priv=1 sepc=8388696 mstatus=32
+helper_sret after priv=0 mstatus=2 returned_pc=8388696
+Back in U pc=0x800058 <sys_putc+16> sp=0x7ffffef0 a0=0
+DUAL GDB PASS: observed TCG translation and runtime U->S->U on the same QEMU process

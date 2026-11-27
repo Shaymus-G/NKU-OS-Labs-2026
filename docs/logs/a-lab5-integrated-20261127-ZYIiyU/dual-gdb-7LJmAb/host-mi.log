@@ -1,0 +1,138 @@
+COMMAND 1-gdb-set pagination off
+=thread-group-added,id="i1"
+~"Reading symbols from /home/gjhjz/OSopt/qemu-4.1.1/riscv64-softmmu/qemu-system-riscv64...\n"
+(gdb) 
+1^done
+(gdb) 
+COMMAND 2-gdb-set mi-async on
+2^done
+(gdb) 
+COMMAND 3-interpreter-exec console "handle SIGUSR1 nostop noprint pass"
+~"Signal        Stop\tPrint\tPass to program\tDescription\n"
+~"SIGUSR1       No\tNo\tYes\t\tUser defined signal 1\n"
+3^done
+(gdb) 
+COMMAND 4-interpreter-exec console "handle SIGUSR2 nostop noprint pass"
+~"Signal        Stop\tPrint\tPass to program\tDescription\n"
+~"SIGUSR2       No\tNo\tYes\t\tUser defined signal 2\n"
+4^done
+(gdb) 
+COMMAND 5-exec-run
+=thread-group-started,id="i1",pid="168484"
+=thread-created,id="1",group-id="i1"
+=library-loaded,id="/lib64/ld-linux-x86-64.so.2",target-name="/lib64/ld-linux-x86-64.so.2",host-name="/lib64/ld-linux-x86-64.so.2",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff7fd0100",to="0x00007ffff7ff2684"}]
+5^running
+*running,thread-id="all"
+(gdb) 
+=library-loaded,id="/lib/x86_64-linux-gnu/libz.so.1",target-name="/lib/x86_64-linux-gnu/libz.so.1",host-name="/lib/x86_64-linux-gnu/libz.so.1",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff7fa4280",to="0x00007ffff7fb4f9b"}]
+=library-loaded,id="/lib/x86_64-linux-gnu/libpixman-1.so.0",target-name="/lib/x86_64-linux-gnu/libpixman-1.so.0",host-name="/lib/x86_64-linux-gnu/libpixman-1.so.0",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff7f05300",to="0x00007ffff7f88254"}]
+=library-loaded,id="/lib/x86_64-linux-gnu/libutil.so.1",target-name="/lib/x86_64-linux-gnu/libutil.so.1",host-name="/lib/x86_64-linux-gnu/libutil.so.1",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff7ef73e0",to="0x00007ffff7ef7d90"}]
+=library-loaded,id="/lib/x86_64-linux-gnu/libglib-2.0.so.0",target-name="/lib/x86_64-linux-gnu/libglib-2.0.so.0",host-name="/lib/x86_64-linux-gnu/libglib-2.0.so.0",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff7de9b20",to="0x00007ffff7e6cb12"}]
+=library-loaded,id="/lib/x86_64-linux-gnu/libm.so.6",target-name="/lib/x86_64-linux-gnu/libm.so.6",host-name="/lib/x86_64-linux-gnu/libm.so.6",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff7c8a3c0",to="0x00007ffff7d30fa8"}]
+=library-loaded,id="/lib/x86_64-linux-gnu/libgcc_s.so.1",target-name="/lib/x86_64-linux-gnu/libgcc_s.so.1",host-name="/lib/x86_64-linux-gnu/libgcc_s.so.1",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff7c655e0",to="0x00007ffff7c76055"}]
+=library-loaded,id="/lib/x86_64-linux-gnu/libpthread.so.0",target-name="/lib/x86_64-linux-gnu/libpthread.so.0",host-name="/lib/x86_64-linux-gnu/libpthread.so.0",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff7c43ae0",to="0x00007ffff7c53535"}]
+=library-loaded,id="/lib/x86_64-linux-gnu/libc.so.6",target-name="/lib/x86_64-linux-gnu/libc.so.6",host-name="/lib/x86_64-linux-gnu/libc.so.6",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff7a6d630",to="0x00007ffff7be24bd"}]
+=library-loaded,id="/lib/x86_64-linux-gnu/libpcre.so.3",target-name="/lib/x86_64-linux-gnu/libpcre.so.3",host-name="/lib/x86_64-linux-gnu/libpcre.so.3",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff79da2a0",to="0x00007ffff7a2aaad"}]
+~"[Thread debugging using libthread_db enabled]\n"
+~"Using host libthread_db library \"/lib/x86_64-linux-gnu/libthread_db.so.1\".\n"
+=thread-created,id="2",group-id="i1"
+~"[New Thread 0x7ffff79d5700 (LWP 168488)]\n"
+*running,thread-id="2"
+=thread-created,id="3",group-id="i1"
+~"[New Thread 0x7ffff5062700 (LWP 168489)]\n"
+*running,thread-id="3"
+COMMAND 6-exec-interrupt --all
+6^done
+(gdb) 
+~"\nThread "
+~"1 \"qemu-system-ris\" received signal SIGINT, Interrupt.\n"
+~"0x00007ffff7b5dcb6 in __ppoll (fds=0x55555654fa00, nfds=6, timeout=<optimized out>, sigmask=0x0) at ../sysdeps/unix/sysv/linux/ppoll.c:44\n"
+&"44\t../sysdeps/unix/sysv/linux/ppoll.c: No such file or directory.\n"
+*stopped,reason="signal-received",signal-name="SIGINT",signal-meaning="Interrupt",frame={addr="0x00007ffff7b5dcb6",func="__ppoll",args=[{name="fds",value="0x55555654fa00"},{name="nfds",value="6"},{name="timeout",value="<optimized out>"},{name="sigmask",value="0x0"}],file="../sysdeps/unix/sysv/linux/ppoll.c",fullname="/build/glibc-B3wQXB/glibc-2.31/io/../sysdeps/unix/sysv/linux/ppoll.c",line="44",arch="i386:x86-64"},thread-id="1",stopped-threads="all",core="0"
+COMMAND 7-interpreter-exec console "set $e = &((RISCVCPU *)cpus.tqh_first)->env"
+7^done
+(gdb) 
+COMMAND 8-data-evaluate-expression "$e->priv"
+8^done,value="0"
+(gdb) 
+COMMAND 9-data-evaluate-expression "$e->priv"
+9^done,value="0"
+(gdb) 
+COMMAND 10-data-evaluate-expression "$e->satp"
+10^done,value="9223372036855301304"
+(gdb) 
+COMMAND 11-exec-continue
+11^running
+*running,thread-id="all"
+~"[Switching to thread 3 (Thread 0x7ffff5062700 (LWP 168489))](running)\n"
+=thread-selected,id="3"
+(gdb) 
+COMMAND 12-exec-interrupt --all
+12^done
+(gdb) 
+~"\nThread "
+~"1 \"qemu-system-ris\" received signal SIGINT, Interrupt.\n"
+~"0x00007ffff7b5dcb6 in __ppoll (fds=0x55555654fa00, nfds=6, timeout=<optimized out>, sigmask=0x0) at ../sysdeps/unix/sysv/linux/ppoll.c:44\n"
+~"44\tin ../sysdeps/unix/sysv/linux/ppoll.c\n"
+*stopped,reason="signal-received",signal-name="SIGINT",signal-meaning="Interrupt",frame={addr="0x00007ffff7b5dcb6",func="__ppoll",args=[{name="fds",value="0x55555654fa00"},{name="nfds",value="6"},{name="timeout",value="<optimized out>"},{name="sigmask",value="0x0"}],file="../sysdeps/unix/sysv/linux/ppoll.c",fullname="/build/glibc-B3wQXB/glibc-2.31/io/../sysdeps/unix/sysv/linux/ppoll.c",line="44",arch="i386:x86-64"},thread-id="1",stopped-threads="all",core="4"
+COMMAND 13-interpreter-exec console "break trans_ecall if ctx->base.pc_next == 8388692"
+~"Breakpoint 1 at 0x555555916d50: file /home/gjhjz/OSopt/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c, line 22.\n"
+=breakpoint-created,bkpt={number="1",type="breakpoint",disp="keep",enabled="y",addr="0x0000555555916d50",func="trans_ecall",file="/home/gjhjz/OSopt/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c",fullname="/home/gjhjz/OSopt/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c",line="22",thread-groups=["i1"],cond="ctx->base.pc_next == 8388692",times="0",original-location="trans_ecall"}
+13^done
+(gdb) 
+COMMAND 14-interpreter-exec console "break helper_raise_exception if exception == 8 && env->pc == 8388692"
+~"Breakpoint 2 at 0x555555919540: file /home/gjhjz/OSopt/qemu-4.1.1/target/riscv/op_helper.c, line 38.\n"
+=breakpoint-created,bkpt={number="2",type="breakpoint",disp="keep",enabled="y",addr="0x0000555555919540",func="helper_raise_exception",file="/home/gjhjz/OSopt/qemu-4.1.1/target/riscv/op_helper.c",fullname="/home/gjhjz/OSopt/qemu-4.1.1/target/riscv/op_helper.c",line="38",thread-groups=["i1"],cond="exception == 8 && env->pc == 8388692",times="0",original-location="helper_raise_exception"}
+14^done
+(gdb) 
+COMMAND 15-interpreter-exec console "break riscv_cpu_do_interrupt if ((RISCVCPU *)cs)->env.pc == 8388692 && ((RISCVCPU *)cs)->env.priv == 0"
+~"Breakpoint 3 at 0x55555591b12a: file /home/gjhjz/OSopt/qemu-4.1.1/target/riscv/cpu_helper.c, line 504.\n"
+=breakpoint-created,bkpt={number="3",type="breakpoint",disp="keep",enabled="y",addr="0x000055555591b12a",func="riscv_cpu_do_interrupt",file="/home/gjhjz/OSopt/qemu-4.1.1/target/riscv/cpu_helper.c",fullname="/home/gjhjz/OSopt/qemu-4.1.1/target/riscv/cpu_helper.c",line="504",thread-groups=["i1"],cond="((RISCVCPU *)cs)->env.pc == 8388692 && ((RISCVCPU *)cs)->env.priv == 0",times="0",original-location="riscv_cpu_do_interrupt"}
+15^done
+(gdb) 
+COMMAND 16-exec-continue
+16^running
+*running,thread-id="all"
+~"[Switching to thread 3 (Thread 0x7ffff5062700 (LWP 168489))](running)\n"
+=thread-selected,id="3"
+(gdb) 
+=breakpoint-modified,bkpt={number="1",type="breakpoint",disp="keep",enabled="y",addr="0x0000555555916d50",func="trans_ecall",file="/home/gjhjz/OSopt/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c",fullname="/home/gjhjz/OSopt/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c",line="22",thread-groups=["i1"],cond="ctx->base.pc_next == 8388692",times="1",original-location="trans_ecall"}
+~"[Switching to Thread 0x7ffff5062700 (LWP 168489)]\n"
+~"\n"
+~"Thread 3 \"qemu-system-ris\" hit Breakpoint 1, trans_ecall (ctx=0x7ffff5061800, a=0x7ffff5061700) at /home/gjhjz/OSopt/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c:22\n"
+~"22\t{\n"
+*stopped,reason="breakpoint-hit",disp="keep",bkptno="1",frame={addr="0x0000555555916d50",func="trans_ecall",args=[{name="ctx",value="0x7ffff5061800"},{name="a",value="0x7ffff5061700"}],file="/home/gjhjz/OSopt/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c",fullname="/home/gjhjz/OSopt/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c",line="22",arch="i386:x86-64"},thread-id="3",stopped-threads="all",core="0"
+COMMAND 17-data-evaluate-expression "ctx->base.pc_next"
+17^done,value="8388692"
+(gdb) 
+COMMAND 18-interpreter-exec console "bt 12"
+~"#0  trans_ecall (ctx=0x7ffff5061800, a=0x7ffff5061700) at /home/gjhjz/OSopt/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c:22\n"
+~"#1  0x0000555555910924 in decode_insn32 (ctx=0x7ffff5061800, insn=115) at target/riscv/decode_insn32.inc.c:1614\n"
+~"#2  0x0000555555918f7a in decode_opc (ctx=0x7ffff5061800) at /home/gjhjz/OSopt/qemu-4.1.1/target/riscv/translate.c:746\n"
+~"#3  0x0000555555919189 in riscv_tr_translate_insn (dcbase=0x7ffff5061800, cpu=0x555556503940) at /home/gjhjz/OSopt/qemu-4.1.1/target/riscv/translate.c:800\n"
+~"#4  0x000055555588d3f7 in translator_loop (ops=0x555556163400 <riscv_tr_ops>, db=0x7ffff5061800, cpu=0x555556503940, tb=0x7ffff5154040 <code_gen_buffer+19>, max_insns=1) at /home/gjhjz/OSopt/qemu-4.1.1/accel/tcg/translator.c:95\n"
+~"#5  0x00005555559192f8 in gen_intermediate_code (cs=0x555556503940, tb=0x7ffff5154040 <code_gen_buffer+19>, max_insns=1) at /home/gjhjz/OSopt/qemu-4.1.1/target/riscv/translate.c:848\n"
+~"#6  0x000055555588b8b2 in tb_gen_code (cpu=0x555556503940, pc=8388692, cs_base=0, flags=0, cflags=-16252928) at /home/gjhjz/OSopt/qemu-4.1.1/accel/tcg/translate-all.c:1738\n"
+~"#7  0x0000555555888197 in tb_find (cpu=0x555556503940, last_tb=0x0, tb_exit=0, cf_mask=524288) at /home/gjhjz/OSopt/qemu-4.1.1/accel/tcg/cpu-exec.c:409\n"
+~"#8  0x0000555555888a67 in cpu_exec (cpu=0x555556503940) at /home/gjhjz/OSopt/qemu-4.1.1/accel/tcg/cpu-exec.c:731\n"
+~"#9  0x000055555583bb48 in tcg_cpu_exec (cpu=0x555556503940) at /home/gjhjz/OSopt/qemu-4.1.1/cpus.c:1435\n"
+~"#10 0x000055555583c3b6 in qemu_tcg_cpu_thread_fn (arg=0x555556503940) at /home/gjhjz/OSopt/qemu-4.1.1/cpus.c:1743\n"
+~"#11 0x0000555555cae6e9 in qemu_thread_start (args=0x555556519fe0) at util/qemu-thread-posix.c:502\n"
+~"(More stack frames follow...)\n"
+18^done
+(gdb) 
+COMMAND 19-data-evaluate-expression "ctx->base.pc_next"
+19^done,value="8388692"
+(gdb) 
+COMMAND 20-exec-continue
+20^running
+*running,thread-id="all"
+~"[Switching to thread 2 (Thread 0x7ffff79d5700 (LWP 168488))](running)\n"
+=thread-selected,id="2"
+(gdb) 
+COMMAND 21-gdb-exit
+21^exit
+=thread-exited,id="1",group-id="i1"
+=thread-exited,id="2",group-id="i1"
+=thread-exited,id="3",group-id="i1"
+=thread-group-exited,id="i1"

@@ -1,0 +1,310 @@
+Line 504 of "/home/gjhjz/OSopt/qemu-4.1.1/target/riscv/cpu_helper.c" starts at address 0x3c712a <riscv_cpu_do_interrupt> and ends at 0x3c713a <riscv_cpu_do_interrupt+16>.
+Dump of assembler code for function riscv_cpu_do_interrupt:
+   0x00000000003c712a <+0>:	f3 0f 1e fa	endbr64 
+   0x00000000003c712e <+4>:	55	push   %rbp
+   0x00000000003c712f <+5>:	48 89 e5	mov    %rsp,%rbp
+   0x00000000003c7132 <+8>:	48 83 ec 50	sub    $0x50,%rsp
+   0x00000000003c7136 <+12>:	48 89 7d b8	mov    %rdi,-0x48(%rbp)
+   0x00000000003c713a <+16>:	48 8b 45 b8	mov    -0x48(%rbp),%rax
+   0x00000000003c713e <+20>:	4c 8d 05 8b e8 4c 00	lea    0x4ce88b(%rip),%r8        # 0x8959d0 <__func__.30357>
+   0x00000000003c7145 <+27>:	b9 fb 01 00 00	mov    $0x1fb,%ecx
+   0x00000000003c714a <+32>:	48 8d 15 a7 e6 4c 00	lea    0x4ce6a7(%rip),%rdx        # 0x8957f8
+   0x00000000003c7151 <+39>:	48 8d 35 d7 e6 4c 00	lea    0x4ce6d7(%rip),%rsi        # 0x89582f
+   0x00000000003c7158 <+46>:	48 89 c7	mov    %rax,%rdi
+   0x00000000003c715b <+49>:	e8 1e ac 24 00	callq  0x611d7e <object_dynamic_cast_assert>
+   0x00000000003c7160 <+54>:	48 89 45 d8	mov    %rax,-0x28(%rbp)
+   0x00000000003c7164 <+58>:	48 8b 45 d8	mov    -0x28(%rbp),%rax
+   0x00000000003c7168 <+62>:	48 05 10 8a 00 00	add    $0x8a10,%rax
+   0x00000000003c716e <+68>:	48 89 45 e0	mov    %rax,-0x20(%rbp)
+   0x00000000003c7172 <+72>:	48 8b 45 b8	mov    -0x48(%rbp),%rax
+   0x00000000003c7176 <+76>:	8b 80 a0 82 00 00	mov    0x82a0(%rax),%eax
+   0x00000000003c717c <+82>:	c1 e8 1f	shr    $0x1f,%eax
+   0x00000000003c717f <+85>:	88 45 c7	mov    %al,-0x39(%rbp)
+   0x00000000003c7182 <+88>:	48 8b 45 b8	mov    -0x48(%rbp),%rax
+   0x00000000003c7186 <+92>:	8b 80 a0 82 00 00	mov    0x82a0(%rax),%eax
+   0x00000000003c718c <+98>:	48 98	cltq   
+   0x00000000003c718e <+100>:	25 ff ff ff 7f	and    $0x7fffffff,%eax
+   0x00000000003c7193 <+105>:	48 89 45 c8	mov    %rax,-0x38(%rbp)
+   0x00000000003c7197 <+109>:	80 7d c7 00	cmpb   $0x0,-0x39(%rbp)
+   0x00000000003c719b <+113>:	74 0d	je     0x3c71aa <riscv_cpu_do_interrupt+128>
+   0x00000000003c719d <+115>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c71a1 <+119>:	48 8b 80 78 02 00 00	mov    0x278(%rax),%rax
+   0x00000000003c71a8 <+126>:	eb 0b	jmp    0x3c71b5 <riscv_cpu_do_interrupt+139>
+   0x00000000003c71aa <+128>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c71ae <+132>:	48 8b 80 a0 02 00 00	mov    0x2a0(%rax),%rax
+   0x00000000003c71b5 <+139>:	48 89 45 e8	mov    %rax,-0x18(%rbp)
+   0x00000000003c71b9 <+143>:	48 c7 45 d0 00 00 00 00	movq   $0x0,-0x30(%rbp)
+   0x00000000003c71c1 <+151>:	0f b6 45 c7	movzbl -0x39(%rbp),%eax
+   0x00000000003c71c5 <+155>:	83 f0 01	xor    $0x1,%eax
+   0x00000000003c71c8 <+158>:	84 c0	test   %al,%al
+   0x00000000003c71ca <+160>:	0f 84 98 00 00 00	je     0x3c7268 <riscv_cpu_do_interrupt+318>
+   0x00000000003c71d0 <+166>:	48 83 7d c8 0f	cmpq   $0xf,-0x38(%rbp)
+   0x00000000003c71d5 <+171>:	0f 97 c0	seta   %al
+   0x00000000003c71d8 <+174>:	84 c0	test   %al,%al
+   0x00000000003c71da <+176>:	75 31	jne    0x3c720d <riscv_cpu_do_interrupt+227>
+   0x00000000003c71dc <+178>:	48 8b 45 c8	mov    -0x38(%rbp),%rax
+   0x00000000003c71e0 <+182>:	ba 01 00 00 00	mov    $0x1,%edx
+   0x00000000003c71e5 <+187>:	89 c1	mov    %eax,%ecx
+   0x00000000003c71e7 <+189>:	48 d3 e2	shl    %cl,%rdx
+   0x00000000003c71ea <+192>:	48 89 d0	mov    %rdx,%rax
+   0x00000000003c71ed <+195>:	25 f3 b0 00 00	and    $0xb0f3,%eax
+   0x00000000003c71f2 <+200>:	48 85 c0	test   %rax,%rax
+   0x00000000003c71f5 <+203>:	0f 95 c0	setne  %al
+   0x00000000003c71f8 <+206>:	84 c0	test   %al,%al
+   0x00000000003c71fa <+208>:	74 11	je     0x3c720d <riscv_cpu_do_interrupt+227>
+   0x00000000003c71fc <+210>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c7200 <+214>:	48 8b 80 20 02 00 00	mov    0x220(%rax),%rax
+   0x00000000003c7207 <+221>:	48 89 45 d0	mov    %rax,-0x30(%rbp)
+   0x00000000003c720b <+225>:	eb 01	jmp    0x3c720e <riscv_cpu_do_interrupt+228>
+   0x00000000003c720d <+227>:	90	nop
+   0x00000000003c720e <+228>:	48 83 7d c8 08	cmpq   $0x8,-0x38(%rbp)
+   0x00000000003c7213 <+233>:	75 53	jne    0x3c7268 <riscv_cpu_do_interrupt+318>
+   0x00000000003c7215 <+235>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c7219 <+239>:	48 8b 80 48 02 00 00	mov    0x248(%rax),%rax
+   0x00000000003c7220 <+246>:	48 83 f8 03	cmp    $0x3,%rax
+   0x00000000003c7224 <+250>:	76 1f	jbe    0x3c7245 <riscv_cpu_do_interrupt+283>
+   0x00000000003c7226 <+252>:	48 8d 0d c3 e7 4c 00	lea    0x4ce7c3(%rip),%rcx        # 0x8959f0 <__PRETTY_FUNCTION__.30375>
+   0x00000000003c722d <+259>:	ba 20 02 00 00	mov    $0x220,%edx
+   0x00000000003c7232 <+264>:	48 8d 35 bf e5 4c 00	lea    0x4ce5bf(%rip),%rsi        # 0x8957f8
+   0x00000000003c7239 <+271>:	48 8d 3d 77 e6 4c 00	lea    0x4ce677(%rip),%rdi        # 0x8958b7
+   0x00000000003c7240 <+278>:	e8 bb 58 ec ff	callq  0x28cb00 <__assert_fail@plt>
+   0x00000000003c7245 <+283>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c7249 <+287>:	48 8b 80 48 02 00 00	mov    0x248(%rax),%rax
+   0x00000000003c7250 <+294>:	48 8d 14 85 00 00 00 00	lea    0x0(,%rax,4),%rdx
+   0x00000000003c7258 <+302>:	48 8d 05 b1 e7 4c 00	lea    0x4ce7b1(%rip),%rax        # 0x895a10 <ecall_cause_map.30363>
+   0x00000000003c725f <+309>:	8b 04 02	mov    (%rdx,%rax,1),%eax
+   0x00000000003c7262 <+312>:	48 98	cltq   
+   0x00000000003c7264 <+314>:	48 89 45 c8	mov    %rax,-0x38(%rbp)
+   0x00000000003c7268 <+318>:	48 83 7d c8 0f	cmpq   $0xf,-0x38(%rbp)
+   0x00000000003c726d <+323>:	77 26	ja     0x3c7295 <riscv_cpu_do_interrupt+363>
+   0x00000000003c726f <+325>:	80 7d c7 00	cmpb   $0x0,-0x39(%rbp)
+   0x00000000003c7273 <+329>:	74 09	je     0x3c727e <riscv_cpu_do_interrupt+340>
+   0x00000000003c7275 <+331>:	48 8d 05 44 84 84 00	lea    0x848444(%rip),%rax        # 0xc0f6c0 <riscv_intr_names>
+   0x00000000003c727c <+338>:	eb 07	jmp    0x3c7285 <riscv_cpu_do_interrupt+347>
+   0x00000000003c727e <+340>:	48 8d 05 bb 83 84 00	lea    0x8483bb(%rip),%rax        # 0xc0f640 <riscv_excp_names>
+   0x00000000003c7285 <+347>:	48 8b 55 c8	mov    -0x38(%rbp),%rdx
+   0x00000000003c7289 <+351>:	48 c1 e2 03	shl    $0x3,%rdx
+   0x00000000003c728d <+355>:	48 01 d0	add    %rdx,%rax
+   0x00000000003c7290 <+358>:	48 8b 00	mov    (%rax),%rax
+   0x00000000003c7293 <+361>:	eb 07	jmp    0x3c729c <riscv_cpu_do_interrupt+370>
+   0x00000000003c7295 <+363>:	48 8d 05 2a e6 4c 00	lea    0x4ce62a(%rip),%rax        # 0x8958c6
+   0x00000000003c729c <+370>:	48 8b 55 e0	mov    -0x20(%rbp),%rdx
+   0x00000000003c72a0 <+374>:	48 8b 8a 00 02 00 00	mov    0x200(%rdx),%rcx
+   0x00000000003c72a7 <+381>:	0f b6 75 c7	movzbl -0x39(%rbp),%esi
+   0x00000000003c72ab <+385>:	48 8b 55 e0	mov    -0x20(%rbp),%rdx
+   0x00000000003c72af <+389>:	48 8b ba 58 02 00 00	mov    0x258(%rdx),%rdi
+   0x00000000003c72b6 <+396>:	4c 8b 45 d0	mov    -0x30(%rbp),%r8
+   0x00000000003c72ba <+400>:	48 8b 55 c8	mov    -0x38(%rbp),%rdx
+   0x00000000003c72be <+404>:	49 89 c1	mov    %rax,%r9
+   0x00000000003c72c1 <+407>:	e8 be eb ff ff	callq  0x3c5e84 <trace_riscv_trap>
+   0x00000000003c72c6 <+412>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c72ca <+416>:	48 8b 80 48 02 00 00	mov    0x248(%rax),%rax
+   0x00000000003c72d1 <+423>:	48 83 f8 01	cmp    $0x1,%rax
+   0x00000000003c72d5 <+427>:	0f 87 a5 01 00 00	ja     0x3c7480 <riscv_cpu_do_interrupt+854>
+   0x00000000003c72db <+433>:	48 83 7d c8 3f	cmpq   $0x3f,-0x38(%rbp)
+   0x00000000003c72e0 <+438>:	0f 87 9a 01 00 00	ja     0x3c7480 <riscv_cpu_do_interrupt+854>
+   0x00000000003c72e6 <+444>:	48 8b 45 c8	mov    -0x38(%rbp),%rax
+   0x00000000003c72ea <+448>:	89 c2	mov    %eax,%edx
+   0x00000000003c72ec <+450>:	48 8b 45 e8	mov    -0x18(%rbp),%rax
+   0x00000000003c72f0 <+454>:	89 d1	mov    %edx,%ecx
+   0x00000000003c72f2 <+456>:	48 d3 e8	shr    %cl,%rax
+   0x00000000003c72f5 <+459>:	83 e0 01	and    $0x1,%eax
+   0x00000000003c72f8 <+462>:	48 85 c0	test   %rax,%rax
+   0x00000000003c72fb <+465>:	0f 84 7f 01 00 00	je     0x3c7480 <riscv_cpu_do_interrupt+854>
+   0x00000000003c7301 <+471>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c7305 <+475>:	48 8b 80 60 02 00 00	mov    0x260(%rax),%rax
+   0x00000000003c730c <+482>:	48 89 45 f0	mov    %rax,-0x10(%rbp)
+   0x00000000003c7310 <+486>:	48 8b 45 f0	mov    -0x10(%rbp),%rax
+   0x00000000003c7314 <+490>:	48 83 e0 df	and    $0xffffffffffffffdf,%rax
+   0x00000000003c7318 <+494>:	48 89 c6	mov    %rax,%rsi
+   0x00000000003c731b <+497>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c731f <+501>:	48 8b 80 28 02 00 00	mov    0x228(%rax),%rax
+   0x00000000003c7326 <+508>:	48 3d ff 0f 01 00	cmp    $0x10fff,%rax
+   0x00000000003c732c <+514>:	76 13	jbe    0x3c7341 <riscv_cpu_do_interrupt+535>
+   0x00000000003c732e <+516>:	48 8b 45 f0	mov    -0x10(%rbp),%rax
+   0x00000000003c7332 <+520>:	83 e0 02	and    $0x2,%eax
+   0x00000000003c7335 <+523>:	48 d1 e8	shr    %rax
+   0x00000000003c7338 <+526>:	48 c1 e0 05	shl    $0x5,%rax
+   0x00000000003c733c <+530>:	83 e0 20	and    $0x20,%eax
+   0x00000000003c733f <+533>:	eb 61	jmp    0x3c73a2 <riscv_cpu_do_interrupt+632>
+   0x00000000003c7341 <+535>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c7345 <+539>:	48 8b 80 48 02 00 00	mov    0x248(%rax),%rax
+   0x00000000003c734c <+546>:	ba 01 00 00 00	mov    $0x1,%edx
+   0x00000000003c7351 <+551>:	89 c1	mov    %eax,%ecx
+   0x00000000003c7353 <+553>:	d3 e2	shl    %cl,%edx
+   0x00000000003c7355 <+555>:	89 d0	mov    %edx,%eax
+   0x00000000003c7357 <+557>:	48 98	cltq   
+   0x00000000003c7359 <+559>:	48 23 45 f0	and    -0x10(%rbp),%rax
+   0x00000000003c735d <+563>:	48 8b 55 e0	mov    -0x20(%rbp),%rdx
+   0x00000000003c7361 <+567>:	48 8b 92 48 02 00 00	mov    0x248(%rdx),%rdx
+   0x00000000003c7368 <+574>:	bf 01 00 00 00	mov    $0x1,%edi
+   0x00000000003c736d <+579>:	89 d1	mov    %edx,%ecx
+   0x00000000003c736f <+581>:	d3 e7	shl    %cl,%edi
+   0x00000000003c7371 <+583>:	48 8b 55 e0	mov    -0x20(%rbp),%rdx
+   0x00000000003c7375 <+587>:	48 8b 92 48 02 00 00	mov    0x248(%rdx),%rdx
+   0x00000000003c737c <+594>:	41 b8 01 00 00 00	mov    $0x1,%r8d
+   0x00000000003c7382 <+600>:	89 d1	mov    %edx,%ecx
+   0x00000000003c7384 <+602>:	41 d3 e0	shl    %cl,%r8d
+   0x00000000003c7387 <+605>:	44 89 c2	mov    %r8d,%edx
+   0x00000000003c738a <+608>:	01 d2	add    %edx,%edx
+   0x00000000003c738c <+610>:	f7 d2	not    %edx
+   0x00000000003c738e <+612>:	21 fa	and    %edi,%edx
+   0x00000000003c7390 <+614>:	48 63 fa	movslq %edx,%rdi
+   0x00000000003c7393 <+617>:	ba 00 00 00 00	mov    $0x0,%edx
+   0x00000000003c7398 <+622>:	48 f7 f7	div    %rdi
+   0x00000000003c739b <+625>:	48 c1 e0 05	shl    $0x5,%rax
+   0x00000000003c739f <+629>:	83 e0 20	and    $0x20,%eax
+   0x00000000003c73a2 <+632>:	48 09 f0	or     %rsi,%rax
+   0x00000000003c73a5 <+635>:	48 89 45 f0	mov    %rax,-0x10(%rbp)
+   0x00000000003c73a9 <+639>:	48 8b 45 f0	mov    -0x10(%rbp),%rax
+   0x00000000003c73ad <+643>:	80 e4 fe	and    $0xfe,%ah
+   0x00000000003c73b0 <+646>:	48 89 c2	mov    %rax,%rdx
+   0x00000000003c73b3 <+649>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c73b7 <+653>:	48 8b 80 48 02 00 00	mov    0x248(%rax),%rax
+   0x00000000003c73be <+660>:	48 c1 e0 08	shl    $0x8,%rax
+   0x00000000003c73c2 <+664>:	25 00 01 00 00	and    $0x100,%eax
+   0x00000000003c73c7 <+669>:	48 09 d0	or     %rdx,%rax
+   0x00000000003c73ca <+672>:	48 89 45 f0	mov    %rax,-0x10(%rbp)
+   0x00000000003c73ce <+676>:	48 83 65 f0 fd	andq   $0xfffffffffffffffd,-0x10(%rbp)
+   0x00000000003c73d3 <+681>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c73d7 <+685>:	48 8b 55 f0	mov    -0x10(%rbp),%rdx
+   0x00000000003c73db <+689>:	48 89 90 60 02 00 00	mov    %rdx,0x260(%rax)
+   0x00000000003c73e2 <+696>:	0f b6 45 c7	movzbl -0x39(%rbp),%eax
+   0x00000000003c73e6 <+700>:	48 c1 e0 3f	shl    $0x3f,%rax
+   0x00000000003c73ea <+704>:	48 0b 45 c8	or     -0x38(%rbp),%rax
+   0x00000000003c73ee <+708>:	48 89 c2	mov    %rax,%rdx
+   0x00000000003c73f1 <+711>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c73f5 <+715>:	48 89 90 b8 02 00 00	mov    %rdx,0x2b8(%rax)
+   0x00000000003c73fc <+722>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c7400 <+726>:	48 8b 90 00 02 00 00	mov    0x200(%rax),%rdx
+   0x00000000003c7407 <+733>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c740b <+737>:	48 89 90 b0 02 00 00	mov    %rdx,0x2b0(%rax)
+   0x00000000003c7412 <+744>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c7416 <+748>:	48 8b 55 d0	mov    -0x30(%rbp),%rdx
+   0x00000000003c741a <+752>:	48 89 90 90 02 00 00	mov    %rdx,0x290(%rax)
+   0x00000000003c7421 <+759>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c7425 <+763>:	48 8b 80 a8 02 00 00	mov    0x2a8(%rax),%rax
+   0x00000000003c742c <+770>:	48 83 e0 fc	and    $0xfffffffffffffffc,%rax
+   0x00000000003c7430 <+774>:	48 89 c2	mov    %rax,%rdx
+   0x00000000003c7433 <+777>:	80 7d c7 00	cmpb   $0x0,-0x39(%rbp)
+   0x00000000003c7437 <+781>:	74 1e	je     0x3c7457 <riscv_cpu_do_interrupt+813>
+   0x00000000003c7439 <+783>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c743d <+787>:	48 8b 80 a8 02 00 00	mov    0x2a8(%rax),%rax
+   0x00000000003c7444 <+794>:	83 e0 03	and    $0x3,%eax
+   0x00000000003c7447 <+797>:	48 83 f8 01	cmp    $0x1,%rax
+   0x00000000003c744b <+801>:	75 0a	jne    0x3c7457 <riscv_cpu_do_interrupt+813>
+   0x00000000003c744d <+803>:	48 8b 45 c8	mov    -0x38(%rbp),%rax
+   0x00000000003c7451 <+807>:	48 c1 e0 02	shl    $0x2,%rax
+   0x00000000003c7455 <+811>:	eb 05	jmp    0x3c745c <riscv_cpu_do_interrupt+818>
+   0x00000000003c7457 <+813>:	b8 00 00 00 00	mov    $0x0,%eax
+   0x00000000003c745c <+818>:	48 01 c2	add    %rax,%rdx
+   0x00000000003c745f <+821>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c7463 <+825>:	48 89 90 00 02 00 00	mov    %rdx,0x200(%rax)
+   0x00000000003c746a <+832>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c746e <+836>:	be 01 00 00 00	mov    $0x1,%esi
+   0x00000000003c7473 <+841>:	48 89 c7	mov    %rax,%rdi
+   0x00000000003c7476 <+844>:	e8 c8 ed ff ff	callq  0x3c6243 <riscv_cpu_set_mode>
+   0x00000000003c747b <+849>:	e9 8b 01 00 00	jmpq   0x3c760b <riscv_cpu_do_interrupt+1249>
+   0x00000000003c7480 <+854>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c7484 <+858>:	48 8b 80 60 02 00 00	mov    0x260(%rax),%rax
+   0x00000000003c748b <+865>:	48 89 45 f8	mov    %rax,-0x8(%rbp)
+   0x00000000003c748f <+869>:	48 8b 45 f8	mov    -0x8(%rbp),%rax
+   0x00000000003c7493 <+873>:	24 7f	and    $0x7f,%al
+   0x00000000003c7495 <+875>:	48 89 c6	mov    %rax,%rsi
+   0x00000000003c7498 <+878>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c749c <+882>:	48 8b 80 28 02 00 00	mov    0x228(%rax),%rax
+   0x00000000003c74a3 <+889>:	48 3d ff 0f 01 00	cmp    $0x10fff,%rax
+   0x00000000003c74a9 <+895>:	76 16	jbe    0x3c74c1 <riscv_cpu_do_interrupt+919>
+   0x00000000003c74ab <+897>:	48 8b 45 f8	mov    -0x8(%rbp),%rax
+   0x00000000003c74af <+901>:	83 e0 08	and    $0x8,%eax
+   0x00000000003c74b2 <+904>:	48 c1 e8 03	shr    $0x3,%rax
+   0x00000000003c74b6 <+908>:	48 c1 e0 07	shl    $0x7,%rax
+   0x00000000003c74ba <+912>:	25 80 00 00 00	and    $0x80,%eax
+   0x00000000003c74bf <+917>:	eb 63	jmp    0x3c7524 <riscv_cpu_do_interrupt+1018>
+   0x00000000003c74c1 <+919>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c74c5 <+923>:	48 8b 80 48 02 00 00	mov    0x248(%rax),%rax
+   0x00000000003c74cc <+930>:	ba 01 00 00 00	mov    $0x1,%edx
+   0x00000000003c74d1 <+935>:	89 c1	mov    %eax,%ecx
+   0x00000000003c74d3 <+937>:	d3 e2	shl    %cl,%edx
+   0x00000000003c74d5 <+939>:	89 d0	mov    %edx,%eax
+   0x00000000003c74d7 <+941>:	48 98	cltq   
+   0x00000000003c74d9 <+943>:	48 23 45 f8	and    -0x8(%rbp),%rax
+   0x00000000003c74dd <+947>:	48 8b 55 e0	mov    -0x20(%rbp),%rdx
+   0x00000000003c74e1 <+951>:	48 8b 92 48 02 00 00	mov    0x248(%rdx),%rdx
+   0x00000000003c74e8 <+958>:	bf 01 00 00 00	mov    $0x1,%edi
+   0x00000000003c74ed <+963>:	89 d1	mov    %edx,%ecx
+   0x00000000003c74ef <+965>:	d3 e7	shl    %cl,%edi
+   0x00000000003c74f1 <+967>:	48 8b 55 e0	mov    -0x20(%rbp),%rdx
+   0x00000000003c74f5 <+971>:	48 8b 92 48 02 00 00	mov    0x248(%rdx),%rdx
+   0x00000000003c74fc <+978>:	41 b8 01 00 00 00	mov    $0x1,%r8d
+   0x00000000003c7502 <+984>:	89 d1	mov    %edx,%ecx
+   0x00000000003c7504 <+986>:	41 d3 e0	shl    %cl,%r8d
+   0x00000000003c7507 <+989>:	44 89 c2	mov    %r8d,%edx
+   0x00000000003c750a <+992>:	01 d2	add    %edx,%edx
+   0x00000000003c750c <+994>:	f7 d2	not    %edx
+   0x00000000003c750e <+996>:	21 fa	and    %edi,%edx
+   0x00000000003c7510 <+998>:	48 63 fa	movslq %edx,%rdi
+   0x00000000003c7513 <+1001>:	ba 00 00 00 00	mov    $0x0,%edx
+   0x00000000003c7518 <+1006>:	48 f7 f7	div    %rdi
+   0x00000000003c751b <+1009>:	48 c1 e0 07	shl    $0x7,%rax
+   0x00000000003c751f <+1013>:	25 80 00 00 00	and    $0x80,%eax
+   0x00000000003c7524 <+1018>:	48 09 f0	or     %rsi,%rax
+   0x00000000003c7527 <+1021>:	48 89 45 f8	mov    %rax,-0x8(%rbp)
+   0x00000000003c752b <+1025>:	48 8b 45 f8	mov    -0x8(%rbp),%rax
+   0x00000000003c752f <+1029>:	80 e4 e7	and    $0xe7,%ah
+   0x00000000003c7532 <+1032>:	48 89 c2	mov    %rax,%rdx
+   0x00000000003c7535 <+1035>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c7539 <+1039>:	48 8b 80 48 02 00 00	mov    0x248(%rax),%rax
+   0x00000000003c7540 <+1046>:	48 c1 e0 0b	shl    $0xb,%rax
+   0x00000000003c7544 <+1050>:	25 00 18 00 00	and    $0x1800,%eax
+   0x00000000003c7549 <+1055>:	48 09 d0	or     %rdx,%rax
+   0x00000000003c754c <+1058>:	48 89 45 f8	mov    %rax,-0x8(%rbp)
+   0x00000000003c7550 <+1062>:	48 83 65 f8 f7	andq   $0xfffffffffffffff7,-0x8(%rbp)
+   0x00000000003c7555 <+1067>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c7559 <+1071>:	48 8b 55 f8	mov    -0x8(%rbp),%rdx
+   0x00000000003c755d <+1075>:	48 89 90 60 02 00 00	mov    %rdx,0x260(%rax)
+   0x00000000003c7564 <+1082>:	0f b6 45 c7	movzbl -0x39(%rbp),%eax
+   0x00000000003c7568 <+1086>:	48 c7 c2 ff ff ff ff	mov    $0xffffffffffffffff,%rdx
+   0x00000000003c756f <+1093>:	89 c1	mov    %eax,%ecx
+   0x00000000003c7571 <+1095>:	48 d3 ea	shr    %cl,%rdx
+   0x00000000003c7574 <+1098>:	48 89 d0	mov    %rdx,%rax
+   0x00000000003c7577 <+1101>:	48 f7 d0	not    %rax
+   0x00000000003c757a <+1104>:	48 0b 45 c8	or     -0x38(%rbp),%rax
+   0x00000000003c757e <+1108>:	48 89 c2	mov    %rax,%rdx
+   0x00000000003c7581 <+1111>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c7585 <+1115>:	48 89 90 d0 02 00 00	mov    %rdx,0x2d0(%rax)
+   0x00000000003c758c <+1122>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c7590 <+1126>:	48 8b 90 00 02 00 00	mov    0x200(%rax),%rdx
+   0x00000000003c7597 <+1133>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c759b <+1137>:	48 89 90 c8 02 00 00	mov    %rdx,0x2c8(%rax)
+   0x00000000003c75a2 <+1144>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c75a6 <+1148>:	48 8b 55 d0	mov    -0x30(%rbp),%rdx
+   0x00000000003c75aa <+1152>:	48 89 90 98 02 00 00	mov    %rdx,0x298(%rax)
+   0x00000000003c75b1 <+1159>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c75b5 <+1163>:	48 8b 80 c0 02 00 00	mov    0x2c0(%rax),%rax
+   0x00000000003c75bc <+1170>:	48 83 e0 fc	and    $0xfffffffffffffffc,%rax
+   0x00000000003c75c0 <+1174>:	48 89 c2	mov    %rax,%rdx
+   0x00000000003c75c3 <+1177>:	80 7d c7 00	cmpb   $0x0,-0x39(%rbp)
+   0x00000000003c75c7 <+1181>:	74 1e	je     0x3c75e7 <riscv_cpu_do_interrupt+1213>
+   0x00000000003c75c9 <+1183>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c75cd <+1187>:	48 8b 80 c0 02 00 00	mov    0x2c0(%rax),%rax
+   0x00000000003c75d4 <+1194>:	83 e0 03	and    $0x3,%eax
+   0x00000000003c75d7 <+1197>:	48 83 f8 01	cmp    $0x1,%rax
+   0x00000000003c75db <+1201>:	75 0a	jne    0x3c75e7 <riscv_cpu_do_interrupt+1213>
+   0x00000000003c75dd <+1203>:	48 8b 45 c8	mov    -0x38(%rbp),%rax
+   0x00000000003c75e1 <+1207>:	48 c1 e0 02	shl    $0x2,%rax
+   0x00000000003c75e5 <+1211>:	eb 05	jmp    0x3c75ec <riscv_cpu_do_interrupt+1218>
+   0x00000000003c75e7 <+1213>:	b8 00 00 00 00	mov    $0x0,%eax
+   0x00000000003c75ec <+1218>:	48 01 c2	add    %rax,%rdx
+   0x00000000003c75ef <+1221>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c75f3 <+1225>:	48 89 90 00 02 00 00	mov    %rdx,0x200(%rax)
+   0x00000000003c75fa <+1232>:	48 8b 45 e0	mov    -0x20(%rbp),%rax
+   0x00000000003c75fe <+1236>:	be 03 00 00 00	mov    $0x3,%esi
+   0x00000000003c7603 <+1241>:	48 89 c7	mov    %rax,%rdi
+   0x00000000003c7606 <+1244>:	e8 38 ec ff ff	callq  0x3c6243 <riscv_cpu_set_mode>
+   0x00000000003c760b <+1249>:	48 8b 45 b8	mov    -0x48(%rbp),%rax
+   0x00000000003c760f <+1253>:	c7 80 a0 82 00 00 ff ff ff ff	movl   $0xffffffff,0x82a0(%rax)
+   0x00000000003c7619 <+1263>:	90	nop
+   0x00000000003c761a <+1264>:	c9	leaveq 
+   0x00000000003c761b <+1265>:	c3	retq   
+End of assembler dump.

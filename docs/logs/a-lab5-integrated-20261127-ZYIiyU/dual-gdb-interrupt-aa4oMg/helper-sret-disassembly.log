@@ -1,0 +1,134 @@
+Line 75 of "/home/gjhjz/OSopt/qemu-4.1.1/target/riscv/op_helper.c" starts at address 0x3c5723 <helper_sret> and ends at 0x3c5737 <helper_sret+20>.
+Dump of assembler code for function helper_sret:
+   0x00000000003c5723 <+0>:	f3 0f 1e fa	endbr64 
+   0x00000000003c5727 <+4>:	55	push   %rbp
+   0x00000000003c5728 <+5>:	48 89 e5	mov    %rsp,%rbp
+   0x00000000003c572b <+8>:	48 83 ec 30	sub    $0x30,%rsp
+   0x00000000003c572f <+12>:	48 89 7d d8	mov    %rdi,-0x28(%rbp)
+   0x00000000003c5733 <+16>:	48 89 75 d0	mov    %rsi,-0x30(%rbp)
+   0x00000000003c5737 <+20>:	48 8b 45 d8	mov    -0x28(%rbp),%rax
+   0x00000000003c573b <+24>:	48 8b 80 48 02 00 00	mov    0x248(%rax),%rax
+   0x00000000003c5742 <+31>:	48 85 c0	test   %rax,%rax
+   0x00000000003c5745 <+34>:	75 18	jne    0x3c575f <helper_sret+60>
+   0x00000000003c5747 <+36>:	48 8b 45 08	mov    0x8(%rbp),%rax
+   0x00000000003c574b <+40>:	48 89 c2	mov    %rax,%rdx
+   0x00000000003c574e <+43>:	48 8b 45 d8	mov    -0x28(%rbp),%rax
+   0x00000000003c5752 <+47>:	be 02 00 00 00	mov    $0x2,%esi
+   0x00000000003c5757 <+52>:	48 89 c7	mov    %rax,%rdi
+   0x00000000003c575a <+55>:	e8 6b fd ff ff	callq  0x3c54ca <riscv_raise_exception>
+   0x00000000003c575f <+60>:	48 8b 45 d8	mov    -0x28(%rbp),%rax
+   0x00000000003c5763 <+64>:	48 8b 80 b0 02 00 00	mov    0x2b0(%rax),%rax
+   0x00000000003c576a <+71>:	48 89 45 e8	mov    %rax,-0x18(%rbp)
+   0x00000000003c576e <+75>:	48 8b 45 d8	mov    -0x28(%rbp),%rax
+   0x00000000003c5772 <+79>:	be 04 00 00 00	mov    $0x4,%esi
+   0x00000000003c5777 <+84>:	48 89 c7	mov    %rax,%rdi
+   0x00000000003c577a <+87>:	e8 ef fc ff ff	callq  0x3c546e <riscv_has_ext>
+   0x00000000003c577f <+92>:	85 c0	test   %eax,%eax
+   0x00000000003c5781 <+94>:	75 24	jne    0x3c57a7 <helper_sret+132>
+   0x00000000003c5783 <+96>:	48 8b 45 e8	mov    -0x18(%rbp),%rax
+   0x00000000003c5787 <+100>:	83 e0 03	and    $0x3,%eax
+   0x00000000003c578a <+103>:	48 85 c0	test   %rax,%rax
+   0x00000000003c578d <+106>:	74 18	je     0x3c57a7 <helper_sret+132>
+   0x00000000003c578f <+108>:	48 8b 45 08	mov    0x8(%rbp),%rax
+   0x00000000003c5793 <+112>:	48 89 c2	mov    %rax,%rdx
+   0x00000000003c5796 <+115>:	48 8b 45 d8	mov    -0x28(%rbp),%rax
+   0x00000000003c579a <+119>:	be 00 00 00 00	mov    $0x0,%esi
+   0x00000000003c579f <+124>:	48 89 c7	mov    %rax,%rdi
+   0x00000000003c57a2 <+127>:	e8 23 fd ff ff	callq  0x3c54ca <riscv_raise_exception>
+   0x00000000003c57a7 <+132>:	48 8b 45 d8	mov    -0x28(%rbp),%rax
+   0x00000000003c57ab <+136>:	48 8b 80 28 02 00 00	mov    0x228(%rax),%rax
+   0x00000000003c57b2 <+143>:	48 3d ff 0f 01 00	cmp    $0x10fff,%rax
+   0x00000000003c57b8 <+149>:	76 30	jbe    0x3c57ea <helper_sret+199>
+   0x00000000003c57ba <+151>:	48 8b 45 d8	mov    -0x28(%rbp),%rax
+   0x00000000003c57be <+155>:	48 8b 80 60 02 00 00	mov    0x260(%rax),%rax
+   0x00000000003c57c5 <+162>:	25 00 00 00 40	and    $0x40000000,%eax
+   0x00000000003c57ca <+167>:	48 3d ff ff ff 3f	cmp    $0x3fffffff,%rax
+   0x00000000003c57d0 <+173>:	76 18	jbe    0x3c57ea <helper_sret+199>
+   0x00000000003c57d2 <+175>:	48 8b 45 08	mov    0x8(%rbp),%rax
+   0x00000000003c57d6 <+179>:	48 89 c2	mov    %rax,%rdx
+   0x00000000003c57d9 <+182>:	48 8b 45 d8	mov    -0x28(%rbp),%rax
+   0x00000000003c57dd <+186>:	be 02 00 00 00	mov    $0x2,%esi
+   0x00000000003c57e2 <+191>:	48 89 c7	mov    %rax,%rdi
+   0x00000000003c57e5 <+194>:	e8 e0 fc ff ff	callq  0x3c54ca <riscv_raise_exception>
+   0x00000000003c57ea <+199>:	48 8b 45 d8	mov    -0x28(%rbp),%rax
+   0x00000000003c57ee <+203>:	48 8b 80 60 02 00 00	mov    0x260(%rax),%rax
+   0x00000000003c57f5 <+210>:	48 89 45 f0	mov    %rax,-0x10(%rbp)
+   0x00000000003c57f9 <+214>:	48 8b 45 f0	mov    -0x10(%rbp),%rax
+   0x00000000003c57fd <+218>:	25 00 01 00 00	and    $0x100,%eax
+   0x00000000003c5802 <+223>:	48 c1 e8 08	shr    $0x8,%rax
+   0x00000000003c5806 <+227>:	48 89 45 f8	mov    %rax,-0x8(%rbp)
+   0x00000000003c580a <+231>:	48 8b 45 d8	mov    -0x28(%rbp),%rax
+   0x00000000003c580e <+235>:	48 8b 80 28 02 00 00	mov    0x228(%rax),%rax
+   0x00000000003c5815 <+242>:	48 3d ff 0f 01 00	cmp    $0x10fff,%rax
+   0x00000000003c581b <+248>:	77 16	ja     0x3c5833 <helper_sret+272>
+   0x00000000003c581d <+250>:	48 8b 45 f8	mov    -0x8(%rbp),%rax
+   0x00000000003c5821 <+254>:	ba 01 00 00 00	mov    $0x1,%edx
+   0x00000000003c5826 <+259>:	89 c1	mov    %eax,%ecx
+   0x00000000003c5828 <+261>:	d3 e2	shl    %cl,%edx
+   0x00000000003c582a <+263>:	89 d0	mov    %edx,%eax
+   0x00000000003c582c <+265>:	48 98	cltq   
+   0x00000000003c582e <+267>:	48 f7 d0	not    %rax
+   0x00000000003c5831 <+270>:	eb 07	jmp    0x3c583a <helper_sret+279>
+   0x00000000003c5833 <+272>:	48 c7 c0 fd ff ff ff	mov    $0xfffffffffffffffd,%rax
+   0x00000000003c583a <+279>:	48 23 45 f0	and    -0x10(%rbp),%rax
+   0x00000000003c583e <+283>:	48 89 c2	mov    %rax,%rdx
+   0x00000000003c5841 <+286>:	48 8b 45 f0	mov    -0x10(%rbp),%rax
+   0x00000000003c5845 <+290>:	83 e0 20	and    $0x20,%eax
+   0x00000000003c5848 <+293>:	48 c1 e8 05	shr    $0x5,%rax
+   0x00000000003c584c <+297>:	48 89 c7	mov    %rax,%rdi
+   0x00000000003c584f <+300>:	48 8b 45 d8	mov    -0x28(%rbp),%rax
+   0x00000000003c5853 <+304>:	48 8b 80 28 02 00 00	mov    0x228(%rax),%rax
+   0x00000000003c585a <+311>:	48 3d ff 0f 01 00	cmp    $0x10fff,%rax
+   0x00000000003c5860 <+317>:	77 0f	ja     0x3c5871 <helper_sret+334>
+   0x00000000003c5862 <+319>:	48 8b 45 f8	mov    -0x8(%rbp),%rax
+   0x00000000003c5866 <+323>:	be 01 00 00 00	mov    $0x1,%esi
+   0x00000000003c586b <+328>:	89 c1	mov    %eax,%ecx
+   0x00000000003c586d <+330>:	d3 e6	shl    %cl,%esi
+   0x00000000003c586f <+332>:	eb 05	jmp    0x3c5876 <helper_sret+339>
+   0x00000000003c5871 <+334>:	be 02 00 00 00	mov    $0x2,%esi
+   0x00000000003c5876 <+339>:	48 8b 45 d8	mov    -0x28(%rbp),%rax
+   0x00000000003c587a <+343>:	48 8b 80 28 02 00 00	mov    0x228(%rax),%rax
+   0x00000000003c5881 <+350>:	48 3d ff 0f 01 00	cmp    $0x10fff,%rax
+   0x00000000003c5887 <+356>:	77 18	ja     0x3c58a1 <helper_sret+382>
+   0x00000000003c5889 <+358>:	48 8b 45 f8	mov    -0x8(%rbp),%rax
+   0x00000000003c588d <+362>:	41 b8 01 00 00 00	mov    $0x1,%r8d
+   0x00000000003c5893 <+368>:	89 c1	mov    %eax,%ecx
+   0x00000000003c5895 <+370>:	41 d3 e0	shl    %cl,%r8d
+   0x00000000003c5898 <+373>:	44 89 c0	mov    %r8d,%eax
+   0x00000000003c589b <+376>:	01 c0	add    %eax,%eax
+   0x00000000003c589d <+378>:	f7 d0	not    %eax
+   0x00000000003c589f <+380>:	eb 05	jmp    0x3c58a6 <helper_sret+387>
+   0x00000000003c58a1 <+382>:	b8 fb ff ff ff	mov    $0xfffffffb,%eax
+   0x00000000003c58a6 <+387>:	21 f0	and    %esi,%eax
+   0x00000000003c58a8 <+389>:	48 98	cltq   
+   0x00000000003c58aa <+391>:	48 0f af f8	imul   %rax,%rdi
+   0x00000000003c58ae <+395>:	48 89 fe	mov    %rdi,%rsi
+   0x00000000003c58b1 <+398>:	48 8b 45 d8	mov    -0x28(%rbp),%rax
+   0x00000000003c58b5 <+402>:	48 8b 80 28 02 00 00	mov    0x228(%rax),%rax
+   0x00000000003c58bc <+409>:	48 3d ff 0f 01 00	cmp    $0x10fff,%rax
+   0x00000000003c58c2 <+415>:	77 13	ja     0x3c58d7 <helper_sret+436>
+   0x00000000003c58c4 <+417>:	48 8b 45 f8	mov    -0x8(%rbp),%rax
+   0x00000000003c58c8 <+421>:	bf 01 00 00 00	mov    $0x1,%edi
+   0x00000000003c58cd <+426>:	89 c1	mov    %eax,%ecx
+   0x00000000003c58cf <+428>:	d3 e7	shl    %cl,%edi
+   0x00000000003c58d1 <+430>:	89 f8	mov    %edi,%eax
+   0x00000000003c58d3 <+432>:	48 98	cltq   
+   0x00000000003c58d5 <+434>:	eb 05	jmp    0x3c58dc <helper_sret+441>
+   0x00000000003c58d7 <+436>:	b8 02 00 00 00	mov    $0x2,%eax
+   0x00000000003c58dc <+441>:	48 21 f0	and    %rsi,%rax
+   0x00000000003c58df <+444>:	48 09 d0	or     %rdx,%rax
+   0x00000000003c58e2 <+447>:	48 89 45 f0	mov    %rax,-0x10(%rbp)
+   0x00000000003c58e6 <+451>:	48 83 65 f0 df	andq   $0xffffffffffffffdf,-0x10(%rbp)
+   0x00000000003c58eb <+456>:	48 81 65 f0 ff fe ff ff	andq   $0xfffffffffffffeff,-0x10(%rbp)
+   0x00000000003c58f3 <+464>:	48 8b 55 f8	mov    -0x8(%rbp),%rdx
+   0x00000000003c58f7 <+468>:	48 8b 45 d8	mov    -0x28(%rbp),%rax
+   0x00000000003c58fb <+472>:	48 89 d6	mov    %rdx,%rsi
+   0x00000000003c58fe <+475>:	48 89 c7	mov    %rax,%rdi
+   0x00000000003c5901 <+478>:	e8 3d 09 00 00	callq  0x3c6243 <riscv_cpu_set_mode>
+   0x00000000003c5906 <+483>:	48 8b 45 d8	mov    -0x28(%rbp),%rax
+   0x00000000003c590a <+487>:	48 8b 55 f0	mov    -0x10(%rbp),%rdx
+   0x00000000003c590e <+491>:	48 89 90 60 02 00 00	mov    %rdx,0x260(%rax)
+   0x00000000003c5915 <+498>:	48 8b 45 e8	mov    -0x18(%rbp),%rax
+   0x00000000003c5919 <+502>:	c9	leaveq 
+   0x00000000003c591a <+503>:	c3	retq   
+End of assembler dump.

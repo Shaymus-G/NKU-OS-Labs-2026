@@ -1,0 +1,4 @@
+make -j4 DEFS=-DLAB5_EAGER_FORK -DC_LAB5_VM_TESTS -DTEST=c_lifecycle -DTESTSTART=_binary_obj___user_c_lifecycle_out_start -DTESTSIZE=_binary_obj___user_c_lifecycle_out_size
++ cc kern/process/proc.c
++ ld bin/kernel
+riscv64-unknown-elf-objcopy bin/kernel --strip-all -O binary bin/ucore.img

@@ -1,0 +1,10 @@
+First U instruction pc=0x800074 <_start> sp=0x80000000
+Host first U state priv=0 satp=9223372036855301304
+Before user ecall pc=0x800054 a0=30
+TCG trans_ecall ctx.pc_next=8388692
+Traceback (most recent call last):
+  File "/tmp/lab5-dual-diag-ZThwmN/lab5-dual-gdb-diagnostic.py", line 201, in <module>
+    main()
+  File "/tmp/lab5-dual-diag-ZThwmN/lab5-dual-gdb-diagnostic.py", line 149, in main
+    assert host.number('exception') == 8 and host.number('env->priv') == 0
+AssertionError

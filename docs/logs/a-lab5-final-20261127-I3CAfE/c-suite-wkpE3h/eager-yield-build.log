@@ -1,0 +1,4 @@
+make -j4 DEFS=-DLAB5_EAGER_FORK -DTEST=yield -DTESTSTART=_binary_obj___user_yield_out_start -DTESTSIZE=_binary_obj___user_yield_out_size
++ cc kern/process/proc.c
++ ld bin/kernel
+riscv64-unknown-elf-objcopy bin/kernel --strip-all -O binary bin/ucore.img
