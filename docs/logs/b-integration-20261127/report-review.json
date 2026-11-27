@@ -1,0 +1,9 @@
+{
+  "report": "report.md",
+  "report_sha256": "ad5b7d68408fa4f3d689bda56d4ba5ef761c576c727527768de9989dcaac8b8b",
+  "archive_matches_original": true,
+  "local_links": "PASS",
+  "syntax_and_whitespace": "PASS",
+  "kernel_changes": false,
+  "push_performed": false
+}

@@ -1,0 +1,53 @@
+COMMAND 1-gdb-set pagination off
+=thread-group-added,id="i1"
+(gdb) 
+1^done
+(gdb) 
+COMMAND 2-file-exec-and-symbols bin/kernel
+2^done
+(gdb) 
+COMMAND 3-interpreter-exec console "add-symbol-file obj/__user_hello.out"
+~"add symbol table from file \"obj/__user_hello.out\"\n"
+~"(y or n) [answered Y; input not from terminal]\n"
+~"Reading symbols from obj/__user_hello.out...\n"
+3^done
+(gdb) 
+COMMAND 4-target-select remote 127.0.0.1:60221
+=thread-group-started,id="i1",pid="1"
+=thread-created,id="1",group-id="i1"
+~"0x0000000000001000 in ?? ()\n"
+*stopped,frame={addr="0x0000000000001000",func="??",args=[],arch="riscv:rv64"},thread-id="1",stopped-threads="all"
+4^connected
+(gdb) 
+COMMAND 5-interpreter-exec console "hbreak *_start"
+~"Hardware assisted breakpoint 1 at 0x800020: file user/libs/initcode.S, line 5.\n"
+=breakpoint-created,bkpt={number="1",type="hw breakpoint",disp="keep",enabled="y",addr="0x0000000000800020",file="user/libs/initcode.S",fullname="/mnt/d/3nd_grade/OS/lab/lab5/github/user/libs/initcode.S",line="5",thread-groups=["i1"],times="0",original-location="*_start"}
+5^done
+(gdb) 
+COMMAND 6-exec-continue
+6^running
+*running,thread-id="all"
+(gdb) 
+=breakpoint-modified,bkpt={number="1",type="hw breakpoint",disp="keep",enabled="y",addr="0x0000000000800020",file="user/libs/initcode.S",fullname="/mnt/d/3nd_grade/OS/lab/lab5/github/user/libs/initcode.S",line="5",thread-groups=["i1"],times="1",original-location="*_start"}
+~"\n"
+~"Breakpoint 1, _start () at user/libs/initcode.S:5\n"
+~"5\t    call umain\n"
+*stopped,reason="breakpoint-hit",disp="keep",bkptno="1",frame={addr="0x0000000000800020",func="_start",args=[],file="user/libs/initcode.S",fullname="/mnt/d/3nd_grade/OS/lab/lab5/github/user/libs/initcode.S",line="5",arch="riscv:rv64"},thread-id="1",stopped-threads="all"
+(gdb) 
+COMMAND 7-data-evaluate-expression "$pc"
+7^done,value="0x800020 <_start>"
+(gdb) 
+COMMAND 8-data-evaluate-expression "$sp"
+8^done,value="0x80000000"
+(gdb) 
+COMMAND 9-data-evaluate-expression "(unsigned long)forkrets - 4"
+9^done,value="18446744072637910730"
+(gdb) 
+COMMAND 10-data-evaluate-expression "*(unsigned int *)18446744072637910730"
+10^error,msg="Cannot access memory at address 0xffffffffc0200eca"
+(gdb) 
+COMMAND 11-gdb-exit
+11^exit
+=thread-exited,id="1",group-id="i1"
+=thread-group-exited,id="i1"
+~"[Inferior 1 (process 1) detached]\n"

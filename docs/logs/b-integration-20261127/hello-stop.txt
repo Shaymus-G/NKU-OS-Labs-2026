@@ -1,0 +1,1 @@
+Observer terminated QEMU after real init cleanup marker; kernel did not auto-shutdown.

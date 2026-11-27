@@ -1,0 +1,199 @@
+#!/usr/bin/env python3
+"""Coordinate host QEMU GDB and guest RV64 GDB over MI, without kernel hooks."""
+import argparse
+import json
+from pathlib import Path
+import queue
+import re
+import socket
+import subprocess
+import threading
+import time
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+class Debugger:
+    def __init__(self, executable, log, extra=()):
+        self.output = log.open('w')
+        self.process = subprocess.Popen([executable, '-q', '-nx', '--interpreter=mi2', *extra],
+            cwd=ROOT, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT, text=True, bufsize=1)
+        self.condition = threading.Condition()
+        self.results = {}
+        self.stops = queue.Queue()
+        self.token = 0
+        threading.Thread(target=self.read, daemon=True).start()
+
+    def read(self):
+        for line in self.process.stdout:
+            self.output.write(line); self.output.flush()
+            match = re.match(r'(\d+)\^(.*)', line)
+            if match:
+                with self.condition:
+                    self.results[int(match[1])] = match[2]
+                    self.condition.notify_all()
+            if line.startswith('*stopped'):
+                self.stops.put(line)
+
+    def command(self, command, timeout=45):
+        self.token += 1
+        token = self.token
+        self.output.write('COMMAND ' + str(token) + command + '\n'); self.output.flush()
+        self.process.stdin.write(str(token) + command + '\n'); self.process.stdin.flush()
+        with self.condition:
+            if not self.condition.wait_for(lambda: token in self.results, timeout):
+                raise TimeoutError(command)
+            result = self.results.pop(token)
+        if result.startswith('error'):
+            raise RuntimeError(command + ': ' + result)
+        return result
+
+    def cli(self, command):
+        return self.command('-interpreter-exec console ' + json.dumps(command))
+
+    def value(self, expr):
+        result = self.command('-data-evaluate-expression ' + json.dumps(expr))
+        match = re.search(r'value=("(?:\\.|[^"\\])*")', result)
+        if not match: raise RuntimeError(result)
+        return json.loads(match[1])
+
+    def number(self, expr):
+        return int(re.match(r'-?(?:0x[0-9a-fA-F]+|[0-9]+)', self.value(expr)).group(0), 0)
+
+    def stop(self):
+        result = self.stops.get(timeout=45)
+        if 'exited' in result: raise RuntimeError(result)
+        return result
+
+    def resume(self):
+        self.command('-exec-continue')
+
+    def interrupt(self):
+        self.command('-exec-interrupt --all')
+        self.stop()
+
+    def close(self):
+        try: self.command('-gdb-exit', 3)
+        except Exception: pass
+        try: self.process.wait(timeout=3)
+        except subprocess.TimeoutExpired: self.process.kill(); self.process.wait()
+        self.output.close()
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--qemu', required=True, type=Path, help='unstripped executable matching its source')
+    parser.add_argument('--log-dir', required=True, type=Path)
+    args = parser.parse_args()
+    args.log_dir.mkdir(parents=True, exist_ok=True)
+    summary = (args.log_dir / 'summary.log').open('w')
+    def record(text):
+        print(text, flush=True); summary.write(text + '\n'); summary.flush()
+
+    disas = subprocess.check_output(['riscv64-unknown-elf-objdump', '-d', 'obj/__user_hello.out'],
+                                   cwd=ROOT, text=True)
+    putc = re.search(r'<sys_putc>:\n(.*?)(?=\n\n)', disas, re.S).group(1)
+    ecall = int(re.search(r'^\s*([0-9a-f]+):.*\becall\b', putc, re.M).group(1), 16)
+    with socket.socket() as endpoint:
+        endpoint.bind(('127.0.0.1', 0)); port = endpoint.getsockname()[1]
+    host = guest = None
+    try:
+        host = Debugger('gdb', args.log_dir / 'host-mi.log',
+            ['--args', str(args.qemu), '-machine', 'virt', '-display', 'none',
+             '-monitor', 'none', '-serial', 'file:' + str(args.log_dir.resolve() / 'qemu.log'), '-bios', 'default',
+             '-device', 'loader,file=bin/ucore.img,addr=0x80200000',
+             '-gdb', f'tcp:127.0.0.1:{port}', '-S'])
+        host.command('-gdb-set pagination off')
+        host.command('-gdb-set mi-async on')
+        host.cli('handle SIGUSR1 nostop noprint pass')
+        host.cli('handle SIGUSR2 nostop noprint pass')
+        host.command('-exec-run')
+        time.sleep(1)
+        guest = Debugger('riscv64-unknown-elf-gdb', args.log_dir / 'guest-mi.log')
+        guest.command('-gdb-set pagination off')
+        guest.command('-file-exec-and-symbols bin/kernel')
+        guest.cli('add-symbol-file obj/__user_hello.out')
+        guest.command(f'-target-select remote 127.0.0.1:{port}')
+        # Connection emits an initial stop event.
+        guest.stop()
+        guest.cli('hbreak *_start')
+        guest.resume(); guest.stop()
+        record(f'First U instruction pc={guest.value("$pc")} sp={guest.value("$sp")}')
+        host.interrupt()
+        host.cli('set $e = &((RISCVCPU *)cpus.tqh_first)->env')
+        assert host.number('$e->priv') == 0
+        record(f'Host first U state priv={host.value("$e->priv")} satp={host.value("$e->satp")}')
+        host.resume()
+        sret = guest.number('(unsigned long)forkrets - 4')
+        guest.cli('delete breakpoints')
+        guest.cli(f'hbreak *{ecall}')
+        guest.resume(); guest.stop()
+        assert guest.number('$pc') == ecall
+        record(f'Before user ecall pc={ecall:#x} a0={guest.value("$a0")}')
+
+        host.interrupt()
+        host.cli(f'break trans_ecall if ctx->base.pc_next == {ecall}')
+        host.cli(f'break helper_raise_exception if exception == 8 && env->pc == {ecall}')
+        host.cli(f'break riscv_cpu_do_interrupt if ((RISCVCPU *)cs)->env.pc == {ecall} && ((RISCVCPU *)cs)->env.priv == 0')
+        host.resume()
+        guest.cli('delete breakpoints')
+        guest.command('-exec-step-instruction')
+        host.stop()
+        assert host.number('ctx->base.pc_next') == ecall
+        host.cli('bt 12')
+        record(f'TCG trans_ecall ctx.pc_next={host.value("ctx->base.pc_next")}')
+        host.resume(); host.stop()
+        assert host.number('exception') == 8 and host.number('env->priv') == 0
+        host.cli('bt 10')
+        record(f'Runtime raise_exception cause={host.value("exception")} priv={host.value("env->priv")} pc={host.value("env->pc")}')
+        host.resume(); host.stop()
+        host.cli('set $e = &((RISCVCPU *)cs)->env')
+        host.cli('bt 10')
+        host.command('-exec-finish'); host.stop()
+        assert host.number('$e->priv') == 1 and host.number('$e->scause') == 8
+        assert host.number('$e->sepc') == ecall
+        record(f'After trap delivery priv={host.value("$e->priv")} scause={host.value("$e->scause")} sepc={host.value("$e->sepc")} pc={host.value("$e->pc")}')
+        host.cli('delete breakpoints'); host.resume()
+        guest.stop()
+        guest.cli('hbreak *syscall')
+        guest.resume(); guest.stop()
+        assert guest.number('current->tf->epc') == ecall + 4
+        assert guest.number(f'*(unsigned int *){sret}') == 0x10200073
+        record(f'Kernel dispatch tf.epc={guest.value("current->tf->epc")} saved_sp={guest.value("current->tf->gpr.sp")}')
+        guest.cli('delete breakpoints')
+        guest.cli(f'hbreak *{sret} if current->tf->epc == {ecall + 4}')
+        guest.resume(); guest.stop()
+        record(f'Before sret pc={guest.value("$pc")} tf.epc={guest.value("current->tf->epc")} sp={guest.value("$sp")}')
+        host.interrupt()
+        record(f'Host return state sepc={host.value("$e->sepc")} sscratch={host.value("$e->sscratch")} mstatus={host.value("$e->mstatus")}')
+        host.cli(f'break trans_sret if ctx->base.pc_next == {sret}')
+        host.cli(f'break helper_sret if env->sepc == {ecall + 4} && env->priv == 1')
+        host.resume()
+        guest.cli('delete breakpoints')
+        guest.command('-exec-step-instruction')
+        host.stop()
+        assert host.number('ctx->base.pc_next') == sret
+        host.cli('bt 12')
+        record(f'TCG trans_sret ctx.pc_next={host.value("ctx->base.pc_next")}')
+        host.resume(); host.stop()
+        host.cli('set $e = env')
+        assert host.number('$e->priv') == 1
+        host.cli('bt 10')
+        record(f'helper_sret before priv={host.value("$e->priv")} sepc={host.value("$e->sepc")} mstatus={host.value("$e->mstatus")}')
+        host.command('-exec-finish'); host.stop()
+        assert host.number('$e->priv') == 0
+        record(f'helper_sret after priv={host.value("$e->priv")} mstatus={host.value("$e->mstatus")} returned_pc={host.value("$rax")}')
+        host.cli('delete breakpoints'); host.resume()
+        guest.stop()
+        assert guest.number('$pc') == ecall + 4 and guest.number('$a0') == 0
+        record(f'Back in U pc={guest.value("$pc")} sp={guest.value("$sp")} a0={guest.value("$a0")}')
+        record('DUAL GDB PASS: observed TCG translation and runtime U->S->U on the same QEMU process')
+    finally:
+        if guest: guest.close()
+        if host: host.close()
+        summary.close()
+
+
+if __name__ == '__main__':
+    main()

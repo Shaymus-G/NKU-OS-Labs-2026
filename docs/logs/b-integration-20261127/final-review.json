@@ -1,0 +1,19 @@
+{
+  "kernel_and_user_sources_match_runtime_manifest": true,
+  "teacher_tests_unchanged": true,
+  "cow_eager_suite_passes": 16,
+  "boundary_modes_passed": [
+    "cow",
+    "eager"
+  ],
+  "teacher_score": "130/130",
+  "guest_gdb": "PASS",
+  "dual_gdb": "PASS",
+  "local_links_and_python_syntax": "PASS",
+  "tools_sha256": {
+    "tools/verify-lab5-b.py": "9ebd28d6a191ea7a8f3e6761b9c40bd66e67ade8834149dfa6e517a64c6d7ce5",
+    "tools/lab5-dual-gdb.py": "16e57cb78f90001bca93eeb8bfe0798c7813ea2ab3ba23974b7f9e1cd7015a7b",
+    "tools/lab5-guest-roundtrip.gdb": "dfe3b63d4d2d28e1d5273d339b4020500599b098e2d788e683179c4d2251345e",
+    "tools/b-lab5-boundary.c": "499265a841619c8dde0ddcafe38f77f823c22cd72eb0ca57f1f0442f43ae6295"
+  }
+}

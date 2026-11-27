@@ -1,0 +1,349 @@
+COMMAND 1-gdb-set pagination off
+=thread-group-added,id="i1"
+~"Reading symbols from /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/riscv64-softmmu/qemu-system-riscv64...\n"
+(gdb) 
+1^done
+(gdb) 
+COMMAND 2-gdb-set mi-async on
+2^done
+(gdb) 
+COMMAND 3-interpreter-exec console "handle SIGUSR1 nostop noprint pass"
+~"Signal        Stop\tPrint\tPass to program\tDescription\n"
+~"SIGUSR1       No\tNo\tYes\t\tUser defined signal 1\n"
+3^done
+(gdb) 
+COMMAND 4-interpreter-exec console "handle SIGUSR2 nostop noprint pass"
+~"Signal        Stop\tPrint\tPass to program\tDescription\n"
+~"SIGUSR2       No\tNo\tYes\t\tUser defined signal 2\n"
+4^done
+(gdb) 
+COMMAND 5-exec-run
+=thread-group-started,id="i1",pid="375"
+=thread-created,id="1",group-id="i1"
+=library-loaded,id="/lib64/ld-linux-x86-64.so.2",target-name="/lib64/ld-linux-x86-64.so.2",host-name="/lib64/ld-linux-x86-64.so.2",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff7fc6000",to="0x00007ffff7ff0195"}]
+5^running
+*running,thread-id="all"
+(gdb) 
+=library-loaded,id="/lib/x86_64-linux-gnu/libncursesw.so.6",target-name="/lib/x86_64-linux-gnu/libncursesw.so.6",host-name="/lib/x86_64-linux-gnu/libncursesw.so.6",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff7f84130",to="0x00007ffff7fac7e5"}]
+=library-loaded,id="/lib/x86_64-linux-gnu/libtinfo.so.6",target-name="/lib/x86_64-linux-gnu/libtinfo.so.6",host-name="/lib/x86_64-linux-gnu/libtinfo.so.6",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff7f54840",to="0x00007ffff7f66b68"}]
+=library-loaded,id="/lib/x86_64-linux-gnu/libz.so.1",target-name="/lib/x86_64-linux-gnu/libz.so.1",host-name="/lib/x86_64-linux-gnu/libz.so.1",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff7f2c260",to="0x00007ffff7f3dc80"}]
+=library-loaded,id="/lib/x86_64-linux-gnu/libpixman-1.so.0",target-name="/lib/x86_64-linux-gnu/libpixman-1.so.0",host-name="/lib/x86_64-linux-gnu/libpixman-1.so.0",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff7e85300",to="0x00007ffff7f1185e"}]
+=library-loaded,id="/lib/x86_64-linux-gnu/libglib-2.0.so.0",target-name="/lib/x86_64-linux-gnu/libglib-2.0.so.0",host-name="/lib/x86_64-linux-gnu/libglib-2.0.so.0",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff7d51e90",to="0x00007ffff7def842"}]
+=library-loaded,id="/lib/x86_64-linux-gnu/libm.so.6",target-name="/lib/x86_64-linux-gnu/libm.so.6",host-name="/lib/x86_64-linux-gnu/libm.so.6",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff7c57420",to="0x00007ffff7cd53a6"}]
+=library-loaded,id="/lib/x86_64-linux-gnu/libgcc_s.so.1",target-name="/lib/x86_64-linux-gnu/libgcc_s.so.1",host-name="/lib/x86_64-linux-gnu/libgcc_s.so.1",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff7c1d780",to="0x00007ffff7c40745"}]
+=library-loaded,id="/lib/x86_64-linux-gnu/libc.so.6",target-name="/lib/x86_64-linux-gnu/libc.so.6",host-name="/lib/x86_64-linux-gnu/libc.so.6",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff7a28800",to="0x00007ffff7bb0039"}]
+=library-loaded,id="/lib/x86_64-linux-gnu/libpcre2-8.so.0",target-name="/lib/x86_64-linux-gnu/libpcre2-8.so.0",host-name="/lib/x86_64-linux-gnu/libpcre2-8.so.0",symbols-loaded="0",thread-group="i1",ranges=[{from="0x00007ffff7968300",to="0x00007ffff79d5270"}]
+~"[Thread debugging using libthread_db enabled]\n"
+~"Using host libthread_db library \"/lib/x86_64-linux-gnu/libthread_db.so.1\".\n"
+=thread-created,id="2",group-id="i1"
+~"[New Thread 0x7ffff79656c0 (LWP 378)]\n"
+*running,thread-id="2"
+=thread-created,id="3",group-id="i1"
+~"[New Thread 0x7ffff4ff26c0 (LWP 379)]\n"
+*running,thread-id="3"
+COMMAND 6-exec-interrupt --all
+6^done
+(gdb) 
+~"\nThread "
+~"1 \"qemu-system-ris\" received signal SIGINT, Interrupt.\n"
+~"0x00007ffff7b1bcd0 in __GI_ppoll (fds=0x555556351ec0, nfds=6, timeout=<optimized out>, timeout@entry=0x7fffffffe590, sigmask=sigmask@entry=0x0) at ../sysdeps/unix/sysv/linux/ppoll.c:42\n"
+&"warning: 42\t../sysdeps/unix/sysv/linux/ppoll.c: No such file or directory\n"
+*stopped,reason="signal-received",signal-name="SIGINT",signal-meaning="Interrupt",frame={addr="0x00007ffff7b1bcd0",func="__GI_ppoll",args=[{name="fds",value="0x555556351ec0"},{name="nfds",value="6"},{name="timeout",value="<optimized out>"},{name="timeout@entry",value="0x7fffffffe590"},{name="sigmask",value="0x0"},{name="sigmask@entry",value="0x0"}],file="../sysdeps/unix/sysv/linux/ppoll.c",fullname="./io/../sysdeps/unix/sysv/linux/ppoll.c",line="42",arch="i386:x86-64"},thread-id="1",stopped-threads="all",core="17"
+COMMAND 7-interpreter-exec console "set $e = &((RISCVCPU *)cpus.tqh_first)->env"
+7^done
+(gdb) 
+COMMAND 8-data-evaluate-expression "$e->priv"
+8^done,value="0"
+(gdb) 
+COMMAND 9-data-evaluate-expression "$e->priv"
+9^done,value="0"
+(gdb) 
+COMMAND 10-data-evaluate-expression "$e->satp"
+10^done,value="9223372036855301304"
+(gdb) 
+COMMAND 11-exec-continue
+11^running
+*running,thread-id="all"
+(gdb) 
+COMMAND 12-exec-interrupt --all
+12^done
+(gdb) 
+~"\nThread "
+~"1 \"qemu-system-ris\" received signal SIGINT, Interrupt.\n"
+~"0x00007ffff7b1bcd0 in __GI_ppoll (fds=0x555556351ec0, nfds=6, timeout=<optimized out>, timeout@entry=0x7fffffffe590, sigmask=sigmask@entry=0x0) at ../sysdeps/unix/sysv/linux/ppoll.c:42\n"
+~"42\tin ../sysdeps/unix/sysv/linux/ppoll.c\n"
+*stopped,reason="signal-received",signal-name="SIGINT",signal-meaning="Interrupt",frame={addr="0x00007ffff7b1bcd0",func="__GI_ppoll",args=[{name="fds",value="0x555556351ec0"},{name="nfds",value="6"},{name="timeout",value="<optimized out>"},{name="timeout@entry",value="0x7fffffffe590"},{name="sigmask",value="0x0"},{name="sigmask@entry",value="0x0"}],file="../sysdeps/unix/sysv/linux/ppoll.c",fullname="./io/../sysdeps/unix/sysv/linux/ppoll.c",line="42",arch="i386:x86-64"},thread-id="1",stopped-threads="all",core="17"
+COMMAND 13-interpreter-exec console "break trans_ecall if ctx->base.pc_next == 8388778"
+~"Breakpoint 1 at 0x5555558d03d7: file /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c, line 24.\n"
+=breakpoint-created,bkpt={number="1",type="breakpoint",disp="keep",enabled="y",addr="0x00005555558d03d7",func="trans_ecall",file="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c",fullname="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c",line="24",thread-groups=["i1"],cond="ctx->base.pc_next == 8388778",times="0",original-location="trans_ecall"}
+13^done
+(gdb) 
+COMMAND 14-interpreter-exec console "break helper_raise_exception if exception == 8 && env->pc == 8388778"
+~"Breakpoint 2 at 0x5555558d13b0: file /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/op_helper.c, line 38.\n"
+=breakpoint-created,bkpt={number="2",type="breakpoint",disp="keep",enabled="y",addr="0x00005555558d13b0",func="helper_raise_exception",file="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/op_helper.c",fullname="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/op_helper.c",line="38",thread-groups=["i1"],cond="exception == 8 && env->pc == 8388778",times="0",original-location="helper_raise_exception"}
+14^done
+(gdb) 
+COMMAND 15-interpreter-exec console "break riscv_cpu_do_interrupt if ((RISCVCPU *)cs)->env.pc == 8388778 && ((RISCVCPU *)cs)->env.priv == 0"
+~"Breakpoint 3 at 0x5555558d22d0: file /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/cpu_helper.c, line 504.\n"
+=breakpoint-created,bkpt={number="3",type="breakpoint",disp="keep",enabled="y",addr="0x00005555558d22d0",func="riscv_cpu_do_interrupt",file="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/cpu_helper.c",fullname="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/cpu_helper.c",line="504",thread-groups=["i1"],cond="((RISCVCPU *)cs)->env.pc == 8388778 && ((RISCVCPU *)cs)->env.priv == 0",times="0",original-location="riscv_cpu_do_interrupt"}
+15^done
+(gdb) 
+COMMAND 16-exec-continue
+16^running
+*running,thread-id="all"
+(gdb) 
+=breakpoint-modified,bkpt={number="1",type="breakpoint",disp="keep",enabled="y",addr="0x00005555558d03d7",func="trans_ecall",file="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c",fullname="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c",line="24",thread-groups=["i1"],cond="ctx->base.pc_next == 8388778",times="1",original-location="trans_ecall"}
+~"[Switching to Thread 0x7ffff4ff26c0 (LWP 379)]\n"
+~"\n"
+~"Thread 3 \"qemu-system-ris\" hit Breakpoint 1, trans_ecall (a=<optimized out>, ctx=0x7ffff4ff1860) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c:24\n"
+~"24\t    generate_exception(ctx, RISCV_EXCP_U_ECALL);\n"
+*stopped,reason="breakpoint-hit",disp="keep",bkptno="1",frame={addr="0x00005555558d03d7",func="trans_ecall",args=[{name="a",value="<optimized out>"},{name="ctx",value="0x7ffff4ff1860"}],file="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c",fullname="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c",line="24",arch="i386:x86-64"},thread-id="3",stopped-threads="all",core="18"
+COMMAND 17-data-evaluate-expression "ctx->base.pc_next"
+17^done,value="8388778"
+(gdb) 
+COMMAND 18-interpreter-exec console "bt 12"
+~"#0  trans_ecall (a=<optimized out>, ctx=0x7ffff4ff1860) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c:24\n"
+~"#1  decode_insn32 (ctx=ctx@entry=0x7ffff4ff1860, insn=insn@entry=115) at target/riscv/decode_insn32.inc.c:1614\n"
+~"#2  0x00005555558d069e in decode_opc (ctx=0x7ffff4ff1860) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/translate.c:746\n"
+~"#3  riscv_tr_translate_insn (dcbase=0x7ffff4ff1860, cpu=<optimized out>) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/translate.c:800\n"
+~"#4  0x00005555558755c9 in translator_loop (ops=ops@entry=0x555555f66760 <riscv_tr_ops>, db=db@entry=0x7ffff4ff1860, cpu=cpu@entry=0x555556305970, tb=tb@entry=0x7ffff50e4040 <code_gen_buffer+19>, max_insns=max_insns@entry=1) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/accel/tcg/translator.c:95\n"
+~"#5  0x00005555558d1210 in gen_intermediate_code (cs=cs@entry=0x555556305970, tb=tb@entry=0x7ffff50e4040 <code_gen_buffer+19>, max_insns=max_insns@entry=1) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/translate.c:848\n"
+~"#6  0x0000555555874189 in tb_gen_code (cpu=cpu@entry=0x555556305970, pc=pc@entry=8388778, cs_base=cs_base@entry=0, flags=0, cflags=-16252928, cflags@entry=524288) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/accel/tcg/translate-all.c:1738\n"
+~"#7  0x00005555558726a0 in tb_find (cf_mask=524288, tb_exit=0, last_tb=0x0, cpu=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/accel/tcg/cpu-exec.c:409\n"
+~"#8  cpu_exec (cpu=cpu@entry=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/accel/tcg/cpu-exec.c:731\n"
+~"#9  0x000055555583908d in tcg_cpu_exec (cpu=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/cpus.c:1435\n"
+~"#10 qemu_tcg_cpu_thread_fn (arg=arg@entry=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/cpus.c:1743\n"
+~"#11 0x0000555555b6c640 in qemu_thread_start (args=0x55555631c090) at util/qemu-thread-posix.c:502\n"
+~"(More stack frames follow...)\n"
+18^done
+(gdb) 
+COMMAND 19-data-evaluate-expression "ctx->base.pc_next"
+19^done,value="8388778"
+(gdb) 
+COMMAND 20-exec-continue
+20^running
+*running,thread-id="all"
+(gdb) 
+=breakpoint-modified,bkpt={number="2",type="breakpoint",disp="keep",enabled="y",addr="0x00005555558d13b0",func="helper_raise_exception",file="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/op_helper.c",fullname="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/op_helper.c",line="38",thread-groups=["i1"],cond="exception == 8 && env->pc == 8388778",times="1",original-location="helper_raise_exception"}
+~"\n"
+~"Thread 3 \"qemu-system-ris\" hit Breakpoint 2, helper_raise_exception (env=0x55555630e380, exception=8) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/op_helper.c:38\n"
+~"38\t{\n"
+*stopped,reason="breakpoint-hit",disp="keep",bkptno="2",frame={addr="0x00005555558d13b0",func="helper_raise_exception",args=[{name="env",value="0x55555630e380"},{name="exception",value="8"}],file="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/op_helper.c",fullname="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/op_helper.c",line="38",arch="i386:x86-64"},thread-id="3",stopped-threads="all",core="18"
+COMMAND 21-data-evaluate-expression "exception"
+21^done,value="8"
+(gdb) 
+COMMAND 22-data-evaluate-expression "env->priv"
+22^done,value="0"
+(gdb) 
+COMMAND 23-interpreter-exec console "bt 10"
+~"#0  helper_raise_exception (env=0x55555630e380, exception=8) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/op_helper.c:38\n"
+~"#1  0x00007ffff50e4124 in code_gen_buffer ()\n"
+~"#2  0x00005555558718e6 in cpu_tb_exec (cpu=cpu@entry=0x555556305970, itb=itb@entry=0x7ffff50e4040 <code_gen_buffer+19>) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/accel/tcg/cpu-exec.c:173\n"
+~"#3  0x000055555587223d in cpu_loop_exec_tb (tb_exit=<synthetic pointer>, last_tb=<synthetic pointer>, tb=0x7ffff50e4040 <code_gen_buffer+19>, cpu=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/accel/tcg/cpu-exec.c:621\n"
+~"#4  cpu_exec (cpu=cpu@entry=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/accel/tcg/cpu-exec.c:732\n"
+~"#5  0x000055555583908d in tcg_cpu_exec (cpu=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/cpus.c:1435\n"
+~"#6  qemu_tcg_cpu_thread_fn (arg=arg@entry=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/cpus.c:1743\n"
+~"#7  0x0000555555b6c640 in qemu_thread_start (args=0x55555631c090) at util/qemu-thread-posix.c:502\n"
+~"#8  0x00007ffff7a9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447\n"
+~"#9  0x00007ffff7b29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78\n"
+23^done
+(gdb) 
+COMMAND 24-data-evaluate-expression "exception"
+24^done,value="8"
+(gdb) 
+COMMAND 25-data-evaluate-expression "env->priv"
+25^done,value="0"
+(gdb) 
+COMMAND 26-data-evaluate-expression "env->pc"
+26^done,value="8388778"
+(gdb) 
+COMMAND 27-exec-continue
+27^running
+*running,thread-id="all"
+(gdb) 
+=breakpoint-modified,bkpt={number="3",type="breakpoint",disp="keep",enabled="y",addr="0x00005555558d22d0",func="riscv_cpu_do_interrupt",file="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/cpu_helper.c",fullname="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/cpu_helper.c",line="504",thread-groups=["i1"],cond="((RISCVCPU *)cs)->env.pc == 8388778 && ((RISCVCPU *)cs)->env.priv == 0",times="1",original-location="riscv_cpu_do_interrupt"}
+~"\n"
+~"Thread 3 \"qemu-system-ris\" hit Breakpoint 3, riscv_cpu_do_interrupt (cs=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/cpu_helper.c:504\n"
+~"504\t{\n"
+*stopped,reason="breakpoint-hit",disp="keep",bkptno="3",frame={addr="0x00005555558d22d0",func="riscv_cpu_do_interrupt",args=[{name="cs",value="0x555556305970"}],file="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/cpu_helper.c",fullname="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/cpu_helper.c",line="504",arch="i386:x86-64"},thread-id="3",stopped-threads="all",core="18"
+COMMAND 28-interpreter-exec console "set $e = &((RISCVCPU *)cs)->env"
+28^done
+(gdb) 
+COMMAND 29-interpreter-exec console "bt 10"
+~"#0  riscv_cpu_do_interrupt (cs=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/cpu_helper.c:504\n"
+~"#1  0x00005555558720c7 in cpu_handle_exception (ret=<synthetic pointer>, cpu=<optimized out>) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/accel/tcg/cpu-exec.c:506\n"
+~"#2  cpu_exec (cpu=cpu@entry=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/accel/tcg/cpu-exec.c:712\n"
+~"#3  0x000055555583908d in tcg_cpu_exec (cpu=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/cpus.c:1435\n"
+~"#4  qemu_tcg_cpu_thread_fn (arg=arg@entry=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/cpus.c:1743\n"
+~"#5  0x0000555555b6c640 in qemu_thread_start (args=0x55555631c090) at util/qemu-thread-posix.c:502\n"
+~"#6  0x00007ffff7a9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447\n"
+~"#7  0x00007ffff7b29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78\n"
+29^done
+(gdb) 
+COMMAND 30-exec-finish
+30^running
+*running,thread-id="all"
+(gdb) 
+*stopped,reason="function-finished",frame={addr="0x00005555558720c7",func="cpu_handle_exception",args=[{name="ret",value="<synthetic pointer>"},{name="cpu",value="<optimized out>"}],file="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/accel/tcg/cpu-exec.c",fullname="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/accel/tcg/cpu-exec.c",line="507",arch="i386:x86-64"},thread-id="3",stopped-threads="all",core="18"
+COMMAND 31-data-evaluate-expression "$e->priv"
+31^done,value="1"
+(gdb) 
+COMMAND 32-data-evaluate-expression "$e->scause"
+32^done,value="8"
+(gdb) 
+COMMAND 33-data-evaluate-expression "$e->sepc"
+33^done,value="8388778"
+(gdb) 
+COMMAND 34-data-evaluate-expression "$e->priv"
+34^done,value="1"
+(gdb) 
+COMMAND 35-data-evaluate-expression "$e->scause"
+35^done,value="8"
+(gdb) 
+COMMAND 36-data-evaluate-expression "$e->sepc"
+36^done,value="8388778"
+(gdb) 
+COMMAND 37-data-evaluate-expression "$e->pc"
+37^done,value="18446744072637910528"
+(gdb) 
+COMMAND 38-interpreter-exec console "delete breakpoints"
+~"Delete all breakpoints, watchpoints, tracepoints, and catchpoints? (y or n) [answered Y; input not from terminal]\n"
+=breakpoint-deleted,id="1"
+=breakpoint-deleted,id="2"
+=breakpoint-deleted,id="3"
+38^done
+(gdb) 
+COMMAND 39-exec-continue
+39^running
+*running,thread-id="all"
+(gdb) 
+COMMAND 40-exec-interrupt --all
+40^done
+(gdb) 
+~"\nThread "
+~"1 \"qemu-system-ris\" received signal SIGINT, Interrupt.\n"
+~"[Switching to Thread 0x7ffff7c14b00 (LWP 375)]\n"
+~"0x00007ffff7b1bcd0 in __GI_ppoll (fds=0x555556351ec0, nfds=6, timeout=<optimized out>, timeout@entry=0x7fffffffe590, sigmask=sigmask@entry=0x0) at ../sysdeps/unix/sysv/linux/ppoll.c:42\n"
+&"warning: 42\t../sysdeps/unix/sysv/linux/ppoll.c: No such file or directory\n"
+*stopped,reason="signal-received",signal-name="SIGINT",signal-meaning="Interrupt",frame={addr="0x00007ffff7b1bcd0",func="__GI_ppoll",args=[{name="fds",value="0x555556351ec0"},{name="nfds",value="6"},{name="timeout",value="<optimized out>"},{name="timeout@entry",value="0x7fffffffe590"},{name="sigmask",value="0x0"},{name="sigmask@entry",value="0x0"}],file="../sysdeps/unix/sysv/linux/ppoll.c",fullname="./io/../sysdeps/unix/sysv/linux/ppoll.c",line="42",arch="i386:x86-64"},thread-id="1",stopped-threads="all",core="17"
+COMMAND 41-data-evaluate-expression "$e->sepc"
+41^done,value="8388782"
+(gdb) 
+COMMAND 42-data-evaluate-expression "$e->sscratch"
+42^done,value="18446744072640757760"
+(gdb) 
+COMMAND 43-data-evaluate-expression "$e->mstatus"
+43^done,value="32"
+(gdb) 
+COMMAND 44-interpreter-exec console "break trans_sret if ctx->base.pc_next == 18446744072637910730"
+~"Breakpoint 4 at 0x5555558c9480: file /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c, line 43.\n"
+=breakpoint-created,bkpt={number="4",type="breakpoint",disp="keep",enabled="y",addr="0x00005555558c9480",func="trans_sret",file="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c",fullname="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c",line="43",thread-groups=["i1"],cond="ctx->base.pc_next == 18446744072637910730",times="0",original-location="trans_sret"}
+44^done
+(gdb) 
+COMMAND 45-interpreter-exec console "break helper_sret if env->sepc == 8388782 && env->priv == 1"
+~"Breakpoint 5 at 0x5555558d1540: file /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/op_helper.c, line 75.\n"
+=breakpoint-created,bkpt={number="5",type="breakpoint",disp="keep",enabled="y",addr="0x00005555558d1540",func="helper_sret",file="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/op_helper.c",fullname="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/op_helper.c",line="75",thread-groups=["i1"],cond="env->sepc == 8388782 && env->priv == 1",times="0",original-location="helper_sret"}
+45^done
+(gdb) 
+COMMAND 46-exec-continue
+46^running
+*running,thread-id="all"
+(gdb) 
+=breakpoint-modified,bkpt={number="4",type="breakpoint",disp="keep",enabled="y",addr="0x00005555558c9480",func="trans_sret",file="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c",fullname="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c",line="43",thread-groups=["i1"],cond="ctx->base.pc_next == 18446744072637910730",times="1",original-location="trans_sret"}
+~"[Switching to Thread 0x7ffff4ff26c0 (LWP 379)]\n"
+~"\n"
+~"Thread 3 \"qemu-system-ris\" hit Breakpoint 4, trans_sret (ctx=0x7ffff4ff1860, a=<optimized out>) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c:43\n"
+~"43\tstatic bool trans_sret(DisasContext *ctx, arg_sret *a)\n"
+*stopped,reason="breakpoint-hit",disp="keep",bkptno="4",frame={addr="0x00005555558c9480",func="trans_sret",args=[{name="ctx",value="0x7ffff4ff1860"},{name="a",value="<optimized out>"}],file="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c",fullname="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c",line="43",arch="i386:x86-64"},thread-id="3",stopped-threads="all",core="18"
+COMMAND 47-data-evaluate-expression "ctx->base.pc_next"
+47^done,value="18446744072637910730"
+(gdb) 
+COMMAND 48-interpreter-exec console "bt 12"
+~"#0  trans_sret (ctx=0x7ffff4ff1860, a=<optimized out>) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/insn_trans/trans_privileged.inc.c:43\n"
+~"#1  0x00005555558ce6e6 in decode_insn32 (ctx=ctx@entry=0x7ffff4ff1860, insn=insn@entry=270532723) at target/riscv/decode_insn32.inc.c:1638\n"
+~"#2  0x00005555558d069e in decode_opc (ctx=0x7ffff4ff1860) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/translate.c:746\n"
+~"#3  riscv_tr_translate_insn (dcbase=0x7ffff4ff1860, cpu=<optimized out>) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/translate.c:800\n"
+~"#4  0x00005555558755c9 in translator_loop (ops=ops@entry=0x555555f66760 <riscv_tr_ops>, db=db@entry=0x7ffff4ff1860, cpu=cpu@entry=0x555556305970, tb=tb@entry=0x7ffff50e4040 <code_gen_buffer+19>, max_insns=max_insns@entry=1) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/accel/tcg/translator.c:95\n"
+~"#5  0x00005555558d1210 in gen_intermediate_code (cs=cs@entry=0x555556305970, tb=tb@entry=0x7ffff50e4040 <code_gen_buffer+19>, max_insns=max_insns@entry=1) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/translate.c:848\n"
+~"#6  0x0000555555874189 in tb_gen_code (cpu=cpu@entry=0x555556305970, pc=pc@entry=18446744072637910730, cs_base=cs_base@entry=0, flags=1, cflags=-16252928, cflags@entry=524288) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/accel/tcg/translate-all.c:1738\n"
+~"#7  0x00005555558726a0 in tb_find (cf_mask=524288, tb_exit=0, last_tb=0x0, cpu=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/accel/tcg/cpu-exec.c:409\n"
+~"#8  cpu_exec (cpu=cpu@entry=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/accel/tcg/cpu-exec.c:731\n"
+~"#9  0x000055555583908d in tcg_cpu_exec (cpu=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/cpus.c:1435\n"
+~"#10 qemu_tcg_cpu_thread_fn (arg=arg@entry=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/cpus.c:1743\n"
+~"#11 0x0000555555b6c640 in qemu_thread_start (args=0x55555631c090) at util/qemu-thread-posix.c:502\n"
+~"(More stack frames follow...)\n"
+48^done
+(gdb) 
+COMMAND 49-data-evaluate-expression "ctx->base.pc_next"
+49^done,value="18446744072637910730"
+(gdb) 
+COMMAND 50-exec-continue
+50^running
+*running,thread-id="all"
+(gdb) 
+=breakpoint-modified,bkpt={number="5",type="breakpoint",disp="keep",enabled="y",addr="0x00005555558d1540",func="helper_sret",file="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/op_helper.c",fullname="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/op_helper.c",line="75",thread-groups=["i1"],cond="env->sepc == 8388782 && env->priv == 1",times="1",original-location="helper_sret"}
+~"\n"
+~"Thread 3 \"qemu-system-ris\" hit Breakpoint 5, helper_sret (env=0x55555630e380, cpu_pc_deb=18446744072637910730) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/op_helper.c:75\n"
+~"75\t{\n"
+*stopped,reason="breakpoint-hit",disp="keep",bkptno="5",frame={addr="0x00005555558d1540",func="helper_sret",args=[{name="env",value="0x55555630e380"},{name="cpu_pc_deb",value="18446744072637910730"}],file="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/op_helper.c",fullname="/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/op_helper.c",line="75",arch="i386:x86-64"},thread-id="3",stopped-threads="all",core="18"
+COMMAND 51-interpreter-exec console "set $e = env"
+51^done
+(gdb) 
+COMMAND 52-data-evaluate-expression "$e->priv"
+52^done,value="1"
+(gdb) 
+COMMAND 53-interpreter-exec console "bt 10"
+~"#0  helper_sret (env=0x55555630e380, cpu_pc_deb=18446744072637910730) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/target/riscv/op_helper.c:75\n"
+~"#1  0x00007ffff50e4122 in code_gen_buffer ()\n"
+~"#2  0x00005555558718e6 in cpu_tb_exec (cpu=cpu@entry=0x555556305970, itb=itb@entry=0x7ffff50e4040 <code_gen_buffer+19>) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/accel/tcg/cpu-exec.c:173\n"
+~"#3  0x000055555587223d in cpu_loop_exec_tb (tb_exit=<synthetic pointer>, last_tb=<synthetic pointer>, tb=0x7ffff50e4040 <code_gen_buffer+19>, cpu=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/accel/tcg/cpu-exec.c:621\n"
+~"#4  cpu_exec (cpu=cpu@entry=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/accel/tcg/cpu-exec.c:732\n"
+~"#5  0x000055555583908d in tcg_cpu_exec (cpu=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/cpus.c:1435\n"
+~"#6  qemu_tcg_cpu_thread_fn (arg=arg@entry=0x555556305970) at /mnt/d/3nd_grade/OS/environment/qemu-4.1.1/cpus.c:1743\n"
+~"#7  0x0000555555b6c640 in qemu_thread_start (args=0x55555631c090) at util/qemu-thread-posix.c:502\n"
+~"#8  0x00007ffff7a9cb84 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447\n"
+~"#9  0x00007ffff7b29ecc in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78\n"
+53^done
+(gdb) 
+COMMAND 54-data-evaluate-expression "$e->priv"
+54^done,value="1"
+(gdb) 
+COMMAND 55-data-evaluate-expression "$e->sepc"
+55^done,value="8388782"
+(gdb) 
+COMMAND 56-data-evaluate-expression "$e->mstatus"
+56^done,value="32"
+(gdb) 
+COMMAND 57-exec-finish
+57^running
+*running,thread-id="all"
+(gdb) 
+*stopped,reason="function-finished",frame={addr="0x00007ffff50e4122",func="code_gen_buffer",args=[],arch="i386:x86-64"},gdb-result-var="$1",return-value="8388782",thread-id="3",stopped-threads="all",core="18"
+COMMAND 58-data-evaluate-expression "$e->priv"
+58^done,value="0"
+(gdb) 
+COMMAND 59-data-evaluate-expression "$e->priv"
+59^done,value="0"
+(gdb) 
+COMMAND 60-data-evaluate-expression "$e->mstatus"
+60^done,value="2"
+(gdb) 
+COMMAND 61-data-evaluate-expression "$rax"
+61^done,value="8388782"
+(gdb) 
+COMMAND 62-interpreter-exec console "delete breakpoints"
+~"Delete all breakpoints, watchpoints, tracepoints, and catchpoints? (y or n) [answered Y; input not from terminal]\n"
+=breakpoint-deleted,id="4"
+=breakpoint-deleted,id="5"
+62^done
+(gdb) 
+COMMAND 63-exec-continue
+63^running
+*running,thread-id="all"
+(gdb) 
+COMMAND 64-gdb-exit
+64^exit
+=thread-exited,id="1",group-id="i1"
+=thread-exited,id="2",group-id="i1"
+=thread-exited,id="3",group-id="i1"
+=thread-group-exited,id="i1"

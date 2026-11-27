@@ -1,0 +1,23 @@
+{
+  "kernel_sha256": "06e877b2bb23ee77144b7eacff6fb7320d734fa2e66ce80178a1de952af2861c",
+  "qemu": [
+    {
+      "path": "/mnt/d/3nd_grade/OS/environment/qemu/bin/qemu-system-riscv64",
+      "file": "/mnt/d/3nd_grade/OS/environment/qemu/bin/qemu-system-riscv64: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=43a57e28ba870726acd7b94ba70b3c61d20e36f5, for GNU/Linux 3.2.0, stripped",
+      "build_id": "43a57e28ba870726acd7b94ba70b3c61d20e36f5",
+      "text_sha256": "bd118a99aac38995da8e6d59308db57dc05a38e579ba7b05eb1381a5a9cd2595"
+    },
+    {
+      "path": "/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/riscv64-softmmu/qemu-system-riscv64",
+      "file": "/mnt/d/3nd_grade/OS/environment/qemu-4.1.1/riscv64-softmmu/qemu-system-riscv64: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=43a57e28ba870726acd7b94ba70b3c61d20e36f5, for GNU/Linux 3.2.0, with debug_info, not stripped",
+      "build_id": "43a57e28ba870726acd7b94ba70b3c61d20e36f5",
+      "text_sha256": "bd118a99aac38995da8e6d59308db57dc05a38e579ba7b05eb1381a5a9cd2595"
+    }
+  ],
+  "source_sha256": {
+    "target/riscv/translate.c": "15c280a421726ad0d089464ac8ab81df02ec7ef7dc43d444eb3a07a574632f98",
+    "target/riscv/insn_trans/trans_privileged.inc.c": "ed98bea92b4adf515d74200001b943cfd704bdfa21e93596e35471b66bab8763",
+    "target/riscv/op_helper.c": "d587e9001eaffc66ca481a3adbb09762adb36616e69eac5bd1792f58c5af5ed5",
+    "target/riscv/cpu_helper.c": "ec1d32c8d143b4520d712cfdc9c4c07e97f67be0f59397dc1fb2da8b79cb15be"
+  }
+}

@@ -1,0 +1,4 @@
+COMMAND: make clean
+rm -f -r obj bin
+
+EXIT: 0

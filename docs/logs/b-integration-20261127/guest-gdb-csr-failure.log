@@ -1,0 +1,12 @@
+COMMAND: riscv64-unknown-elf-gdb -q -nx -batch -x tools/lab5-guest-roundtrip.gdb
+add symbol table from file "obj/__user_hello.out"
+0x0000000000001000 in ?? ()
+Hardware assisted breakpoint 1 at 0x800020: file user/libs/initcode.S, line 5.
+
+Breakpoint 1, _start () at user/libs/initcode.S:5
+5	    call umain
+tools/lab5-guest-roundtrip.gdb:11: Error in sourced command file:
+Could not fetch register "satp"; remote failure reply 'E14'
+[Inferior 1 (process 1) detached]
+
+EXIT: 1
